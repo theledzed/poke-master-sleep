@@ -1,0 +1,733 @@
+// PokeAPI integration service for Pokemon Sleep Master
+
+// Map Spanish/English species names to National Pokedex Number
+export const POKEMON_DEX_MAP: Record<string, number> = {
+  // Starters & Gen 1
+  'bulbasaur': 1, 'ivysaur': 2, 'venusaur': 3,
+  'charmander': 4, 'charmeleon': 5, 'charizard': 6,
+  'squirtle': 7, 'wartortle': 8, 'blastoise': 9,
+  'caterpie': 10, 'metapod': 11, 'butterfree': 12,
+  'rattata': 19, 'raticate': 20,
+  'ekans': 23, 'arbok': 24,
+  'pikachu': 25, 'raichu': 26,
+  'clefairy': 35, 'clefable': 36,
+  'vulpix': 37, 'ninetales': 38,
+  'jigglypuff': 39, 'wigglytuff': 40,
+  'diglett': 50, 'dugtrio': 51,
+  'meowth': 52, 'persian': 53,
+  'psyduck': 54, 'golduck': 55,
+  'mankey': 56, 'primeape': 57,
+  'growlithe': 58, 'arcanine': 59,
+  'bellsprout': 69, 'weepinbell': 70, 'victreebel': 71,
+  'geodude': 74, 'graveler': 75, 'golem': 76,
+  'slowpoke': 79, 'slowbro': 80, 'slowking': 199,
+  'magnemite': 81, 'magneton': 82, 'magnezone': 462,
+  'doduo': 84, 'dodrio': 85,
+  'gastly': 92, 'haunter': 93, 'gengar': 94,
+  'onix': 95, 'steelix': 208,
+  'cubone': 104, 'marowak': 105,
+  'kangaskhan': 115,
+  'pinsir': 127,
+  'magikarp': 129, 'gyarados': 130,
+  'ditto': 132,
+  'eevee': 133, 'vaporeon': 134, 'jolteon': 135, 'flareon': 136,
+  'espeon': 196, 'umbreon': 197, 'leafeon': 470, 'glaceon': 471, 'sylveon': 700,
+  'dratini': 147, 'dragonair': 148, 'dragonite': 149,
+  'mewtwo': 150, 'mew': 151,
+
+  // Gen 2
+  'chikorita': 152, 'bayleef': 153, 'meganium': 154,
+  'cyndaquil': 155, 'quilava': 156, 'typhlosion': 157,
+  'totodile': 158, 'croconaw': 159, 'feraligatr': 160,
+  'pichu': 172, 'cleffa': 173, 'igglybuff': 174, 'togepi': 175, 'togetic': 176, 'togekiss': 468,
+  'mareep': 179, 'flaaffy': 180, 'ampharos': 181,
+  'sudowoodo': 185,
+  'wooper': 194, 'quagsire': 195,
+  'wobbuffet': 202,
+  'heracross': 214,
+  'delibird': 225,
+  'houndour': 228, 'houndoom': 229,
+  'larvitar': 246, 'pupitar': 247, 'tyranitar': 248,
+  'raikou': 243, 'entei': 244, 'suicune': 245,
+
+  // Gen 3
+  'treecko': 252, 'grovyle': 253, 'sceptile': 254,
+  'torchic': 255, 'combusken': 256, 'blaziken': 257,
+  'mudkip': 258, 'marshtomp': 259, 'swampert': 260,
+  'slakoth': 287, 'vigoroth': 288, 'slaking': 289,
+  'sableye': 302,
+  'gulpin': 316, 'swalot': 317,
+  'swablu': 333, 'altaria': 334,
+  'shuppet': 353, 'banette': 354,
+  'absor': 359, 'absol': 359,
+  'spheal': 363, 'sealeo': 364, 'walrein': 365,
+  'gardevoir': 282, 'gallade': 475, 'ralts': 280, 'kirlia': 281,
+
+  // Gen 4
+  'turtwig': 387, 'grotle': 388, 'torterra': 389,
+  'chimchar': 390, 'monferno': 391, 'infernape': 392,
+  'piplup': 393, 'prinplup': 394, 'empoleon': 395,
+  'shinx': 403, 'luxio': 404, 'luxray': 405,
+  'bonsly': 438, 'happiny': 440, 'chansey': 113, 'blissey': 242,
+  'riolu': 447, 'lucario': 448,
+  'croagunk': 453, 'toxicroak': 454,
+  'abomasnow': 460, 'snover': 459,
+  'darkrai': 491, 'cresselia': 488,
+
+  // Gen 5 & beyond
+  'foongus': 590, 'amoonguss': 591,
+  'rufflet': 627, 'braviary': 628,
+  'cutiefly': 742, 'ribombee': 743,
+  'stufful': 759, 'bewear': 760,
+  'mimikyu': 778,
+  'comfey': 764,
+  'cramorant': 845,
+
+  // Gen 9 Paldea
+  'sprigatito': 906, 'floragato': 907, 'meowscarada': 908,
+  'fuecoco': 909, 'crocalor': 910, 'skeledirge': 911,
+  'quaxly': 912, 'quaxwell': 913, 'quaquaval': 914,
+  'pawmi': 921, 'pawmo': 922, 'pawmot': 923,
+  'tinkatink': 957, 'tinkatuff': 958, 'tinkaton': 959,
+  'clodsire': 980
+};
+
+export function getPokemonDexId(name: string): number | null {
+  const clean = name.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+  if (POKEMON_DEX_MAP[clean]) {
+    return POKEMON_DEX_MAP[clean];
+  }
+  for (const [key, id] of Object.entries(POKEMON_DEX_MAP)) {
+    if (clean.includes(key) || key.includes(clean)) {
+      return id;
+    }
+  }
+  return null;
+}
+
+export type SpriteStyle = 'artwork' | 'showdown' | 'home' | 'pixel';
+
+// Official Pokemon Artwork & Sprites (Supports Shiny!)
+export function getPokemonArtworkUrl(
+  nameOrId: string | number,
+  style: SpriteStyle = 'showdown',
+  isShiny: boolean = false
+): string {
+  let dexId: number | null = null;
+
+  if (typeof nameOrId === 'number') {
+    dexId = nameOrId;
+  } else {
+    dexId = getPokemonDexId(nameOrId);
+  }
+
+  if (!dexId) {
+    return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${isShiny ? 'shiny/' : ''}25.gif`;
+  }
+
+  switch (style) {
+    case 'showdown':
+      return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${isShiny ? 'shiny/' : ''}${dexId}.gif`;
+    case 'artwork':
+      return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${isShiny ? 'shiny/' : ''}${dexId}.png`;
+    case 'home':
+      return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${isShiny ? 'shiny/' : ''}${dexId}.png`;
+    case 'pixel':
+    default:
+      return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${isShiny ? 'shiny/' : ''}${dexId}.png`;
+  }
+}
+
+// Map Pokemon Sleep Berries to Official PokeAPI Item Sprites
+export const BERRY_ITEM_SPRITES: Record<string, string> = {
+  'Baya Caquic': 'persim-berry',
+  'Baya Zanama': 'leppa-berry',
+  'Baya Aranja': 'oran-berry',
+  'Baya Uvav': 'grepa-berry',
+  'Baya Rudion': 'durin-berry',
+  'Baya Safre': 'rawst-berry',
+  'Baya Zreza': 'cheri-berry',
+  'Baya Atania': 'chesto-berry',
+  'Baya Higog': 'figy-berry',
+  'Baya Plama': 'pamtre-berry',
+  'Baya Ango': 'mago-berry',
+  'Baya Zidra': 'sitrus-berry',
+  'Baya Oram': 'bluk-berry',
+  'Baya Wiki': 'wiki-berry',
+  'Baya Andano': 'belue-berry',
+  'Baya Meloc': 'pecha-berry',
+  'Baya Drasi': 'yache-berry',
+  'Baya Yache': 'yache-berry',
+  'Baya Ziuela': 'lum-berry',
+  'Baya Lum': 'lum-berry'
+};
+
+export function getBerrySpriteUrl(berryName: string): string {
+  const itemSlug = BERRY_ITEM_SPRITES[berryName] || 'oran-berry';
+  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${itemSlug}.png`;
+}
+
+// Map Pokemon Sleep Ingredients to Official PokeAPI Item Sprites
+export const INGREDIENT_ITEM_SPRITES: Record<string, string> = {
+  'Leche Mu-mu': 'moomoo-milk',
+  'Miel': 'honey',
+  'Cola de Slowpoke': 'slowpoke-tail',
+  'Seta Sabrosa': 'big-mushroom',
+  'Huevo Selecto': 'lucky-egg',
+  'Manzana Selecta': 'sweet-apple',
+  'Hierba Picante': 'revival-herb',
+  'Patata': 'tart-apple',
+  'Soja Verdegal': 'miracle-seed',
+  'Fiambre Vegetariano': 'leftovers',
+  'Aceite Puro': 'berry-juice',
+  'Cacao Relajante': 'rage-candy-bar',
+  'Café Estimulante': 'soda-pop',
+  'Maíz Verdegal': 'sweet-heart',
+  'Calabaza Suculenta': 'aspear-berry',
+  'Puerro Grueso': 'energy-root',
+  'Jengibre': 'fresh-water',
+  'Siestomate': 'tamato-berry',
+  'Aguacate': 'qualot-berry'
+};
+
+export function getIngredientSpriteUrl(ingName: string): string {
+  const itemSlug = INGREDIENT_ITEM_SPRITES[ingName] || 'potion';
+  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${itemSlug}.png`;
+}
+
+// Main skill icons and metadata
+export interface MainSkillMeta {
+  name: string;
+  badgeBg: string;
+  badgeText: string;
+  iconSymbol: string;
+  category: 'energy' | 'vigor' | 'ingredients' | 'pot' | 'special';
+}
+
+export const MAIN_SKILLS_META: Record<string, MainSkillMeta> = {
+  'Energía para todos S': {
+    name: 'Energía para todos S',
+    badgeBg: 'bg-emerald-500/20 border-emerald-500/40',
+    badgeText: 'text-emerald-300',
+    iconSymbol: '💖',
+    category: 'energy'
+  },
+  'Carga vigor M': {
+    name: 'Carga vigor M',
+    badgeBg: 'bg-sky-500/20 border-sky-400/40',
+    badgeText: 'text-sky-300',
+    iconSymbol: '⚡',
+    category: 'vigor'
+  },
+  'Carga vigor S': {
+    name: 'Carga vigor S',
+    badgeBg: 'bg-sky-500/15 border-sky-400/30',
+    badgeText: 'text-sky-300',
+    iconSymbol: '⚡',
+    category: 'vigor'
+  },
+  'Carga energía S': {
+    name: 'Carga energía S',
+    badgeBg: 'bg-green-500/20 border-green-500/40',
+    badgeText: 'text-green-300',
+    iconSymbol: '🔋',
+    category: 'energy'
+  },
+  'Cura de energía S': {
+    name: 'Cura de energía S',
+    badgeBg: 'bg-teal-500/20 border-teal-500/40',
+    badgeText: 'text-teal-300',
+    iconSymbol: '🌿',
+    category: 'energy'
+  },
+  'Autocuración S': {
+    name: 'Autocuración S',
+    badgeBg: 'bg-purple-500/20 border-purple-500/40',
+    badgeText: 'text-purple-300',
+    iconSymbol: '🌙',
+    category: 'energy'
+  },
+  'Imán ingredientes S': {
+    name: 'Imán ingredientes S',
+    badgeBg: 'bg-cyan-500/20 border-cyan-500/40',
+    badgeText: 'text-cyan-300',
+    iconSymbol: '🧲',
+    category: 'ingredients'
+  },
+  'Receta sustanciosa S': {
+    name: 'Receta sustanciosa S',
+    badgeBg: 'bg-orange-500/20 border-orange-500/40',
+    badgeText: 'text-orange-300',
+    iconSymbol: '🍲',
+    category: 'pot'
+  },
+  'Metrónomo': {
+    name: 'Metrónomo',
+    badgeBg: 'bg-pink-500/20 border-pink-500/40',
+    badgeText: 'text-pink-300',
+    iconSymbol: '🎼',
+    category: 'special'
+  },
+  'Superútil S': {
+    name: 'Superútil S',
+    badgeBg: 'bg-indigo-500/20 border-indigo-500/40',
+    badgeText: 'text-indigo-300',
+    iconSymbol: '🏃',
+    category: 'special'
+  },
+  'Bayamanía': {
+    name: 'Bayamanía',
+    badgeBg: 'bg-rose-500/20 border-rose-500/40',
+    badgeText: 'text-rose-300',
+    iconSymbol: '🍒',
+    category: 'special'
+  },
+  'Imán fragmentos S': {
+    name: 'Imán fragmentos S',
+    badgeBg: 'bg-yellow-500/20 border-yellow-500/40',
+    badgeText: 'text-yellow-300',
+    iconSymbol: '💎',
+    category: 'special'
+  },
+  'Impulso de ayuda S': {
+    name: 'Impulso de ayuda S',
+    badgeBg: 'bg-violet-500/20 border-violet-500/40',
+    badgeText: 'text-violet-300',
+    iconSymbol: '🚀',
+    category: 'special'
+  },
+  'Onda Mental': {
+    name: 'Onda Mental',
+    badgeBg: 'bg-fuchsia-500/20 border-fuchsia-500/40',
+    badgeText: 'text-fuchsia-300',
+    iconSymbol: '🧠',
+    category: 'special'
+  },
+  'Mal Sueño': {
+    name: 'Mal Sueño',
+    badgeBg: 'bg-zinc-800 border-zinc-600',
+    badgeText: 'text-zinc-300',
+    iconSymbol: '🌑',
+    category: 'special'
+  }
+};
+
+// Canonical Main Skill by Species
+export const SPECIES_MAIN_SKILL_MAP: Record<string, string> = {
+  bulbasaur: 'Imán ingredientes S', ivysaur: 'Imán ingredientes S', venusaur: 'Imán ingredientes S',
+  charmander: 'Imán ingredientes S', charmeleon: 'Imán ingredientes S', charizard: 'Imán ingredientes S',
+  squirtle: 'Imán ingredientes S', wartortle: 'Imán ingredientes S', blastoise: 'Imán ingredientes S',
+  caterpie: 'Imán ingredientes S', metapod: 'Imán ingredientes S', butterfree: 'Imán ingredientes S',
+  rattata: 'Carga vigor S', raticate: 'Carga vigor S',
+  ekans: 'Carga vigor S', arbok: 'Carga vigor S',
+  pikachu: 'Carga vigor S', raichu: 'Carga vigor S',
+  clefairy: 'Metrónomo', clefable: 'Metrónomo', cleffa: 'Metrónomo',
+  vulpix: 'Bayamanía', ninetales: 'Bayamanía',
+  jigglypuff: 'Energía para todos S', wigglytuff: 'Energía para todos S', igglybuff: 'Energía para todos S',
+  diglett: 'Carga vigor S', dugtrio: 'Carga vigor S',
+  meowth: 'Imán fragmentos S', persian: 'Imán fragmentos S',
+  psyduck: 'Carga vigor S', golduck: 'Carga vigor S',
+  mankey: 'Carga vigor S', primeape: 'Carga vigor S',
+  growlithe: 'Superútil S', arcanine: 'Superútil S',
+  bellsprout: 'Imán ingredientes S', weepinbell: 'Imán ingredientes S', victreebel: 'Imán ingredientes S',
+  geodude: 'Carga vigor S', graveler: 'Carga vigor S', golem: 'Carga vigor S',
+  slowpoke: 'Carga energía S', slowbro: 'Carga energía S', slowking: 'Carga energía S',
+  magnemite: 'Receta sustanciosa S', magneton: 'Receta sustanciosa S', magnezone: 'Receta sustanciosa S',
+  doduo: 'Carga vigor S', dodrio: 'Carga vigor S',
+  gastly: 'Carga vigor S', haunter: 'Carga vigor S', gengar: 'Carga vigor S',
+  onix: 'Imán ingredientes S', steelix: 'Imán ingredientes S',
+  cubone: 'Carga vigor S', marowak: 'Carga vigor S',
+  kangaskhan: 'Imán ingredientes S',
+  pinsir: 'Carga vigor S',
+  ditto: 'Carga vigor S',
+  eevee: 'Impulso de ayuda S',
+  vaporeon: 'Imán ingredientes S',
+  jolteon: 'Superútil S',
+  flareon: 'Receta sustanciosa S',
+  espeon: 'Carga vigor M',
+  umbreon: 'Autocuración S',
+  leafeon: 'Cura de energía S',
+  glaceon: 'Receta sustanciosa S',
+  sylveon: 'Energía para todos S',
+  dratini: 'Carga energía S', dragonair: 'Carga energía S', dragonite: 'Carga energía S',
+  chikorita: 'Carga vigor S', bayleef: 'Carga vigor S', meganium: 'Carga vigor S',
+  cyndaquil: 'Carga vigor S', quilava: 'Carga vigor S', typhlosion: 'Carga vigor S',
+  totodile: 'Carga vigor S', croconaw: 'Carga vigor S', feraligatr: 'Carga vigor S',
+  togepi: 'Metrónomo', togetic: 'Metrónomo', togekiss: 'Metrónomo',
+  mareep: 'Carga vigor M', flaaffy: 'Carga vigor M', ampharos: 'Carga vigor M',
+  sudowoodo: 'Carga vigor M', bonsly: 'Carga vigor M',
+  wooper: 'Carga energía S', quagsire: 'Carga energía S',
+  wobbuffet: 'Cura de energía S',
+  heracross: 'Imán ingredientes S',
+  houndour: 'Carga vigor S', houndoom: 'Carga vigor S',
+  larvitar: 'Carga energía S', pupitar: 'Carga energía S', tyranitar: 'Carga energía S',
+  treecko: 'Carga vigor S', grovyle: 'Carga vigor S', sceptile: 'Carga vigor S',
+  torchic: 'Carga vigor S', combusken: 'Carga vigor S', blaziken: 'Carga vigor S',
+  mudkip: 'Carga vigor S', marshtomp: 'Carga vigor S', swampert: 'Carga vigor S',
+  slakoth: 'Imán ingredientes S', vigoroth: 'Imán ingredientes S', slaking: 'Imán ingredientes S',
+  sableye: 'Imán fragmentos S',
+  gulpin: 'Imán fragmentos S', swalot: 'Imán fragmentos S',
+  swablu: 'Carga energía S', altaria: 'Carga energía S',
+  shuppet: 'Carga vigor S', banette: 'Carga vigor S',
+  absol: 'Carga energía S',
+  spheal: 'Imán ingredientes S', sealeo: 'Imán ingredientes S', walrein: 'Imán ingredientes S',
+  ralts: 'Energía para todos S', kirlia: 'Energía para todos S', gardevoir: 'Energía para todos S', gallade: 'Superútil S',
+  turtwig: 'Imán ingredientes S', grotle: 'Imán ingredientes S', torterra: 'Imán ingredientes S',
+  chimchar: 'Carga vigor S', monferno: 'Carga vigor S', infernape: 'Carga vigor S',
+  piplup: 'Carga vigor S', prinplup: 'Carga vigor S', empoleon: 'Carga vigor S',
+  shinx: 'Carga vigor S', luxio: 'Carga vigor S', luxray: 'Carga vigor S',
+  happiny: 'Energía para todos S', chansey: 'Energía para todos S', blissey: 'Energía para todos S',
+  riolu: 'Imán fragmentos S', lucario: 'Imán fragmentos S',
+  croagunk: 'Carga vigor S', toxicroak: 'Carga vigor S',
+  snover: 'Carga energía S', abomasnow: 'Carga energía S',
+  darkrai: 'Mal Sueño',
+  foongus: 'Imán ingredientes S', amoonguss: 'Imán ingredientes S',
+  rufflet: 'Bayamanía', braviary: 'Bayamanía',
+  cutiefly: 'Imán ingredientes S', ribombee: 'Imán ingredientes S',
+  stufful: 'Carga vigor S', bewear: 'Carga vigor S',
+  mimikyu: 'Disfraz alegre',
+  comfey: 'Energía para todos S',
+  cramorant: 'Carga vigor S',
+  sprigatito: 'Imán ingredientes S', floragato: 'Imán ingredientes S', meowscarada: 'Imán ingredientes S',
+  fuecoco: 'Carga energía S', crocalor: 'Carga energía S', skeledirge: 'Carga energía S',
+  quaxly: 'Carga vigor S', quaxwell: 'Carga vigor S', quaquaval: 'Carga vigor S',
+  pawmi: 'Energía para todos S', pawmo: 'Energía para todos S', pawmot: 'Energía para todos S',
+  tinkatink: 'Carga energía S', tinkatuff: 'Carga energía S', tinkaton: 'Carga energía S',
+  mew: 'Metrónomo',
+  mewtwo: 'Onda Mental'
+};
+
+export function getPokemonCanonicalSkill(name: string): string {
+  const clean = name.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+  if (SPECIES_MAIN_SKILL_MAP[clean]) {
+    return SPECIES_MAIN_SKILL_MAP[clean];
+  }
+  for (const [key, skill] of Object.entries(SPECIES_MAIN_SKILL_MAP)) {
+    if (clean.includes(key) || key.includes(clean)) {
+      return skill;
+    }
+  }
+  return 'Carga vigor S';
+}
+
+export function getMainSkillMeta(skillName: string): MainSkillMeta {
+  return MAIN_SKILLS_META[skillName] || {
+    name: skillName,
+    badgeBg: 'bg-slate-800 border-slate-700',
+    badgeText: 'text-slate-300',
+    iconSymbol: '✨',
+    category: 'special'
+  };
+}
+
+// Pokemon Type colors & aesthetics
+export interface TypeTheme {
+  name: string;
+  badgeBg: string;
+  badgeText: string;
+  badgeBorder: string;
+  glow: string;
+  gradient: string;
+}
+
+export const POKEMON_TYPE_THEMES: Record<string, TypeTheme> = {
+  'Eléctrico': {
+    name: 'Eléctrico',
+    badgeBg: 'bg-amber-400/20',
+    badgeText: 'text-amber-300',
+    badgeBorder: 'border-amber-400/40',
+    glow: 'rgba(251, 191, 36, 0.25)',
+    gradient: 'from-amber-500/20 via-yellow-500/10 to-transparent'
+  },
+  'Fuego': {
+    name: 'Fuego',
+    badgeBg: 'bg-orange-500/20',
+    badgeText: 'text-orange-400',
+    badgeBorder: 'border-orange-500/40',
+    glow: 'rgba(249, 115, 22, 0.25)',
+    gradient: 'from-orange-500/20 via-red-500/10 to-transparent'
+  },
+  'Agua': {
+    name: 'Agua',
+    badgeBg: 'bg-blue-500/20',
+    badgeText: 'text-blue-400',
+    badgeBorder: 'border-blue-500/40',
+    glow: 'rgba(59, 130, 246, 0.25)',
+    gradient: 'from-blue-500/20 via-sky-500/10 to-transparent'
+  },
+  'Planta': {
+    name: 'Planta',
+    badgeBg: 'bg-emerald-500/20',
+    badgeText: 'text-emerald-400',
+    badgeBorder: 'border-emerald-500/40',
+    glow: 'rgba(16, 185, 129, 0.25)',
+    gradient: 'from-emerald-500/20 via-green-500/10 to-transparent'
+  },
+  'Psíquico': {
+    name: 'Psíquico',
+    badgeBg: 'bg-fuchsia-500/20',
+    badgeText: 'text-fuchsia-400',
+    badgeBorder: 'border-fuchsia-500/40',
+    glow: 'rgba(217, 70, 239, 0.25)',
+    gradient: 'from-fuchsia-500/20 via-pink-500/10 to-transparent'
+  },
+  'Fantasma': {
+    name: 'Fantasma',
+    badgeBg: 'bg-purple-600/20',
+    badgeText: 'text-purple-300',
+    badgeBorder: 'border-purple-500/40',
+    glow: 'rgba(147, 51, 234, 0.25)',
+    gradient: 'from-purple-600/20 via-indigo-600/10 to-transparent'
+  },
+  'Normal': {
+    name: 'Normal',
+    badgeBg: 'bg-slate-500/20',
+    badgeText: 'text-slate-300',
+    badgeBorder: 'border-slate-500/40',
+    glow: 'rgba(148, 163, 184, 0.25)',
+    gradient: 'from-slate-500/20 via-slate-600/10 to-transparent'
+  },
+  'Siniestro': {
+    name: 'Siniestro',
+    badgeBg: 'bg-zinc-700/30',
+    badgeText: 'text-zinc-300',
+    badgeBorder: 'border-zinc-600/40',
+    glow: 'rgba(63, 63, 70, 0.3)',
+    gradient: 'from-zinc-700/20 via-zinc-800/10 to-transparent'
+  },
+  'Hada': {
+    name: 'Hada',
+    badgeBg: 'bg-pink-400/20',
+    badgeText: 'text-pink-300',
+    badgeBorder: 'border-pink-400/40',
+    glow: 'rgba(244, 114, 182, 0.25)',
+    gradient: 'from-pink-400/20 via-rose-400/10 to-transparent'
+  },
+  'Roca': {
+    name: 'Roca',
+    badgeBg: 'bg-stone-500/20',
+    badgeText: 'text-stone-300',
+    badgeBorder: 'border-stone-500/40',
+    glow: 'rgba(120, 113, 108, 0.25)',
+    gradient: 'from-stone-500/20 via-stone-600/10 to-transparent'
+  },
+  'Tierra': {
+    name: 'Tierra',
+    badgeBg: 'bg-yellow-700/20',
+    badgeText: 'text-yellow-400',
+    badgeBorder: 'border-yellow-600/40',
+    glow: 'rgba(161, 98, 7, 0.25)',
+    gradient: 'from-yellow-700/20 via-amber-700/10 to-transparent'
+  },
+  'Hielo': {
+    name: 'Hielo',
+    badgeBg: 'bg-cyan-400/20',
+    badgeText: 'text-cyan-300',
+    badgeBorder: 'border-cyan-400/40',
+    glow: 'rgba(34, 211, 238, 0.25)',
+    gradient: 'from-cyan-400/20 via-sky-400/10 to-transparent'
+  },
+  'Lucha': {
+    name: 'Lucha',
+    badgeBg: 'bg-red-700/20',
+    badgeText: 'text-red-400',
+    badgeBorder: 'border-red-600/40',
+    glow: 'rgba(185, 28, 28, 0.25)',
+    gradient: 'from-red-700/20 via-rose-700/10 to-transparent'
+  },
+  'Veneno': {
+    name: 'Veneno',
+    badgeBg: 'bg-violet-600/20',
+    badgeText: 'text-violet-300',
+    badgeBorder: 'border-violet-500/40',
+    glow: 'rgba(124, 58, 237, 0.25)',
+    gradient: 'from-violet-600/20 via-purple-700/10 to-transparent'
+  },
+  'Volador': {
+    name: 'Volador',
+    badgeBg: 'bg-indigo-400/20',
+    badgeText: 'text-indigo-300',
+    badgeBorder: 'border-indigo-400/40',
+    glow: 'rgba(129, 140, 248, 0.25)',
+    gradient: 'from-indigo-400/20 via-blue-500/10 to-transparent'
+  },
+  'Acero': {
+    name: 'Acero',
+    badgeBg: 'bg-slate-400/20',
+    badgeText: 'text-slate-200',
+    badgeBorder: 'border-slate-400/40',
+    glow: 'rgba(148, 163, 184, 0.25)',
+    gradient: 'from-slate-400/20 via-gray-500/10 to-transparent'
+  },
+  'Dragón': {
+    name: 'Dragón',
+    badgeBg: 'bg-indigo-700/20',
+    badgeText: 'text-indigo-300',
+    badgeBorder: 'border-indigo-600/40',
+    glow: 'rgba(99, 102, 241, 0.25)',
+    gradient: 'from-indigo-700/20 via-blue-700/10 to-transparent'
+  },
+  'Bicho': {
+    name: 'Bicho',
+    badgeBg: 'bg-lime-600/20',
+    badgeText: 'text-lime-300',
+    badgeBorder: 'border-lime-500/40',
+    glow: 'rgba(132, 204, 22, 0.25)',
+    gradient: 'from-lime-600/20 via-emerald-600/10 to-transparent'
+  }
+};
+
+export function getTypeTheme(typeName: string): TypeTheme {
+  return POKEMON_TYPE_THEMES[typeName] || POKEMON_TYPE_THEMES['Normal'];
+}
+
+// Official Pokemon Sleep Dish Artwork from WikiDex (as seen in the PDF)
+export const DISH_IMAGE_FILE_MAP: Record<string, string> = {
+  // Guisos y curris
+  'Curri Mixto': 'Curri_Mixto_Sleep.png',
+  'Curri de Manzana Selecta': 'Curri_de_Manzana_Selecta_Sleep.png',
+  'Curri de Cola a la Parrilla': 'Curri_de_Cola_a_la_Parrilla_Sleep.png',
+  'Curri de Tomate "Poder Solar"': 'Curri_de_Tomate_Poder_Solar_Sleep.png',
+  'Curri Cremoso "Comesueños"': 'Curri_Cremoso_Comesue%C3%B1os_Sleep.png',
+  'Curri de Puerro Picante': 'Curri_de_Puerro_Picante_Sleep.png',
+  'Curri de Setas "Espora"': 'Curri_de_Setas_Espora_Sleep.png',
+  'Curri "Bomba Huevo"': 'Curri_Bomba_Huevo_Sleep.png',
+  'Curri de Hamburguesa con Queso': 'Curri_de_Hamburguesa_con_Queso_Sleep.png',
+  'Estofado de Patata': 'Estofado_de_Patata_Sleep.png',
+  'Sopa Cremosa': 'Sopa_Cremosa_Sleep.png',
+  'Curri de Hamburguesa Vegetariana': 'Curri_de_Hamburguesa_Vegetariana_Sleep.png',
+  'Curri Meloso': 'Curri_Meloso_Sleep.png',
+  'Curri Ninja': 'Curri_Ninja_Sleep.png',
+  'Curri con Escalope "Sequía"': 'Curri_con_Escalope_Sequ%C3%ADa_Sleep.png',
+  'Curri de Tortilla Jugosa': 'Curri_de_Tortilla_Jugosa_Sleep.png',
+  'Curri de Habas "Corpulencia"': 'Curri_de_Habas_Corpulencia_Sleep.png',
+  'Guiso de Maíz "Flexibilidad"': 'Guiso_de_Ma%C3%ADz_Flexibilidad_Sleep.png',
+  'Curri Keema de Maíz "Infierno"': 'Curri_Keema_de_Ma%C3%ADz_Infierno_Sleep.png',
+  'Curri Picante "Puño Mareo"': 'Curri_Picante_Pu%C3%B1o_Mareo_Sleep.png',
+  'Crema Vigorizante "Poder Oculto"': 'Crema_Vigorizante_Poder_Oculto_Sleep.png',
+  'Curri Sukiyaki "Corte"': 'Curri_Sukiyaki_Corte_Sleep.png',
+  'Guiso Pumpkaboo "Imitación"': 'Guiso_Pumpkaboo_Imitaci%C3%B3n_Sleep.png',
+  'Aguacates Gratinados "Espesura"': 'Aguacates_Gratinados_Espesura_Sleep.png',
+  'Bollito de Curri Verdegal': 'Bollito_de_Curri_Verdegal_Sleep.png',
+  'Udon al Curri "Bote"': 'Udon_al_Curri_Bote_Sleep.png',
+
+  // Ensaladas
+  'Ensalada Mixta': 'Ensalada_Mixta_Sleep.png',
+  'Ensalada de Cola de Slowpoke a la Pimienta': 'Ensalada_de_Cola_de_Slowpoke_a_la_Pimienta_Sleep.png',
+  'Ensalada de Setas "Espora"': 'Ensalada_de_Setas_Espora_Sleep.png',
+  'Ensalada César "Manto Níveo"': 'Ensalada_C%C3%A9sar_Manto_N%C3%ADveo_Sleep.png',
+  'Ensalada de Patata "Gula"': 'Ensalada_de_Patata_Gula_Sleep.png',
+  'Ensalada de Tofu "Velo Agua"': 'Ensalada_de_Tofu_Velo_Agua_Sleep.png',
+  'Ensaladón "Fuerza Bruta"': 'Ensalad%C3%B3n_Fuerza_Bruta_Sleep.png',
+  'Ensalada de Jamón Vegetariano': 'Ensalada_de_Jam%C3%B3n_Vegetariano_Sleep.png',
+  'Ensalada de Siestomate': 'Ensalada_de_Siestomate_Sleep.png',
+  'Ensalada con Mozzarella de Leche Mu-mu': 'Ensalada_con_Mozzarella_de_Leche_Mu-mu_Sleep.png',
+  'Ensalada de Carne al Cacao "Respondón"': 'Ensalada_de_Carne_al_Cacao_Respond%C3%B3n_Sleep.png',
+  'Ensalada de Jengibre "Sofoco"': 'Ensalada_de_Jengibre_Sofoco_Sleep.png',
+  'Ensalada de Manzana Selecta': 'Ensalada_de_Manzana_Selecta_Sleep.png',
+  'Ensalada de Puerro "Inmunidad"': 'Ensalada_de_Puerro_Inmunidad_Sleep.png',
+  'Ensalada de Manzana y Queso "Atracción"': 'Ensalada_de_Manzana_y_Queso_Atracci%C3%B3n_Sleep.png',
+  'Ensalada Ninja': 'Ensalada_Ninja_Sleep.png',
+  'Ensalada de Tofu "Onda Ígnea"': 'Ensalada_de_Tofu_Onda_%C3%8Dgnea_Sleep.png',
+  'Ensalada Verdegal': 'Ensalada_Verdegal_Sleep.png',
+  'Ensalada de Fruta "Paz Mental"': 'Ensalada_de_Fruta_Paz_Mental_Sleep.png',
+  'Ensalada de Maíz "Ataque Furia"': 'Ensalada_de_Ma%C3%ADz_Ataque_Furia_Sleep.png',
+  'Ensalada "Tajo Cruzado"': 'Ensalada_Tajo_Cruzado_Sleep.png',
+  'Ensalada con Aliño de Café "Competitivo"': 'Ensalada_con_Ali%C3%B1o_de_Caf%C3%A9_Competitivo_Sleep.png',
+  'Corona de Ensalada "Tormenta Floral"': 'Corona_de_Ensalada_Tormenta_Floral_Sleep.png',
+  'Ensalada con Aliño de Yogur "Ácido Málico"': 'Ensalada_con_Ali%C3%B1o_de_Yogur_%C3%81cido_M%C3%A1lico_Sleep.png',
+  'Ensalada de Aguacate "Armadura Frágil"': 'Ensalada_de_Aguacate_Armadura_Fr%C3%A1gil_Sleep.png',
+  'Nachos con Guacamole "Terratemblor"': 'Nachos_con_Guacamole_Terratemblor_Sleep.png',
+  'Verduras al Vapor "Escaldar"': 'Verduras_al_Vapor_Escaldar_Sleep.png',
+
+  // Postres y bebidas
+  'Zumo Mixto': 'Zumo_Mixto_Sleep.png',
+  'Boniatos "Peluche"': 'Boniatos_Peluche_Sleep.png',
+  'Galletas de Jengibre "Impasible"': 'Galletas_de_Jengibre_Impasible_Sleep.png',
+  'Zumo de Manzana Selecta': 'Zumo_de_Manzana_Selecta_Sleep.png',
+  'Refresco Casero': 'Refresco_Casero_Sleep.png',
+  'Té de Jengibre "Ascuas"': 'T%C3%A9_de_Jengibre_Ascuas_Sleep.png',
+  'Flan con Frutas de Jigglypuff': 'Flan_con_Frutas_de_Jigglypuff_Sleep.png',
+  'Batido "Beso Amoroso"': 'Batido_Beso_Amoroso_Sleep.png',
+  'Tarta de Manzana "Deseo"': 'Tarta_de_Manzana_Deseo_Sleep.png',
+  'Té Reparador de Neroli': 'T%C3%A9_Reparador_de_Neroli_Sleep.png',
+  'Tarta de Chocolate "Dulce Aroma"': 'Tarta_de_Chocolate_Dulce_Aroma_Sleep.png',
+  'Leche Mu-mu Caliente': 'Leche_Mu-mu_Caliente_Sleep.png',
+  'Bizcocho de Soja "Liviano"': 'Bizcocho_de_Soja_Liviano_Sleep.png',
+  'Batido de Proteínas "Entusiasmo"': 'Batido_de_Prote%C3%ADnas_Entusiasmo_Sleep.png',
+  'Zumo de Verduras "Acérrimo"': 'Zumo_de_Verduras_Ac%C3%A9rrimo_Sleep.png',
+  'Malasada Maxi': 'Malasada_Maxi_Sleep.png',
+  'Dónuts de Soja "Potencia"': 'D%C3%B3nuts_de_Soja_Potencia_Sleep.png',
+  'Palomitas "Explosión"': 'Palomitas_Explosi%C3%B3n_Sleep.png',
+  'Panecillos de Maíz "Hora del Té"': 'Panecillos_de_Ma%C3%ADz_Hora_del_T%C3%A9_Sleep.png',
+  'Tartaleta de Chocolate "Danza Pétalo"': 'Tartaleta_de_Chocolate_Danza_P%C3%A9talo_Sleep.png',
+  'Macarons "Don Floral"': 'Macarons_Don_Floral_Sleep.png',
+  'Gelatina de Café "Madrugar"': 'Gelatina_de_Caf%C3%A9_Madrugar_Sleep.png',
+  'Cola Especiada "Chispa"': 'Cola_Especiada_Chispa_Sleep.png',
+  'Tiramisú de Maíz "Rompemoldes"': 'Tiramis%C3%BA_de_Ma%C3%ADz_Rompemoldes_Sleep.png',
+  'Petisú Clodsire': 'Petis%C3%BA_Clodsire_Sleep.png',
+  'Tortitas "Cara Susto"': 'Tortitas_Cara_Susto_Sleep.png',
+  'Batido "Ciclón de Hojas"': 'Batido_Cicl%C3%B3n_de_Hojas_Sleep.png',
+  'Gofres de Chocolate "Recogemiel"': 'Gofres_de_Chocolate_Recogemiel_Sleep.png'
+};
+
+export function getDishImageUrl(dishName: string): string {
+  const directFile = DISH_IMAGE_FILE_MAP[dishName];
+  if (directFile) {
+    return `https://www.wikidex.net/wiki/Especial:Redirigir/file/${directFile}`;
+  }
+
+  // Fallback cleaning
+  const clean = dishName.replace(/["“”«»]/g, '').trim().replace(/\s+/g, '_');
+  return `https://www.wikidex.net/wiki/Especial:Redirigir/file/${encodeURIComponent(clean + '_Sleep.png')}`;
+}
+
+// Special / Legendary / Mythical Pokémon set (Official Pokemon Sleep rule: max 1 per team)
+export const SPECIAL_POKEMON_SET = new Set([
+  'mew', 'mewtwo', 'darkrai', 'cresselia',
+  'raikou', 'entei', 'suicune',
+  'articuno', 'zapdos', 'moltres',
+  'lugia', 'hooh', 'ho-oh', 'celebi',
+  'kyogre', 'groudon', 'rayquaza', 'jirachi', 'deoxys',
+  'dialga', 'palkia', 'giratina', 'arceus', 'manaphy', 'phione', 'shaymin',
+  'reshiram', 'zekrom', 'kyurem', 'victini', 'genesect',
+  'xerneas', 'yveltal', 'zygarde', 'diancie', 'hoopa', 'volcanion',
+  'solgaleo', 'lunala', 'necrozma', 'magearna', 'marshadow', 'zeraora', 'meltan', 'melmetal',
+  'zacian', 'zamazenta', 'eternatus', 'zarude', 'calyrex', 'koraidon', 'miraidon', 'pecharunt', 'terapagos', 'ogerpon'
+]);
+
+export function isSpecialPokemon(pokemonOrName: any): boolean {
+  if (!pokemonOrName) return false;
+  const name = typeof pokemonOrName === 'string' ? pokemonOrName : pokemonOrName.name;
+  if (!name) return false;
+  const clean = name.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+  if (SPECIAL_POKEMON_SET.has(clean)) return true;
+  for (const s of SPECIAL_POKEMON_SET) {
+    if (clean === s || clean.startsWith(s)) return true;
+  }
+  return false;
+}
+
+// Official PokeAPI Pokéball item sprites for Snorlax Rank tiers
+export const POKEBALL_SPRITES = {
+  pokeBall: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png',
+  greatBall: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/great-ball.png',
+  ultraBall: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/ultra-ball.png',
+  masterBall: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/master-ball.png',
+  dreamBall: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/dream-ball.png'
+} as const;
+
+export function getRankPokeballUrl(rankName: string): string {
+  if (!rankName) return POKEBALL_SPRITES.pokeBall;
+  if (rankName.startsWith('Máster') || rankName.startsWith('Master')) {
+    return POKEBALL_SPRITES.masterBall;
+  }
+  if (rankName.startsWith('Ultra')) {
+    return POKEBALL_SPRITES.ultraBall;
+  }
+  if (rankName.startsWith('Súper') || rankName.startsWith('Super')) {
+    return POKEBALL_SPRITES.greatBall;
+  }
+  return POKEBALL_SPRITES.pokeBall;
+}
+
