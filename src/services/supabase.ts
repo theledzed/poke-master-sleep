@@ -184,7 +184,18 @@ export async function loadProfileData(profileId: ProfileId): Promise<{
       const cloudPokemons = data.pokemons as Pokemon[];
       const cloudConfig = data.snorlax_config
         ? { ...DEFAULT_SNORLAX_CONFIG, ...(data.snorlax_config as SnorlaxConfig) }
-        : { ...DEFAULT_SNORLAX_CONFIG };
+        : localData.config;
+
+      // Protective safeguard: If cloud was newly created with empty '[]' (from migration SQL),
+      // but local storage already has Pokémon (e.g. Cris's 57 Pokémon), preserve local and upload it!
+      if (cloudPokemons.length === 0 && localData.pokemons.length > 0) {
+        await saveProfileData(profileId, localData.pokemons, cloudConfig);
+        return {
+          pokemons: localData.pokemons,
+          config: cloudConfig,
+          isCloud: true
+        };
+      }
 
       // Update local storage with fresh cloud data
       saveProfileToLocal(profileId, cloudPokemons, cloudConfig);
