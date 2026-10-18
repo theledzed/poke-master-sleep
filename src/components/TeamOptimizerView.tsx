@@ -65,14 +65,18 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
     return evaluateTeam(savedInGameTeamPokemons, config);
   }, [savedInGameTeamPokemons, inGameTeamMatchRank, config]);
 
+  const isMidWeekCalibrated = Boolean(config.midWeekProgress?.isCalibrated && (config.midWeekProgress?.currentVigor ?? 0) > 0);
+  const effectiveVigor = isMidWeekCalibrated ? (config.midWeekProgress?.currentVigor || 0) : 0;
+  const effectiveDay = isMidWeekCalibrated ? (config.midWeekProgress?.currentDayIdx ?? 0) : 0;
+
   const customSavedTeamWeeklyProj = useMemo(() => {
     if (!customSavedTeamResult) return null;
-    return proyectarSemanaEquipo(customSavedTeamResult.team, config, 0, 0);
-  }, [customSavedTeamResult, config]);
+    return proyectarSemanaEquipo(customSavedTeamResult.team, config, effectiveVigor, effectiveDay);
+  }, [customSavedTeamResult, config, effectiveVigor, effectiveDay]);
 
   const weeklyProjections = useMemo(() => {
-    return results.map(res => proyectarSemanaEquipo(res.team, config, 0, 0));
-  }, [results, config]);
+    return results.map(res => proyectarSemanaEquipo(res.team, config, effectiveVigor, effectiveDay));
+  }, [results, config, effectiveVigor, effectiveDay]);
 
   if (!results || results.length === 0) {
     return (
@@ -206,21 +210,31 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
 
           {/* Projected Weekly Rank Badge with Master Ball Sprite */}
           {currentWeeklyProj && (
-            <div className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl bg-sky-500/15 border border-sky-400/30 text-sky-200 text-xs font-bold shadow-md shadow-sky-950/40 self-start sm:self-auto">
+            <div className="inline-flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-sky-500/15 border border-sky-400/30 text-sky-200 text-xs font-bold shadow-md shadow-sky-950/40 self-start sm:self-auto">
               <img
                 src={getRankPokeballUrl(currentWeeklyProj.estadoRangoFinal.rangoActual)}
                 alt="Pokeball"
-                className="w-8 h-8 object-contain flex-shrink-0 drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)]"
+                className="w-9 h-9 object-contain flex-shrink-0 drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)]"
               />
               <div>
-                <span className="text-[10px] uppercase font-black tracking-wider text-sky-300 block">
-                  Rango Semanal Estimado
-                </span>
-                <div className="text-sm font-black text-white flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] uppercase font-black tracking-wider text-sky-300 block">
+                    {isMidWeekCalibrated ? '🟢 Predicción Calibrada en Vivo' : 'Rango Semanal Estimado'}
+                  </span>
+                  {isMidWeekCalibrated && (
+                    <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-400/30">
+                      En Vivo
+                    </span>
+                  )}
+                </div>
+                <div className="text-sm font-black text-white flex items-center gap-1.5 flex-wrap">
                   <span>{currentWeeklyProj.estadoRangoFinal.rangoActual}</span>
                   <span className="text-xs font-mono font-normal text-sky-300/80">
                     (~{currentWeeklyProj.vigorFinalSemana.toLocaleString()} pts)
                   </span>
+                </div>
+                <div className="text-[10px] text-slate-300 font-mono mt-0.5">
+                  Rango: <span className="text-white font-semibold">{currentWeeklyProj.vigorMinSemana.toLocaleString()}</span> ~ <span className="text-white font-semibold">{currentWeeklyProj.vigorMaxSemana.toLocaleString()}</span> pts
                 </div>
               </div>
             </div>

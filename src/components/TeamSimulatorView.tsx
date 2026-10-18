@@ -132,16 +132,20 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
     return evaluateTeam(currentTeamPokemons, config);
   }, [currentTeamPokemons, config]);
 
+  const isMidWeekCalibrated = Boolean(config.midWeekProgress?.isCalibrated && (config.midWeekProgress?.currentVigor ?? 0) > 0);
+  const effectiveVigor = isMidWeekCalibrated ? (config.midWeekProgress?.currentVigor || 0) : 0;
+  const effectiveDay = isMidWeekCalibrated ? (config.midWeekProgress?.currentDayIdx ?? 0) : 0;
+
   // Weekly projections (including Sunday x2 pot and 30% x3 extra tasty)
   const customWeeklyProj = useMemo(() => {
     if (currentTeamPokemons.length === 0) return null;
-    return proyectarSemanaEquipo(currentTeamPokemons, config, 0, 0);
-  }, [currentTeamPokemons, config]);
+    return proyectarSemanaEquipo(currentTeamPokemons, config, effectiveVigor, effectiveDay);
+  }, [currentTeamPokemons, config, effectiveVigor, effectiveDay]);
 
   const recommendedWeeklyProj = useMemo(() => {
     if (!recommendedResult || !recommendedResult.team || recommendedResult.team.length === 0) return null;
-    return proyectarSemanaEquipo(recommendedResult.team, config, 0, 0);
-  }, [recommendedResult, config]);
+    return proyectarSemanaEquipo(recommendedResult.team, config, effectiveVigor, effectiveDay);
+  }, [recommendedResult, config, effectiveVigor, effectiveDay]);
 
   // Handle slot assignment
   const handleSelectPokemonForSlot = (pokemonId: string) => {
