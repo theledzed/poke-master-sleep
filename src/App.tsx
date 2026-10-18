@@ -170,13 +170,18 @@ export const App: React.FC = () => {
   const handleSavePokemon = (pokemonData: Pokemon) => {
     setPokemons(prev => {
       const existingIndex = prev.findIndex(p => p.id === pokemonData.id);
+      let updated: Pokemon[];
       if (existingIndex >= 0) {
-        const updated = [...prev];
+        updated = [...prev];
         updated[existingIndex] = pokemonData;
-        return updated;
       } else {
-        return [pokemonData, ...prev];
+        updated = [pokemonData, ...prev];
       }
+      // Save immediately to local storage and sync to cloud without delay
+      saveProfileData(activeProfile, updated, config).then(res => {
+        if (res.cloudSynced) setSyncStatus('synced');
+      });
+      return updated;
     });
   };
 
@@ -327,8 +332,15 @@ export const App: React.FC = () => {
         onClose={() => setIsModalOpen(false)}
         onSave={handleSavePokemon}
         onDelete={(id) => {
-          setPokemons(prev => prev.filter(p => p.id !== id));
+          setPokemons(prev => {
+            const updated = prev.filter(p => p.id !== id);
+            saveProfileData(activeProfile, updated, config).then(res => {
+              if (res.cloudSynced) setSyncStatus('synced');
+            });
+            return updated;
+          });
           setIsModalOpen(false);
+          setPokemonToEdit(null);
         }}
         pokemonToEdit={pokemonToEdit}
       />

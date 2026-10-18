@@ -201,11 +201,24 @@ export async function loadProfileData(profileId: ProfileId): Promise<{
         };
       }
 
-      // Update local storage with fresh cloud data
-      saveProfileToLocal(profileId, cloudPokemons, cloudConfig);
+      // Safeguard against data loss: If local storage has Pokémon not present in cloud (e.g. newly created helpers before sync completed),
+      // merge them instead of blindly overwriting!
+      const cloudIds = new Set(cloudPokemons.map(p => p.id));
+      const localOnlyPokemons = localData.pokemons.filter(p => !cloudIds.has(p.id));
+
+      let finalPokemons = cloudPokemons;
+      if (localOnlyPokemons.length > 0) {
+        console.info(`[Supabase] Preserving ${localOnlyPokemons.length} local Pokemon not yet in cloud for ${profileId}`);
+        finalPokemons = [...localOnlyPokemons, ...cloudPokemons];
+        // Persist merged dataset to cloud immediately
+        saveProfileData(profileId, finalPokemons, cloudConfig);
+      } else {
+        // Update local storage with fresh cloud data
+        saveProfileToLocal(profileId, cloudPokemons, cloudConfig);
+      }
 
       return {
-        pokemons: cloudPokemons,
+        pokemons: finalPokemons,
         config: cloudConfig,
         isCloud: true
       };
