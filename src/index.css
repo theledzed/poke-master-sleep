@@ -2,13 +2,159 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ==========================================================================
+   COZY ATMOSPHERIC THEME ENGINE (Pokémon Sleep & Field Journal Aesthetic)
+   ========================================================================== */
+
+:root,
+[data-theme-weather="morning"] {
+  --bg-app-top: #122438;
+  --bg-app-bottom: #1c324b;
+  --surface-card: rgba(26, 44, 64, 0.88);
+  --surface-card-hover: rgba(34, 58, 84, 0.94);
+  --surface-card-glass: rgba(22, 38, 56, 0.65);
+  --surface-inner: rgba(15, 26, 38, 0.45);
+  --surface-border: rgba(251, 191, 36, 0.18);
+  --border-specular: rgba(251, 191, 36, 0.38);
+  --accent-primary: #FBBF24;
+  --accent-secondary: #34D399;
+  --accent-glow: rgba(251, 191, 36, 0.25);
+  --text-heading: #FDFBF7;
+  --card-shadow: 0 10px 28px -6px rgba(8, 20, 32, 0.45), 0 0 0 1px var(--surface-border);
+  --sky-glow: radial-gradient(ellipse 90% 65% at 50% -10%, rgba(251, 191, 36, 0.25), transparent 70%);
+}
+
+[data-theme-weather="afternoon"] {
+  --bg-app-top: #281827;
+  --bg-app-bottom: #3a1e33;
+  --surface-card: rgba(54, 30, 50, 0.88);
+  --surface-card-hover: rgba(68, 38, 64, 0.94);
+  --surface-card-glass: rgba(46, 24, 42, 0.65);
+  --surface-inner: rgba(30, 14, 28, 0.45);
+  --surface-border: rgba(251, 146, 60, 0.22);
+  --border-specular: rgba(251, 146, 60, 0.42);
+  --accent-primary: #FB923C;
+  --accent-secondary: #F472B6;
+  --accent-glow: rgba(251, 146, 60, 0.28);
+  --text-heading: #FFF7ED;
+  --card-shadow: 0 10px 28px -6px rgba(32, 12, 26, 0.50), 0 0 0 1px var(--surface-border);
+  --sky-glow: radial-gradient(ellipse 90% 65% at 50% -10%, rgba(251, 146, 60, 0.28), transparent 70%);
+}
+
+[data-theme-weather="night"] {
+  --bg-app-top: #0e1322;
+  --bg-app-bottom: #161c33;
+  --surface-card: rgba(24, 29, 52, 0.90);
+  --surface-card-hover: rgba(33, 40, 70, 0.95);
+  --surface-card-glass: rgba(18, 22, 42, 0.68);
+  --surface-inner: rgba(10, 13, 24, 0.50);
+  --surface-border: rgba(167, 139, 250, 0.18);
+  --border-specular: rgba(167, 139, 250, 0.38);
+  --accent-primary: #A78BFA;
+  --accent-secondary: #FDE047;
+  --accent-glow: rgba(167, 139, 250, 0.25);
+  --text-heading: #FAF5FF;
+  --card-shadow: 0 10px 28px -6px rgba(6, 8, 20, 0.55), 0 0 0 1px var(--surface-border);
+  --sky-glow: radial-gradient(ellipse 90% 65% at 50% -10%, rgba(167, 139, 250, 0.22), transparent 70%);
+}
+
+[data-theme-weather="rain"] {
+  --bg-app-top: #101e28;
+  --bg-app-bottom: #182b38;
+  --surface-card: rgba(26, 46, 60, 0.88);
+  --surface-card-hover: rgba(34, 58, 76, 0.94);
+  --surface-card-glass: rgba(20, 36, 48, 0.65);
+  --surface-inner: rgba(12, 24, 32, 0.45);
+  --surface-border: rgba(56, 189, 248, 0.20);
+  --border-specular: rgba(56, 189, 248, 0.40);
+  --accent-primary: #38BDF8;
+  --accent-secondary: #6EE7B7;
+  --accent-glow: rgba(56, 189, 248, 0.25);
+  --text-heading: #F0FDF4;
+  --card-shadow: 0 10px 28px -6px rgba(8, 20, 28, 0.50), 0 0 0 1px var(--surface-border);
+  --sky-glow: radial-gradient(ellipse 90% 65% at 50% -10%, rgba(56, 189, 248, 0.25), transparent 70%);
+}
+
 @layer base {
   body {
-    @apply text-slate-100 font-sans antialiased selection:bg-sky-400 selection:text-slate-950 min-h-screen;
-    background-color: #08172c;
-    background-image: radial-gradient(ellipse 100% 65% at 50% -10%, #0f355f 0%, #08172c 85%);
+    @apply text-slate-100 font-sans antialiased min-h-screen selection:bg-amber-400 selection:text-slate-900;
+    background-color: var(--bg-app-top);
+    background-image: var(--sky-glow), linear-gradient(180deg, var(--bg-app-top) 0%, var(--bg-app-bottom) 100%);
     background-attachment: fixed;
+    transition: background-color 0.8s ease, background-image 0.8s ease;
   }
+
+  h1, h2, h3, .font-display {
+    font-family: 'Fredoka', 'Nunito', system-ui, sans-serif;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* ==========================================================================
+   COZY UI COMPONENTS (Tactile, Soft 3D, Field Journal Aesthetic)
+   ========================================================================== */
+
+/* Authentic Pokemon Cozy Field Card */
+.cozy-card,
+.poke-card {
+  background: var(--surface-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--surface-border);
+  box-shadow: var(--card-shadow);
+  border-radius: 1.25rem;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cozy-card:hover,
+.poke-card:hover {
+  background: var(--surface-card-hover);
+  border-color: var(--border-specular);
+  box-shadow: 0 14px 34px -6px rgba(0, 0, 0, 0.45), 0 0 0 1px var(--border-specular);
+}
+
+/* Squishy 3D Push Button (Nintendo Cozy Style) */
+.btn-cozy-primary {
+  @apply relative inline-flex items-center justify-center font-display font-bold tracking-wide transition-all select-none;
+  background: linear-gradient(180deg, #F59E0B 0%, #D97706 100%);
+  color: #ffffff;
+  border-radius: 9999px;
+  border-bottom: 3px solid #B45309;
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.38);
+}
+
+.btn-cozy-primary:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(217, 119, 6, 0.45);
+}
+
+.btn-cozy-primary:active {
+  transform: translateY(2px);
+  border-bottom-width: 1px;
+  box-shadow: 0 2px 6px rgba(217, 119, 6, 0.25);
+}
+
+/* Secondary Frosted Pill Button */
+.btn-cozy-secondary {
+  @apply relative inline-flex items-center justify-center font-display font-bold tracking-wide transition-all select-none;
+  background: var(--surface-card-glass);
+  border: 1px solid var(--surface-border);
+  border-bottom: 2px solid rgba(0, 0, 0, 0.3);
+  color: #f1f5f9;
+  border-radius: 9999px;
+  backdrop-filter: blur(8px);
+}
+
+.btn-cozy-secondary:hover {
+  background: var(--surface-card-hover);
+  border-color: var(--border-specular);
+  transform: translateY(-1px);
+}
+
+.btn-cozy-secondary:active {
+  transform: translateY(1px);
+  border-bottom-width: 1px;
 }
 
 /* Pokéball SVG Watermark Utility */
@@ -19,27 +165,18 @@
   background-size: 110px 110px;
 }
 
-/* Authentic Pokemon Sapphire Card */
-.poke-card {
-  @apply bg-[#0e2746]/85 backdrop-blur-md border border-sky-400/15 rounded-2xl shadow-lg shadow-[#040c17]/30 transition-all duration-200;
-}
-
-.poke-card:hover {
-  @apply border-sky-400/30 shadow-xl shadow-[#040c17]/50;
-}
-
-/* Custom scrollbars */
+/* Custom Cozy Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #080c16;
+  background: rgba(0, 0, 0, 0.2);
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: rgba(255, 255, 255, 0.28);
 }

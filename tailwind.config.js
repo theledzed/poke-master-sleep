@@ -7,7 +7,23 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Nunito', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['Fredoka', 'Nunito', 'sans-serif'],
+        cozy: ['Fredoka', 'cursive', 'sans-serif'],
+        tabular: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+      },
       colors: {
+        cozy: {
+          surface: 'var(--surface-card)',
+          hover: 'var(--surface-card-hover)',
+          glass: 'var(--surface-card-glass)',
+          border: 'var(--surface-border)',
+          specular: 'var(--border-specular)',
+          accent: 'var(--accent-primary)',
+          accent2: 'var(--accent-secondary)',
+          heading: 'var(--text-heading)',
+        },
         poke: {
           red: '#EE1515',
           darkRed: '#A30D0D',

@@ -71,6 +71,11 @@ export const App: React.FC = () => {
     return getAutoWeather();
   });
 
+  // Keep root HTML element synchronized with atmospheric weather theme
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme-weather', weather);
+  }, [weather]);
+
   const [activeTab, setActiveTab] = useState<ActiveTab>('optimizer');
   const [optimizedResults, setOptimizedResults] = useState<OptimizedTeamResult[]>([]);
   const [isCalculating, setIsCalculating] = useState(false);
@@ -318,7 +323,7 @@ export const App: React.FC = () => {
   }, [activeProfile, config]);
 
   return (
-    <div className="min-h-screen text-slate-100 flex flex-col pb-24 md:pb-10 relative">
+    <div data-theme-weather={weather} className="min-h-screen text-slate-100 flex flex-col pb-24 md:pb-10 relative">
       {/* Dynamic Ambient Sky / Weather Background */}
       <WeatherBackground currentWeather={weather} onWeatherChange={setWeather} />
 
