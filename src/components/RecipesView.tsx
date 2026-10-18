@@ -7,11 +7,13 @@ import { Utensils, Soup, Salad, Coffee, Search, ChevronRight, Sparkles } from 'l
 interface RecipesViewProps {
   config?: SnorlaxConfig;
   onUpdateRecipeLevel?: (recipeName: string, level: number) => void;
+  onUpdateAllRecipeLevels?: (levels: Record<string, number>) => void;
 }
 
 export const RecipesView: React.FC<RecipesViewProps> = ({
   config,
-  onUpdateRecipeLevel
+  onUpdateRecipeLevel,
+  onUpdateAllRecipeLevels
 }) => {
   const [selectedType, setSelectedType] = useState<DishType | 'all'>('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -42,25 +44,44 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
             </span>
           </div>
           <p className="text-xs text-slate-300 mt-1">
-            Consulta los ingredientes requeridos y simula el vigor según el nivel del plato
+            Consulta los ingredientes requeridos y guarda el nivel de tus platillos en la nube
           </p>
         </div>
 
-        {/* Level Simulator Slider */}
-        <div className="bg-[#08182c]/80 border border-sky-400/20 px-4 py-2 rounded-full flex items-center gap-3 shadow-inner">
-          <div className="text-xs">
-            <span className="text-slate-400">Nivel de Plato: </span>
-            <span className="font-bold text-sky-300 font-mono">Nv. {previewLevel}</span>
-            <span className="text-emerald-400 text-[11px] ml-1.5 font-bold">(+{levelBonus}%)</span>
+        {/* Level Simulator Slider & Batch Save Button */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+          <div className="bg-[#08182c]/80 border border-sky-400/20 px-4 py-2 rounded-full flex items-center gap-3 shadow-inner">
+            <div className="text-xs whitespace-nowrap">
+              <span className="text-slate-400">Nivel de Plato: </span>
+              <span className="font-bold text-sky-300 font-mono">Nv. {previewLevel}</span>
+              <span className="text-emerald-400 text-[11px] ml-1.5 font-bold">(+{levelBonus}%)</span>
+            </div>
+            <input
+              type="range"
+              min="1"
+              max="65"
+              value={previewLevel}
+              onChange={(e) => setPreviewLevel(parseInt(e.target.value, 10))}
+              className="w-24 sm:w-28 accent-sky-400 cursor-pointer"
+            />
           </div>
-          <input
-            type="range"
-            min="1"
-            max="65"
-            value={previewLevel}
-            onChange={(e) => setPreviewLevel(parseInt(e.target.value, 10))}
-            className="w-28 accent-sky-400 cursor-pointer"
-          />
+
+          {onUpdateAllRecipeLevels && (
+            <button
+              onClick={() => {
+                const batch: Record<string, number> = {};
+                filteredRecipes.forEach(r => {
+                  batch[r.name] = previewLevel;
+                });
+                onUpdateAllRecipeLevels(batch);
+              }}
+              className="px-4 py-2 rounded-full bg-gradient-to-r from-blue-600 via-sky-500 to-blue-600 hover:from-blue-500 hover:to-sky-400 text-white text-xs font-black uppercase tracking-wider shadow-md shadow-sky-500/25 active:scale-95 transition-all flex items-center justify-center gap-1.5"
+              title={`Guardar Nv. ${previewLevel} en Supabase para las ${filteredRecipes.length} recetas mostradas`}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Guardar Nv. {previewLevel} ({filteredRecipes.length})</span>
+            </button>
+          )}
         </div>
       </div>
 

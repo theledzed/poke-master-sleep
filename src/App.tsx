@@ -201,6 +201,17 @@ export const App: React.FC = () => {
     }));
   }, []);
 
+  // Update batch recipe levels handler
+  const handleUpdateAllRecipeLevels = useCallback((newLevels: Record<string, number>) => {
+    setConfig(prev => ({
+      ...prev,
+      recipeLevels: {
+        ...(prev.recipeLevels || {}),
+        ...newLevels
+      }
+    }));
+  }, []);
+
   // Update area bonus handler
   const handleUpdateAreaBonus = useCallback((bonus: number) => {
     setConfig(prev => ({
@@ -294,6 +305,7 @@ export const App: React.FC = () => {
           <RecipesView
             config={config}
             onUpdateRecipeLevel={handleUpdateRecipeLevel}
+            onUpdateAllRecipeLevels={handleUpdateAllRecipeLevels}
           />
         )}
 
