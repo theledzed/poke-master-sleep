@@ -46,12 +46,16 @@ const env = ((import.meta as any).env || {}) as Record<string, string | undefine
 const supabaseUrl = (
   env.VITE_PUBLIC_SUPABASE_URL ||
   env.VITE_SUPABASE_URL ||
+  env.SUPABASE_URL ||
   ''
 ).trim();
 
 const supabaseAnonKey = (
   env.VITE_PUBLIC_SUPABASE_ANON_KEY ||
+  env.VITE_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
   env.VITE_SUPABASE_ANON_KEY ||
+  env.SUPABASE_ANON_KEY ||
+  env.SUPABASE_PUBLISHABLE_KEY ||
   ''
 ).trim();
 
