@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Pokemon, Specialty, IngredientSlot, Subskill } from '../types/pokemon';
 import { BERRIES, INGREDIENTS, NATURES, KNOWN_SUBSKILLS, parseNature, CANONICAL_BERRIES } from '../data/gameData';
 import { parseFrequency } from '../services/csvParser';
@@ -10,7 +10,13 @@ import {
   MAIN_SKILLS_META
 } from '../services/pokeApiService';
 import { getPokemonSkillLevel } from '../services/optimizer';
-import { X, Check, Plus, Trash2, Lock, CheckCircle2, Sparkles, Star } from 'lucide-react';
+import {
+  POKEMON_SPECIES_CATALOG,
+  searchSpeciesCatalog,
+  findSpeciesCatalogEntry,
+  SpeciesCatalogEntry
+} from '../data/pokemonCatalog';
+import { X, Check, Plus, Trash2, Lock, CheckCircle2, Sparkles, Star, ChevronDown, Search } from 'lucide-react';
 
 interface PokemonModalProps {
   isOpen: boolean;
@@ -31,8 +37,8 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
 
   const [name, setName] = useState('');
   const [isShiny, setIsShiny] = useState(false);
-  const [level, setLevel] = useState<number>(25);
-  const [rp, setRp] = useState<number>(1000);
+  const [level, setLevel] = useState<number | string>(25);
+  const [rp, setRp] = useState<number | string>(1000);
   const [frequencyStr, setFrequencyStr] = useState('45 min 0s');
   const [specialty, setSpecialty] = useState<Specialty>('Bayas');
   const [berry, setBerry] = useState<string>('Baya Caquic');
@@ -43,13 +49,13 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
 
   // 3 Ingredient slots
   const [ing1Name, setIng1Name] = useState<string>('Manzana Selecta');
-  const [ing1Count, setIng1Count] = useState<number>(1);
+  const [ing1Count, setIng1Count] = useState<number | string>(1);
 
   const [ing2Name, setIng2Name] = useState<string>('Manzana Selecta');
-  const [ing2Count, setIng2Count] = useState<number>(2);
+  const [ing2Count, setIng2Count] = useState<number | string>(2);
 
   const [ing3Name, setIng3Name] = useState<string>('Manzana Selecta');
-  const [ing3Count, setIng3Count] = useState<number>(3);
+  const [ing3Count, setIng3Count] = useState<number | string>(3);
 
   // Subskills list
   const [subskills, setSubskills] = useState<string[]>([
@@ -59,6 +65,27 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
     '',
     ''
   ]);
+
+  // Autocomplete state
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState<SpeciesCatalogEntry[]>([]);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(e.target as Node) &&
+        nameInputRef.current &&
+        !nameInputRef.current.contains(e.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (pokemonToEdit) {
@@ -119,16 +146,45 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
       setIng3Count(3);
       setSubskills(['', '', '', '', '']);
     }
+    setShowSuggestions(false);
   }, [pokemonToEdit, isOpen]);
+
+  const handleSelectSpecies = (entry: SpeciesCatalogEntry) => {
+    setName(entry.name);
+    setSpecialty(entry.specialty);
+    setBerry(entry.berry);
+    setMainSkillName(entry.mainSkill);
+    if (entry.ingredients) {
+      if (entry.ingredients[0]) setIng1Name(entry.ingredients[0]);
+      if (entry.ingredients[1]) setIng2Name(entry.ingredients[1]);
+      if (entry.ingredients[2]) setIng3Name(entry.ingredients[2]);
+    }
+    if (!pokemonToEdit && entry.frequencyStr) {
+      setFrequencyStr(entry.frequencyStr);
+    }
+    setShowSuggestions(false);
+  };
 
   const handleNameChange = (newName: string) => {
     setName(newName);
     if (!pokemonToEdit) {
-      const canonical = getPokemonCanonicalSkill(newName);
-      if (canonical) {
-        setMainSkillName(canonical);
+      const match = findSpeciesCatalogEntry(newName);
+      if (match && match.name.toLowerCase() === newName.toLowerCase().trim()) {
+        setSpecialty(match.specialty);
+        setBerry(match.berry);
+        setMainSkillName(match.mainSkill);
+        if (match.ingredients) {
+          setIng1Name(match.ingredients[0]);
+          setIng2Name(match.ingredients[1]);
+          setIng3Name(match.ingredients[2]);
+        }
+        if (match.frequencyStr) {
+          setFrequencyStr(match.frequencyStr);
+        }
       }
     }
+    setSuggestions(searchSpeciesCatalog(newName, 8));
+    setShowSuggestions(true);
   };
 
   if (!isOpen) return null;
@@ -140,24 +196,30 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
     const natureObj = parseNature(natureName);
     const frequencySeconds = parseFrequency(frequencyStr);
 
+    const finalLevel = typeof level === 'number' ? level : parseInt(String(level), 10) || 1;
+    const finalRp = typeof rp === 'number' ? rp : parseInt(String(rp), 10) || 0;
+    const finalIng1Count = typeof ing1Count === 'number' ? ing1Count : parseInt(String(ing1Count), 10) || 1;
+    const finalIng2Count = typeof ing2Count === 'number' ? ing2Count : parseInt(String(ing2Count), 10) || 2;
+    const finalIng3Count = typeof ing3Count === 'number' ? ing3Count : parseInt(String(ing3Count), 10) || 3;
+
     const ingredients: IngredientSlot[] = [
       {
         name: ing1Name,
-        count: ing1Count,
+        count: finalIng1Count,
         unlockLevel: 1,
-        enabled: level >= 1
+        enabled: finalLevel >= 1
       },
       {
         name: ing2Name,
-        count: ing2Count,
+        count: finalIng2Count,
         unlockLevel: 30,
-        enabled: level >= 30
+        enabled: finalLevel >= 30
       },
       {
         name: ing3Name,
-        count: ing3Count,
+        count: finalIng3Count,
         unlockLevel: 60,
-        enabled: level >= 60
+        enabled: finalLevel >= 60
       }
     ];
 
@@ -172,7 +234,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
           tier: meta.tier,
           description: meta.description,
           unlockLevel: unlock,
-          enabled: level >= unlock
+          enabled: finalLevel >= unlock
         };
       });
 
@@ -188,8 +250,8 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
       name: name.trim(),
       frequencyStr,
       frequencySeconds,
-      level,
-      rp,
+      level: finalLevel,
+      rp: finalRp,
       specialty,
       nature: natureName,
       natureObj,
@@ -281,39 +343,145 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
             </div>
           </div>
 
-          {/* Fila 1: Nombre, Nivel, PA */}
+          {/* Fila 1: Nombre con Autocompletado, Nivel, PA */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Nombre</label>
-              <input
-                type="text"
-                required
-                placeholder="ej. Raichu, Mew, Gengar"
-                value={name}
-                onChange={(e) => handleNameChange(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
+            <div className="relative">
+              <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center justify-between">
+                <span>Especie / Nombre</span>
+                <span className="text-[10px] text-sky-400 font-normal">Autocompleta datos</span>
+              </label>
+              <div className="relative">
+                <input
+                  ref={nameInputRef}
+                  type="text"
+                  required
+                  placeholder="ej. Raichu, Mew, Gengar..."
+                  value={name}
+                  onChange={(e) => handleNameChange(e.target.value)}
+                  onFocus={() => {
+                    setSuggestions(searchSpeciesCatalog(name, 8));
+                    setShowSuggestions(true);
+                  }}
+                  className="w-full pl-3 pr-8 py-2 bg-slate-950 border border-slate-800 focus:border-sky-500 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSuggestions(searchSpeciesCatalog(name, 8));
+                    setShowSuggestions(prev => !prev);
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1 rounded-md"
+                  title="Ver catálogo de especies oficiales"
+                >
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* Suggestions Dropdown */}
+              {showSuggestions && suggestions.length > 0 && (
+                <div
+                  ref={suggestionsRef}
+                  className="absolute left-0 right-0 top-full mt-1.5 bg-[#08182c] border border-sky-400/30 rounded-2xl shadow-2xl z-50 max-h-64 overflow-y-auto divide-y divide-sky-950/60 backdrop-blur-xl"
+                >
+                  <div className="p-2 bg-sky-950/40 text-[10px] text-sky-300 font-semibold uppercase tracking-wider flex items-center justify-between">
+                    <span>Especies de Pokémon Sleep</span>
+                    <span className="text-slate-400 font-normal text-[9px]">Click para autocompletar</span>
+                  </div>
+                  {suggestions.map((entry) => {
+                    const artworkUrl = getPokemonArtworkUrl(entry.name, 'artwork', false);
+                    return (
+                      <button
+                        key={entry.name}
+                        type="button"
+                        onClick={() => handleSelectSpecies(entry)}
+                        className="w-full text-left px-3 py-2 hover:bg-sky-900/40 flex items-center justify-between gap-2 transition-colors group"
+                      >
+                        <div className="flex items-center gap-2.5 truncate">
+                          <div className="w-8 h-8 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-center p-0.5 flex-shrink-0 group-hover:border-sky-400/40">
+                            <img
+                              src={artworkUrl}
+                              alt={entry.name}
+                              className="w-full h-full object-contain"
+                              onError={(e) => { (e.target as HTMLElement).style.opacity = '0.3'; }}
+                            />
+                          </div>
+                          <div className="truncate">
+                            <div className="font-bold text-xs text-white group-hover:text-sky-300 truncate">
+                              {entry.name}
+                            </div>
+                            <div className="text-[10px] text-slate-400 flex items-center gap-1.5 truncate">
+                              <span className="text-amber-400">{entry.berry}</span>
+                              <span>•</span>
+                              <span className="truncate text-slate-300">{entry.mainSkill}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md border flex-shrink-0 ${
+                          entry.specialty === 'Bayas'
+                            ? 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+                            : entry.specialty === 'Ingredientes'
+                            ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                            : entry.specialty === 'Todo'
+                            ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                            : 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30'
+                        }`}>
+                          {entry.specialty}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
+
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Nivel ({level})</label>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">
+                Nivel {level !== '' ? `(${level})` : ''}
+              </label>
               <input
                 type="number"
                 min="1"
                 max="100"
                 required
                 value={level}
-                onChange={(e) => setLevel(parseInt(e.target.value, 10) || 1)}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                onFocus={(e) => e.target.select()}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '') {
+                    setLevel('');
+                  } else {
+                    const parsed = parseInt(val, 10);
+                    setLevel(isNaN(parsed) ? '' : Math.max(1, Math.min(100, parsed)));
+                  }
+                }}
+                onBlur={() => {
+                  if (level === '' || Number(level) < 1) setLevel(1);
+                }}
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
               />
             </div>
+
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1">Poder de Ayuda (PA)</label>
               <input
                 type="number"
                 min="0"
                 value={rp}
-                onChange={(e) => setRp(parseInt(e.target.value, 10) || 0)}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                onFocus={(e) => e.target.select()}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '') {
+                    setRp('');
+                  } else {
+                    const parsed = parseInt(val, 10);
+                    setRp(isNaN(parsed) ? '' : Math.max(0, parsed));
+                  }
+                }}
+                onBlur={() => {
+                  if (rp === '' || Number(rp) < 0) setRp(0);
+                }}
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
               />
             </div>
           </div>
@@ -325,12 +493,12 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
               <select
                 value={specialty}
                 onChange={(e) => setSpecialty(e.target.value as Specialty)}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
               >
-                <option value="Bayas">Bayas</option>
-                <option value="Ingredientes">Ingredientes</option>
-                <option value="Habilidades">Habilidades</option>
-                <option value="Todo">Todo (Mew)</option>
+                <option value="Bayas">Bayas (+1 Baya base)</option>
+                <option value="Ingredientes">Ingredientes (Mayor cuota)</option>
+                <option value="Habilidades">Habilidades (2 activaciones)</option>
+                <option value="Todo">Todo (Bayas + Ingr + Habilidades)</option>
               </select>
             </div>
             <div>
@@ -462,18 +630,30 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                   <input
                     type="number"
                     min="1"
-                    max="10"
+                    max="15"
                     value={ing1Count}
-                    onChange={(e) => setIng1Count(parseInt(e.target.value, 10) || 1)}
-                    className="w-full px-2 py-1 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white"
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '') {
+                        setIng1Count('');
+                      } else {
+                        const parsed = parseInt(val, 10);
+                        setIng1Count(isNaN(parsed) ? '' : Math.max(1, Math.min(15, parsed)));
+                      }
+                    }}
+                    onBlur={() => {
+                      if (ing1Count === '' || Number(ing1Count) < 1) setIng1Count(1);
+                    }}
+                    className="w-full px-2 py-1 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white font-mono text-center"
                   />
                 </div>
               </div>
 
               {/* Slot 2: Nv 30 */}
-              <div className={`flex items-center gap-2 text-xs ${level >= 30 ? '' : 'opacity-70'}`}>
+              <div className={`flex items-center gap-2 text-xs ${level !== '' && Number(level) >= 30 ? '' : 'opacity-70'}`}>
                 <span className="w-16 flex items-center gap-1 font-semibold text-slate-300">
-                  {level >= 30 ? (
+                  {level !== '' && Number(level) >= 30 ? (
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                   ) : (
                     <Lock className="w-3.5 h-3.5 text-amber-500" />
@@ -502,18 +682,30 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                   <input
                     type="number"
                     min="1"
-                    max="10"
+                    max="15"
                     value={ing2Count}
-                    onChange={(e) => setIng2Count(parseInt(e.target.value, 10) || 1)}
-                    className="w-full px-2 py-1 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white"
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '') {
+                        setIng2Count('');
+                      } else {
+                        const parsed = parseInt(val, 10);
+                        setIng2Count(isNaN(parsed) ? '' : Math.max(1, Math.min(15, parsed)));
+                      }
+                    }}
+                    onBlur={() => {
+                      if (ing2Count === '' || Number(ing2Count) < 1) setIng2Count(2);
+                    }}
+                    className="w-full px-2 py-1 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white font-mono text-center"
                   />
                 </div>
               </div>
 
               {/* Slot 3: Nv 60 */}
-              <div className={`flex items-center gap-2 text-xs ${level >= 60 ? '' : 'opacity-70'}`}>
+              <div className={`flex items-center gap-2 text-xs ${level !== '' && Number(level) >= 60 ? '' : 'opacity-70'}`}>
                 <span className="w-16 flex items-center gap-1 font-semibold text-slate-300">
-                  {level >= 60 ? (
+                  {level !== '' && Number(level) >= 60 ? (
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                   ) : (
                     <Lock className="w-3.5 h-3.5 text-amber-500" />
@@ -542,10 +734,22 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                   <input
                     type="number"
                     min="1"
-                    max="10"
+                    max="15"
                     value={ing3Count}
-                    onChange={(e) => setIng3Count(parseInt(e.target.value, 10) || 1)}
-                    className="w-full px-2 py-1 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white"
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '') {
+                        setIng3Count('');
+                      } else {
+                        const parsed = parseInt(val, 10);
+                        setIng3Count(isNaN(parsed) ? '' : Math.max(1, Math.min(15, parsed)));
+                      }
+                    }}
+                    onBlur={() => {
+                      if (ing3Count === '' || Number(ing3Count) < 1) setIng3Count(3);
+                    }}
+                    className="w-full px-2 py-1 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white font-mono text-center"
                   />
                 </div>
               </div>
