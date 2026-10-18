@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Background Gradient -->
+    <radialGradient id="bgGradient" cx="50%" cy="35%" r="75%">
+      <stop offset="0%" stop-color="#1e1b4b" />
+      <stop offset="45%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#030712" />
+    </radialGradient>
+
+    <!-- Pokéball Top Half (Indigo/Master Ball Purple) -->
+    <linearGradient id="topBall" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#818cf8" />
+      <stop offset="40%" stop-color="#4f46e5" />
+      <stop offset="100%" stop-color="#312e81" />
+    </linearGradient>
+
+    <!-- Master Ball Accents (Pink/Magenta) -->
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f472b6" />
+      <stop offset="100%" stop-color="#c026d3" />
+    </linearGradient>
+
+    <!-- Pokéball Bottom Half (Pearl Moonlight) -->
+    <linearGradient id="bottomBall" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="60%" stop-color="#e2e8f0" />
+      <stop offset="100%" stop-color="#94a3b8" />
+    </linearGradient>
+
+    <!-- Moon Gradient -->
+    <linearGradient id="moonGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="50%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+
+    <!-- Cyan Glow -->
+    <linearGradient id="cyanButton" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#67e8f9" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+
+    <!-- Glow Filter -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="16" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Background Base -->
+  <rect width="512" height="512" rx="115" fill="url(#bgGradient)" />
+
+  <!-- Ambient Moonlit Glow in Background -->
+  <circle cx="256" cy="240" r="180" fill="#6366f1" opacity="0.15" filter="url(#softGlow)" />
+  <circle cx="360" cy="150" r="100" fill="#fbbf24" opacity="0.12" filter="url(#softGlow)" />
+
+  <g >
+    <!-- Crescent Moon (Embracing the ball from top-right) -->
+    <path d="M 320 80 
+             A 140 140 0 1 0 420 300 
+             A 160 160 0 1 1 320 80 Z" 
+          fill="url(#moonGradient)" 
+          filter="url(#glow)" 
+          opacity="0.95" />
+
+    <!-- Sleeping Stars / Sparkles -->
+    <!-- Star 1 (Top Left) -->
+    <path d="M 110 130 Q 110 150 90 150 Q 110 150 110 170 Q 110 150 130 150 Q 110 150 110 130 Z" 
+          fill="#fef08a" filter="url(#glow)" />
+    <!-- Star 2 (Far Right) -->
+    <path d="M 430 220 Q 430 235 415 235 Q 430 235 430 250 Q 430 235 445 235 Q 430 235 430 220 Z" 
+          fill="#67e8f9" filter="url(#glow)" />
+    <!-- Star 3 (Bottom Left Small) -->
+    <path d="M 100 350 Q 100 360 90 360 Q 100 360 100 370 Q 100 360 110 360 Q 100 360 100 350 Z" 
+          fill="#fef08a" opacity="0.8" />
+
+    <!-- Main Pokéball Outer Shadow / Ring -->
+    <circle cx="256" cy="270" r="148" fill="#030712" opacity="0.6" filter="url(#glow)" />
+
+    <!-- Clip path for Pokéball sphere -->
+    <clipPath id="ballClip">
+      <circle cx="256" cy="270" r="140" />
+    </clipPath>
+
+    <!-- Pokéball Sphere Body -->
+    <g clip-path="url(#ballClip)">
+      <!-- Top Half (Purple/Indigo) -->
+      <rect x="116" y="130" width="280" height="140" fill="url(#topBall)" />
+
+      <!-- Master Ball Curves / Ears -->
+      <circle cx="180" cy="195" r="42" fill="url(#accentGradient)" />
+      <circle cx="332" cy="195" r="42" fill="url(#accentGradient)" />
+      
+      <!-- Top Ball Specular Highlight (Soft Glossy Reflection) -->
+      <ellipse cx="256" cy="175" rx="75" ry="30" fill="#ffffff" opacity="0.25" />
+
+      <!-- Bottom Half (Moonlight Pearl) -->
+      <rect x="116" y="270" width="280" height="140" fill="url(#bottomBall)" />
+
+      <!-- Divider Band (Black Rim) -->
+      <rect x="116" y="258" width="280" height="24" fill="#090d16" />
+      <line x1="116" y1="258" x2="396" y2="258" stroke="#1e293b" stroke-width="2" />
+      <line x1="116" y1="282" x2="396" y2="282" stroke="#1e293b" stroke-width="2" />
+    </g>
+
+    <!-- Center Release Button / Sleep Core -->
+    <!-- Outer Rim -->
+    <circle cx="256" cy="270" r="46" fill="#090d16" stroke="#1e293b" stroke-width="2" />
+    <!-- Silver Inner Ring -->
+    <circle cx="256" cy="270" r="34" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" />
+    <!-- Glowing Cyan / Sleep Energy Button -->
+    <circle cx="256" cy="270" r="22" fill="url(#cyanButton)" filter="url(#glow)" />
+    <!-- Button Center Sparkle -->
+    <circle cx="251" cy="265" r="6" fill="#ffffff" opacity="0.8" />
+
+    <!-- Cute Zzz Floating Upward -->
+    <g fill="#fef08a" filter="url(#glow)" opacity="0.95">
+      <!-- Small Z -->
+      <path d="M 305 130 H 322 L 308 144 H 324 V 148 H 304 L 319 134 H 305 Z" />
+      <!-- Medium Z -->
+      <path d="M 330 95 H 352 L 334 113 H 354 V 118 H 329 L 348 100 H 330 Z" />
+      <!-- Big Z -->
+      <path d="M 362 55 H 390 L 368 78 H 392 V 85 H 360 L 384 62 H 362 Z" />
+    </g>
+  </g>
+</svg>

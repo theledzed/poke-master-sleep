@@ -7,16 +7,20 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+      registerType: 'prompt',
+      includeAssets: ['favicon.ico', 'favicon.svg', 'apple-touch-icon.png'],
       manifest: {
+        id: '/',
+        start_url: '/',
+        scope: '/',
         name: 'Pokémon Sleep Master - Optimizador de Equipos',
         short_name: 'SleepMaster',
         description: 'Optimizador inteligente de equipos y gestor de Pokémon para Pokémon Sleep',
-        theme_color: '#1e1b4b',
-        background_color: '#0f172a',
+        theme_color: '#0b0f19',
+        background_color: '#0b0f19',
         display: 'standalone',
         orientation: 'portrait',
+        categories: ['games', 'utilities'],
         icons: [
           {
             src: 'pwa-192x192.png',
@@ -27,9 +31,18 @@ export default defineConfig({
             src: 'pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'any'
+          },
+          {
+            src: 'maskable-icon-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
           }
         ]
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,json}']
       }
     })
   ]

@@ -22,6 +22,8 @@ import {
   isSupabaseConfigured,
   STORAGE_KEY_ACTIVE_PROFILE
 } from './services/supabase';
+import { PwaUpdatePrompt } from './components/PwaUpdatePrompt';
+import { PwaInstallPrompt } from './components/PwaInstallPrompt';
 
 const STORAGE_KEY_WEATHER = 'sleep_master_weather_v1';
 
@@ -283,6 +285,12 @@ export const App: React.FC = () => {
     <div className="min-h-screen text-slate-100 flex flex-col pb-24 md:pb-10 relative">
       {/* Dynamic Ambient Sky / Weather Background */}
       <WeatherBackground currentWeather={weather} onWeatherChange={setWeather} />
+
+      {/* PWA Update Banner (Triggered when new version is deployed) */}
+      <PwaUpdatePrompt />
+
+      {/* PWA Install Banner & Guide (Android / iOS) */}
+      <PwaInstallPrompt />
 
       {/* Navbar */}
       <Navbar
