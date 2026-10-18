@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Pokemon, SnorlaxConfig, OptimizedTeamResult, Specialty } from '../types/pokemon';
+import { Pokemon, SnorlaxConfig, OptimizedTeamResult, Specialty, MidWeekProgress } from '../types/pokemon';
 import { evaluateTeam, getEffectivePotCapacity } from '../services/optimizer';
 import { PokemonCard } from './PokemonCard';
 import {
@@ -33,7 +33,10 @@ import {
   HeartHandshake,
   TrendingUp,
   TrendingDown,
-  Info
+  Info,
+  Star,
+  Download,
+  Check
 } from 'lucide-react';
 import { WeeklyRankProjectionView } from './WeeklyRankProjectionView';
 import { proyectarSemanaEquipo } from '../services/weeklyProjector';
@@ -47,6 +50,9 @@ interface TeamSimulatorViewProps {
   onUpdateRecipeLevel?: (recipeName: string, level: number) => void;
   onUpdateAreaBonus?: (bonus: number) => void;
   onToggleGoodCampTicket?: () => void;
+  onSetCurrentTeam?: (pokemonIds: string[], teamName?: string) => void;
+  onUpdateMidWeekProgress?: (progress: MidWeekProgress) => void;
+  onResetMidWeekProgress?: () => void;
 }
 
 const STORAGE_KEY_CUSTOM_TEAMS = 'sleep_master_custom_teams_v1';
@@ -59,7 +65,10 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
   onEditPokemon,
   onUpdateRecipeLevel,
   onUpdateAreaBonus,
-  onToggleGoodCampTicket
+  onToggleGoodCampTicket,
+  onSetCurrentTeam,
+  onUpdateMidWeekProgress,
+  onResetMidWeekProgress
 }) => {
   // Store team slot IDs (up to 5 each)
   const [activeCustomTeamIndex, setActiveCustomTeamIndex] = useState<0 | 1>(0);
@@ -165,6 +174,42 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
       recIds[4] || null
     ];
     setCurrentTeamIds(padded);
+  };
+
+  const [saveTeamStatus, setSaveTeamStatus] = useState<string | null>(null);
+
+  const isSameTeam = (ids1: string[], ids2: string[]) => {
+    if (ids1.length !== ids2.length || ids1.length === 0) return false;
+    const set1 = new Set(ids1);
+    return ids2.every(id => set1.has(id));
+  };
+
+  const isCurrentCustomTeamInGame = useMemo(() => {
+    if (!config.currentTeam?.pokemonIds || currentTeamPokemons.length !== 5) return false;
+    return isSameTeam(currentTeamPokemons.map(p => p.id), config.currentTeam.pokemonIds);
+  }, [config.currentTeam, currentTeamPokemons]);
+
+  const handleLoadCurrentTeam = () => {
+    if (!config.currentTeam?.pokemonIds) return;
+    const ids = config.currentTeam.pokemonIds;
+    const padded = [
+      ids[0] || null,
+      ids[1] || null,
+      ids[2] || null,
+      ids[3] || null,
+      ids[4] || null
+    ];
+    setCurrentTeamIds(padded);
+  };
+
+  const handleSaveAsCurrentTeam = () => {
+    if (!onSetCurrentTeam || currentTeamPokemons.length === 0) return;
+    onSetCurrentTeam(
+      currentTeamPokemons.map(p => p.id),
+      activeCustomTeamIndex === 0 ? 'Mi Equipo 1' : 'Mi Equipo 2'
+    );
+    setSaveTeamStatus('¡Asignado en Juego!');
+    setTimeout(() => setSaveTeamStatus(null), 2500);
   };
 
   // Filtered list for Pokemon Picker
@@ -350,7 +395,38 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
             </button>
           </div>
 
-          <div className="flex items-center gap-2 self-end sm:self-auto">
+          <div className="flex flex-wrap items-center gap-2 self-end sm:self-auto">
+            {/* Load in-game team button if saved in config */}
+            {config.currentTeam?.pokemonIds && config.currentTeam.pokemonIds.length > 0 && (
+              <button
+                onClick={handleLoadCurrentTeam}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#091f3a] hover:bg-emerald-500/20 border border-sky-400/20 hover:border-emerald-500/40 text-emerald-300 hover:text-white text-xs font-bold transition-all shadow-sm"
+                title="Cargar los Pokémon que tienes marcados como tu Equipo Actual en Juego"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Cargar en Juego</span>
+              </button>
+            )}
+
+            {/* Set as in-game team button or badge */}
+            {currentTeamPokemons.length === 5 && (
+              isCurrentCustomTeamInGame ? (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-xs font-bold shadow-sm">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>En Juego ⭐</span>
+                </div>
+              ) : (
+                <button
+                  onClick={handleSaveAsCurrentTeam}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md shadow-emerald-600/25 active:scale-95"
+                  title="Establecer esta alineación de 5 Pokémon como tu Equipo Actual en Juego"
+                >
+                  {saveTeamStatus ? <Check className="w-3.5 h-3.5" /> : <Star className="w-3.5 h-3.5 fill-current text-amber-300" />}
+                  <span>{saveTeamStatus || 'Guardar en Juego ⭐'}</span>
+                </button>
+              )
+            )}
+
             {recommendedResult && (
               <button
                 onClick={handleCopyRecommended}
@@ -591,9 +667,15 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
         <WeeklyRankProjectionView
           equipo={currentTeamPokemons}
           config={config}
-          teamLabel={activeCustomTeamIndex === 0 ? 'Mi Equipo 1' : 'Mi Equipo 2'}
+          teamLabel={
+            isCurrentCustomTeamInGame
+              ? `${activeCustomTeamIndex === 0 ? 'Mi Equipo 1' : 'Mi Equipo 2'} (En Juego ⭐)`
+              : activeCustomTeamIndex === 0 ? 'Mi Equipo 1' : 'Mi Equipo 2'
+          }
           comparisonEquipo={recommendedResult?.team}
           comparisonLabel="Equipo Recomendado #1"
+          onUpdateMidWeekProgress={onUpdateMidWeekProgress}
+          onResetMidWeekProgress={onResetMidWeekProgress}
         />
       )}
 

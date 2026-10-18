@@ -60,6 +60,19 @@ export interface Recipe {
 
 export type OptimizerStrategy = 'balanced' | 'cooking' | 'berries';
 
+export interface CurrentTeamConfig {
+  pokemonIds: string[];
+  teamName?: string;
+  updatedAt?: string;
+}
+
+export interface MidWeekProgress {
+  currentVigor: number;
+  currentDayIdx: number; // 0=Lun ... 6=Dom
+  updatedAt?: string;
+  isCalibrated?: boolean;
+}
+
 export interface SnorlaxConfig {
   island: string;
   dishType: DishType;
@@ -70,6 +83,8 @@ export interface SnorlaxConfig {
   recipeLevels: Record<string, number>;
   areaBonus?: number; // 0 to 75%
   goodCampTicket?: boolean; // Pase de Acampada (+50% puchero, +20% velocidad de ayuda, +20% inventario)
+  currentTeam?: CurrentTeamConfig;
+  midWeekProgress?: MidWeekProgress;
 }
 
 export interface MealPlan {

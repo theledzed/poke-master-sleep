@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { Pokemon, SnorlaxConfig, OptimizedTeamResult } from './types/pokemon';
+import { Pokemon, SnorlaxConfig, OptimizedTeamResult, MidWeekProgress } from './types/pokemon';
 import { optimizeTeam } from './services/optimizer';
 import { Navbar, ActiveTab } from './components/Navbar';
 import { SnorlaxSetup } from './components/SnorlaxSetup';
@@ -233,6 +233,39 @@ export const App: React.FC = () => {
     }));
   }, []);
 
+  // Set active in-game team handler
+  const handleSetCurrentTeam = useCallback((pokemonIds: string[], teamName?: string) => {
+    setConfig(prev => ({
+      ...prev,
+      currentTeam: {
+        pokemonIds,
+        teamName: teamName || 'Mi Equipo Actual',
+        updatedAt: new Date().toISOString()
+      }
+    }));
+  }, []);
+
+  // Mid-week progress calibration handler
+  const handleUpdateMidWeekProgress = useCallback((progress: MidWeekProgress) => {
+    setConfig(prev => ({
+      ...prev,
+      midWeekProgress: {
+        ...progress,
+        updatedAt: progress.updatedAt || new Date().toISOString(),
+        isCalibrated: progress.isCalibrated ?? true
+      }
+    }));
+  }, []);
+
+  // Reset mid-week calibration to theoretical
+  const handleResetMidWeekProgress = useCallback(() => {
+    setConfig(prev => {
+      const copy = { ...prev };
+      delete copy.midWeekProgress;
+      return copy;
+    });
+  }, []);
+
   return (
     <div className="min-h-screen text-slate-100 flex flex-col pb-24 md:pb-10 relative">
       {/* Dynamic Ambient Sky / Weather Background */}
@@ -271,6 +304,10 @@ export const App: React.FC = () => {
             <TeamOptimizerView
               results={optimizedResults}
               config={config}
+              allPokemons={pokemons}
+              onSetCurrentTeam={handleSetCurrentTeam}
+              onUpdateMidWeekProgress={handleUpdateMidWeekProgress}
+              onResetMidWeekProgress={handleResetMidWeekProgress}
               onEditPokemon={handleEditPokemon}
               onOpenSimulator={() => setActiveTab('simulator')}
               spriteStyle={spriteStyle}
@@ -289,6 +326,9 @@ export const App: React.FC = () => {
             onUpdateRecipeLevel={handleUpdateRecipeLevel}
             onUpdateAreaBonus={handleUpdateAreaBonus}
             onToggleGoodCampTicket={handleToggleGoodCampTicket}
+            onSetCurrentTeam={handleSetCurrentTeam}
+            onUpdateMidWeekProgress={handleUpdateMidWeekProgress}
+            onResetMidWeekProgress={handleResetMidWeekProgress}
           />
         )}
 

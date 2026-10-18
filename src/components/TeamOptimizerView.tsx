@@ -1,15 +1,19 @@
 import React, { useState, useMemo } from 'react';
-import { OptimizedTeamResult, SnorlaxConfig } from '../types/pokemon';
-import { getEffectivePotCapacity } from '../services/optimizer';
+import { Pokemon, OptimizedTeamResult, SnorlaxConfig, MidWeekProgress } from '../types/pokemon';
+import { getEffectivePotCapacity, evaluateTeam } from '../services/optimizer';
 import { PokemonCard } from './PokemonCard';
 import { getIngredientSpriteUrl, getDishImageUrl, getRankPokeballUrl } from '../services/pokeApiService';
-import { Zap, Trophy, Utensils, Sparkles, Flame, ShieldAlert, ArrowRight, CheckCircle2, Swords, Star, LayoutGrid, Smartphone } from 'lucide-react';
+import { Zap, Trophy, Utensils, Sparkles, Flame, ShieldAlert, ArrowRight, CheckCircle2, Swords, Star, LayoutGrid, Smartphone, Check } from 'lucide-react';
 import { WeeklyRankProjectionView } from './WeeklyRankProjectionView';
 import { proyectarSemanaEquipo } from '../services/weeklyProjector';
 
 interface TeamOptimizerViewProps {
   results: OptimizedTeamResult[];
   config: SnorlaxConfig;
+  allPokemons?: Pokemon[];
+  onSetCurrentTeam?: (pokemonIds: string[], teamName?: string) => void;
+  onUpdateMidWeekProgress?: (progress: MidWeekProgress) => void;
+  onResetMidWeekProgress?: () => void;
   onEditPokemon?: (pokemon: any) => void;
   onOpenSimulator?: () => void;
   spriteStyle?: 'artwork' | 'showdown';
@@ -18,12 +22,53 @@ interface TeamOptimizerViewProps {
 export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
   results,
   config,
+  allPokemons = [],
+  onSetCurrentTeam,
+  onUpdateMidWeekProgress,
+  onResetMidWeekProgress,
   onEditPokemon,
   onOpenSimulator,
   spriteStyle = 'artwork'
 }) => {
   const [selectedRank, setSelectedRank] = useState<number>(0);
   const [teamViewMode, setTeamViewMode] = useState<'compact' | 'detailed'>('compact');
+  const [saveTeamStatus, setSaveTeamStatus] = useState<string | null>(null);
+
+  // Helper to check if two teams have identical pokemon IDs
+  const isSameTeam = (ids1: string[], ids2: string[]) => {
+    if (ids1.length !== ids2.length || ids1.length === 0) return false;
+    const set1 = new Set(ids1);
+    return ids2.every(id => set1.has(id));
+  };
+
+  const currentTeamSavedIds = useMemo(() => {
+    return config.currentTeam?.pokemonIds || [];
+  }, [config.currentTeam]);
+
+  // If the user has a saved currentTeam with 5 pokemon in their collection, resolve their Pokemon objects
+  const savedInGameTeamPokemons = useMemo(() => {
+    if (!config.currentTeam?.pokemonIds || allPokemons.length === 0) return [];
+    return config.currentTeam.pokemonIds
+      .map(id => allPokemons.find(p => p.id === id))
+      .filter((p): p is Pokemon => p !== undefined);
+  }, [config.currentTeam, allPokemons]);
+
+  // Is this saved in-game team already one of the optimizer's recommendations?
+  const inGameTeamMatchRank = useMemo(() => {
+    if (currentTeamSavedIds.length === 0) return -1;
+    return results.findIndex(res => isSameTeam(res.team.map(p => p.id), currentTeamSavedIds));
+  }, [results, currentTeamSavedIds]);
+
+  // Evaluate the saved in-game team if it's not already in results
+  const customSavedTeamResult = useMemo(() => {
+    if (savedInGameTeamPokemons.length < 5 || inGameTeamMatchRank !== -1) return null;
+    return evaluateTeam(savedInGameTeamPokemons, config);
+  }, [savedInGameTeamPokemons, inGameTeamMatchRank, config]);
+
+  const customSavedTeamWeeklyProj = useMemo(() => {
+    if (!customSavedTeamResult) return null;
+    return proyectarSemanaEquipo(customSavedTeamResult.team, config, 0, 0);
+  }, [customSavedTeamResult, config]);
 
   const weeklyProjections = useMemo(() => {
     return results.map(res => proyectarSemanaEquipo(res.team, config, 0, 0));
@@ -41,18 +86,63 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
     );
   }
 
-  const currentResult = results[selectedRank] || results[0];
-  const currentWeeklyProj = weeklyProjections[selectedRank] || weeklyProjections[0];
+  const currentResult: OptimizedTeamResult =
+    selectedRank === -1 && customSavedTeamResult
+      ? customSavedTeamResult
+      : results[selectedRank] || results[0];
+
+  const currentWeeklyProj =
+    selectedRank === -1 && customSavedTeamWeeklyProj
+      ? customSavedTeamWeeklyProj
+      : weeklyProjections[selectedRank] || weeklyProjections[0];
+
+  const isCurrentSelectionInGame =
+    currentTeamSavedIds.length > 0 &&
+    isSameTeam(currentResult.team.map(p => p.id), currentTeamSavedIds);
+
+  const handleAssignCurrentTeam = () => {
+    if (onSetCurrentTeam && currentResult) {
+      const name = selectedRank === -1 ? 'Mi Equipo Actual' : `Equipo #${selectedRank + 1}`;
+      onSetCurrentTeam(currentResult.team.map(p => p.id), name);
+      setSaveTeamStatus('¡Asignado!');
+      setTimeout(() => setSaveTeamStatus(null), 2500);
+    }
+  };
 
   return (
     <div className="space-y-6 my-6">
       {/* Team Rank Selector & Simulator Shortcut (Pokemon GO Pill Style) */}
       {/* Team Rank Selector & Simulator Shortcut */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-        <div className="flex items-center gap-1 bg-[#091f3a] p-1 rounded-xl border border-sky-400/20 overflow-x-auto">
+        <div className="flex items-center gap-1.5 bg-[#091f3a] p-1 rounded-xl border border-sky-400/20 overflow-x-auto max-w-full">
+          {/* Custom Saved Team Tab (if user has an in-game team distinct from recommendations) */}
+          {customSavedTeamResult && (
+            <button
+              onClick={() => setSelectedRank(-1)}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                selectedRank === -1
+                  ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/30'
+                  : 'text-emerald-300 hover:text-white hover:bg-white/5 border border-emerald-500/30'
+              }`}
+            >
+              <Star className="w-3.5 h-3.5 fill-current text-amber-300" />
+              <span>🎮 Mi Equipo Actual</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono ${
+                selectedRank === -1 ? 'bg-emerald-950/40 text-emerald-100 font-black' : 'bg-white/5 text-emerald-300'
+              }`}>
+                {customSavedTeamResult.totalDailyVigor.toLocaleString()}
+                {customSavedTeamWeeklyProj && (
+                  <span className="ml-1 opacity-90">• {customSavedTeamWeeklyProj.estadoRangoFinal.rangoActual}</span>
+                )}
+              </span>
+            </button>
+          )}
+
+          {/* AI Recommended Teams */}
           {results.map((res, idx) => {
             const wProj = weeklyProjections[idx];
             const isSelected = selectedRank === idx;
+            const isThisInGame = currentTeamSavedIds.length > 0 && isSameTeam(res.team.map(p => p.id), currentTeamSavedIds);
             return (
               <button
                 key={idx}
@@ -65,6 +155,12 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
               >
                 <Trophy className={`w-3.5 h-3.5 ${isSelected ? 'text-amber-300' : 'text-slate-400'}`} />
                 <span>Equipo #{idx + 1}</span>
+                {isThisInGame && (
+                  <span className="text-[9px] bg-emerald-500/30 text-emerald-200 border border-emerald-400/40 px-1.5 py-0.2 rounded font-black flex items-center gap-0.5">
+                    <span>⭐</span>
+                    <span className="hidden sm:inline">En Juego</span>
+                  </span>
+                )}
                 <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono ${
                   isSelected ? 'bg-sky-950/40 text-sky-100 font-black' : 'bg-white/5 text-slate-400'
                 }`}>
@@ -131,8 +227,8 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
           )}
         </div>
 
-        {/* Quick Breakdown Pills */}
-        <div className="mt-3 pt-3 border-t border-sky-400/15 flex flex-wrap items-center justify-between gap-2 text-xs relative z-10">
+        {/* Quick Breakdown Pills & In-Game Team Assignment Button */}
+        <div className="mt-3 pt-3 border-t border-sky-400/15 flex flex-wrap items-center justify-between gap-3 text-xs relative z-10">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="px-2.5 py-1 rounded-full bg-rose-500/15 border border-rose-500/25 text-rose-300 text-[11px] font-bold flex items-center gap-1.5">
               <span>🍒</span> Bayas: <strong className="font-mono text-white font-black">{currentResult.berryVigorDaily.toLocaleString()}</strong> ({Math.round((currentResult.berryVigorDaily / currentResult.totalDailyVigor) * 100)}%)
@@ -145,12 +241,28 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
             </span>
           </div>
 
-          {currentResult.highlights.length > 0 && (
-            <span className="text-[11px] text-slate-300 font-semibold flex items-center gap-1">
-              <CheckCircle2 className="w-3.5 h-3.5 text-sky-400" />
-              <span>{currentResult.highlights[0]}</span>
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {isCurrentSelectionInGame ? (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-xs font-bold shadow-sm">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span>✓ Tu Equipo Actual en Juego</span>
+                {config.currentTeam?.updatedAt && (
+                  <span className="text-[10px] text-emerald-300/80 font-mono hidden md:inline">
+                    (Asignado {new Date(config.currentTeam.updatedAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })})
+                  </span>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={handleAssignCurrentTeam}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white text-xs font-bold transition-all shadow-md shadow-sky-500/25 active:scale-95"
+                title="Establecer este equipo como el que tienes activo en tu partida de Pokémon Sleep"
+              >
+                {saveTeamStatus ? <Check className="w-3.5 h-3.5" /> : <Star className="w-3.5 h-3.5 fill-current text-amber-300" />}
+                <span>{saveTeamStatus || 'Establecer como mi Equipo en Juego ⭐'}</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -374,7 +486,15 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
         <WeeklyRankProjectionView
           equipo={currentResult.team}
           config={config}
-          teamLabel={`Opción #${selectedRank + 1}`}
+          teamLabel={
+            selectedRank === -1
+              ? 'Mi Equipo Actual 🎮'
+              : isCurrentSelectionInGame
+              ? `Equipo #${selectedRank + 1} (En Juego ⭐)`
+              : `Opción #${selectedRank + 1}`
+          }
+          onUpdateMidWeekProgress={onUpdateMidWeekProgress}
+          onResetMidWeekProgress={onResetMidWeekProgress}
         />
       )}
     </div>

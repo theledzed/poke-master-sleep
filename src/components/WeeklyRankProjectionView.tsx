@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Pokemon, SnorlaxConfig } from '../types/pokemon';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Pokemon, SnorlaxConfig, MidWeekProgress } from '../types/pokemon';
 import {
   proyectarSemanaEquipo,
   ProyeccionSemanalCompleta,
@@ -29,7 +29,11 @@ import {
   ArrowRight,
   Target,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Info,
+  Save,
+  RotateCcw,
+  Check
 } from 'lucide-react';
 
 interface WeeklyRankProjectionViewProps {
@@ -38,6 +42,8 @@ interface WeeklyRankProjectionViewProps {
   teamLabel?: string;
   comparisonEquipo?: Pokemon[];
   comparisonLabel?: string;
+  onUpdateMidWeekProgress?: (progress: MidWeekProgress) => void;
+  onResetMidWeekProgress?: () => void;
 }
 
 const DIAS_NOMBRES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
@@ -47,12 +53,73 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
   config,
   teamLabel = 'Tu Equipo',
   comparisonEquipo,
-  comparisonLabel = 'Equipo Recomendado #1'
+  comparisonLabel = 'Equipo Recomendado #1',
+  onUpdateMidWeekProgress,
+  onResetMidWeekProgress
 }) => {
-  const [simulationMode, setSimulationMode] = useState<'full_week' | 'mid_week'>('full_week');
-  const [currentVigorInput, setCurrentVigorInput] = useState<number>(0);
-  const [currentDayIdx, setCurrentDayIdx] = useState<number>(5); // Default to Saturday (idx 5)
+  const [simulationMode, setSimulationMode] = useState<'full_week' | 'mid_week'>(() => {
+    return config.midWeekProgress?.isCalibrated && (config.midWeekProgress.currentVigor ?? 0) > 0
+      ? 'mid_week'
+      : 'full_week';
+  });
+  const [currentVigorInput, setCurrentVigorInput] = useState<number>(() => {
+    return config.midWeekProgress?.currentVigor || 0;
+  });
+  const [currentDayIdx, setCurrentDayIdx] = useState<number>(() => {
+    return typeof config.midWeekProgress?.currentDayIdx === 'number'
+      ? config.midWeekProgress.currentDayIdx
+      : 5; // Default to Saturday (idx 5)
+  });
   const [isTimelineExpanded, setIsTimelineExpanded] = useState<boolean>(true);
+  const [saveStatus, setSaveStatus] = useState<string | null>(null);
+
+  // Sync state if config.midWeekProgress updates from outside
+  useEffect(() => {
+    if (config.midWeekProgress?.isCalibrated && config.midWeekProgress.currentVigor > 0) {
+      setCurrentVigorInput(config.midWeekProgress.currentVigor);
+      if (typeof config.midWeekProgress.currentDayIdx === 'number') {
+        setCurrentDayIdx(config.midWeekProgress.currentDayIdx);
+      }
+      setSimulationMode('mid_week');
+    }
+  }, [config.midWeekProgress]);
+
+  const handleSaveMidWeek = (vigor: number, dayIdx: number) => {
+    if (onUpdateMidWeekProgress) {
+      onUpdateMidWeekProgress({
+        currentVigor: vigor,
+        currentDayIdx: dayIdx,
+        isCalibrated: vigor > 0,
+        updatedAt: new Date().toISOString()
+      });
+      setSaveStatus('¡Guardado!');
+      setTimeout(() => setSaveStatus(null), 2500);
+    }
+  };
+
+  const handleResetCalibration = () => {
+    setSimulationMode('full_week');
+    if (onResetMidWeekProgress) {
+      onResetMidWeekProgress();
+    }
+  };
+
+  const formatUpdateDate = (dateStr?: string) => {
+    if (!dateStr) return 'Recientemente';
+    try {
+      const d = new Date(dateStr);
+      const now = new Date();
+      const isToday = d.toDateString() === now.toDateString();
+      const timeStr = d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+      if (isToday) {
+        return `Hoy a las ${timeStr}`;
+      }
+      const dateFormatted = d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+      return `${dateFormatted}, ${timeStr}`;
+    } catch {
+      return dateStr;
+    }
+  };
 
   const islaId = useMemo(() => normalizeIslaId(config.island), [config.island]);
 
@@ -184,25 +251,84 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
         </div>
       </div>
 
+      {/* Informative Guidance Banner based on calibration status */}
+      {simulationMode === 'full_week' ? (
+        <div className="bg-sky-950/40 border border-sky-400/25 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs relative z-10">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="p-2 rounded-xl bg-sky-500/20 text-sky-300 border border-sky-400/30 flex-shrink-0">
+              <Info className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="font-bold text-sky-200 block text-xs">
+                💡 Proyección Teórica Estimada (desde el Lunes 4:00 AM)
+              </span>
+              <p className="text-slate-300 text-[11px] mt-0.5 max-w-2xl leading-relaxed">
+                Esta es una proyección teórica calculada desde el lunes a las 4:00 AM con el ritmo promedio de tu equipo. Si vas ajustando tus puntos reales en juego durante la semana, obtendrás predicciones exactas hacia el rango Maestro el domingo.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setSimulationMode('mid_week')}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-bold text-xs whitespace-nowrap self-start sm:self-auto transition-all shadow-md shadow-sky-500/25 flex-shrink-0"
+          >
+            <Zap className="w-3.5 h-3.5" />
+            <span>Ajustar a Hoy en Juego 🎮</span>
+          </button>
+        </div>
+      ) : (
+        <div className="bg-emerald-950/40 border border-emerald-400/30 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs relative z-10 shadow-inner">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 flex-shrink-0">
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-black text-emerald-300 uppercase tracking-wide text-[11px]">
+                  🟢 Proyección Calibrada con tu Juego
+                </span>
+                <span className="text-[10px] text-emerald-200 font-mono bg-emerald-950/80 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                  Actualizado: {formatUpdateDate(config.midWeekProgress?.updatedAt)}
+                </span>
+              </div>
+              <p className="text-slate-200 text-xs mt-1 leading-relaxed">
+                Ajustado con <strong className="text-white font-bold">{currentVigorInput.toLocaleString()} pts</strong> ({DIAS_NOMBRES[currentDayIdx]}). Tu predicción toma tus puntos en pantalla y calcula la producción restante hasta el domingo por la noche.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handleResetCalibration}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold transition-all border border-slate-700 self-start sm:self-auto flex-shrink-0"
+            title="Volver a la proyección teórica de toda la semana"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Volver a Teórica</span>
+          </button>
+        </div>
+      )}
+
       {/* Mid-Week Input Bar (if active) */}
       {simulationMode === 'mid_week' && (
-        <div className="bg-[#0c2444]/90 border border-sky-400/25 rounded-3xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10 shadow-inner">
+        <div className="bg-[#0c2444]/90 border border-sky-400/25 rounded-3xl p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 relative z-10 shadow-inner">
           <div className="flex-1">
             <span className="text-xs font-black text-sky-300 uppercase tracking-wider block mb-1">
               ¿Cuánto Vigor tiene tu Snorlax en este momento?
             </span>
             <p className="text-xs text-slate-200">
-              Ingresa los puntos que ves en la pantalla de tu juego para proyectar exactamente hasta qué rango llegarás el domingo por la noche.
+              Ingresa los puntos que ves en la pantalla de tu juego para calibrar exactamente tu progreso y predecir tu rango final del domingo.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-end gap-3">
             <div>
               <label className="block text-[10px] text-slate-400 font-bold mb-1">Día Actual</label>
               <select
                 value={currentDayIdx}
-                onChange={(e) => setCurrentDayIdx(parseInt(e.target.value, 10))}
-                className="bg-[#080C16] border border-sky-400/25 text-white text-xs font-bold rounded-full px-4 py-2 focus:ring-1 focus:ring-sky-400 focus:outline-none"
+                onChange={(e) => {
+                  const newDay = parseInt(e.target.value, 10);
+                  setCurrentDayIdx(newDay);
+                  handleSaveMidWeek(currentVigorInput, newDay);
+                }}
+                className="bg-[#080C16] border border-sky-400/25 text-white text-xs font-bold rounded-xl px-3 py-2 focus:ring-1 focus:ring-sky-400 focus:outline-none"
               >
                 {DIAS_NOMBRES.map((d, idx) => (
                   <option key={idx} value={idx} className="bg-slate-900">
@@ -217,11 +343,23 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
               <input
                 type="number"
                 value={currentVigorInput || ''}
-                onChange={(e) => setCurrentVigorInput(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                onChange={(e) => {
+                  const newVigor = Math.max(0, parseInt(e.target.value, 10) || 0);
+                  setCurrentVigorInput(newVigor);
+                }}
+                onBlur={() => handleSaveMidWeek(currentVigorInput, currentDayIdx)}
                 placeholder="Ej. 185000"
-                className="w-36 bg-[#080C16] border border-sky-400/25 text-sky-300 font-mono font-bold text-xs rounded-full px-4 py-2 focus:ring-1 focus:ring-sky-400 focus:outline-none"
+                className="w-36 bg-[#080C16] border border-sky-400/25 text-sky-300 font-mono font-bold text-xs rounded-xl px-3 py-2 focus:ring-1 focus:ring-sky-400 focus:outline-none"
               />
             </div>
+
+            <button
+              onClick={() => handleSaveMidWeek(currentVigorInput, currentDayIdx)}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-xs transition-all shadow-md shadow-emerald-500/25 self-end"
+            >
+              {saveStatus ? <Check className="w-3.5 h-3.5" /> : <Save className="w-3.5 h-3.5" />}
+              <span>{saveStatus || 'Guardar Ajuste'}</span>
+            </button>
           </div>
         </div>
       )}
@@ -234,8 +372,14 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
         <div className="relative z-10 space-y-4">
           {/* Top row: Pill & Island */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider bg-sky-500/20 text-sky-200 border border-sky-400/30">
-              {simulationMode === 'full_week' ? 'RANGO ESPERADO AL CIERRE SEMANAL' : 'PREDICCIÓN PARA MAÑANA DOMINGO'}
+            <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider border ${
+              simulationMode === 'mid_week' && currentVigorInput > 0
+                ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/30'
+                : 'bg-sky-500/20 text-sky-200 border-sky-400/30'
+            }`}>
+              {simulationMode === 'mid_week' && currentVigorInput > 0
+                ? '🟢 PREDICCIÓN CALIBRADA EN VIVO'
+                : 'PROYECCIÓN TEÓRICA • SEMANA COMPLETA'}
             </span>
             <span className="text-xs text-slate-300 font-mono bg-[#08182c]/80 border border-sky-400/20 px-3 py-0.5 rounded-full font-bold">
               🏝️ Isla: <span className="text-white capitalize font-black">{islaId.replace('_', ' ')}</span>
