@@ -122,13 +122,14 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
     <div className="space-y-6 my-6">
       {/* Team Rank Selector & Simulator Shortcut (Pokemon GO Pill Style) */}
       {/* Team Rank Selector & Simulator Shortcut */}
+      {/* Team Rank Selector & Simulator Shortcut */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-        <div className="flex items-center gap-1.5 bg-[#091f3a] p-1 rounded-xl border border-sky-400/20 overflow-x-auto max-w-full">
+        <div className="flex items-center gap-1.5 bg-[var(--surface-inner)] p-1.5 rounded-2xl border border-[var(--surface-border)] overflow-x-auto max-w-full shadow-inner">
           {/* Custom Saved Team Tab (if user has an in-game team distinct from recommendations) */}
           {customSavedTeamResult && (
             <button
               onClick={() => setSelectedRank(-1)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
                 selectedRank === -1
                   ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/30'
                   : 'text-emerald-300 hover:text-white hover:bg-white/5 border border-emerald-500/30'
@@ -156,13 +157,13 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
               <button
                 key={idx}
                 onClick={() => setSelectedRank(idx)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
                   isSelected
-                    ? 'bg-sky-500 text-white shadow-sm shadow-sky-500/30'
+                    ? 'bg-[var(--accent-primary)] text-slate-950 font-black shadow-md shadow-[var(--accent-glow)]'
                     : 'text-slate-300 hover:text-white hover:bg-white/5'
                 }`}
               >
-                <Trophy className={`w-3.5 h-3.5 ${isSelected ? 'text-amber-300' : 'text-slate-400'}`} />
+                <Trophy className={`w-3.5 h-3.5 ${isSelected ? 'text-slate-900' : 'text-slate-400'}`} />
                 <span>Equipo #{idx + 1}</span>
                 {isThisInGame && (
                   <span className="text-[9px] bg-emerald-500/30 text-emerald-200 border border-emerald-400/40 px-1.5 py-0.2 rounded font-black flex items-center gap-0.5">
@@ -170,8 +171,8 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
                     <span className="hidden sm:inline">En Juego</span>
                   </span>
                 )}
-                <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono ${
-                  isSelected ? 'bg-sky-950/40 text-sky-100 font-black' : 'bg-white/5 text-slate-400'
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-lg font-mono ${
+                  isSelected ? 'bg-black/20 text-slate-900 font-black' : 'bg-white/5 text-slate-400'
                 }`}>
                   {res.totalDailyVigor.toLocaleString()}
                   {wProj && (
@@ -186,55 +187,56 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
         {onOpenSimulator && (
           <button
             onClick={onOpenSimulator}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#091f3a] hover:bg-sky-500/20 border border-sky-400/25 text-sky-300 hover:text-white text-xs font-bold transition-all shadow-sm self-start sm:self-auto flex-shrink-0"
+            className="btn-cozy-secondary px-3.5 py-2 text-xs flex items-center gap-1.5 self-start sm:self-auto flex-shrink-0"
           >
-            <Swords className="w-3.5 h-3.5" />
+            <Swords className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
             <span>Laboratorio (Vs)</span>
           </button>
         )}
       </div>
 
-      {/* Quick Projection & Score Summary Card */}
-      <div className="poke-card p-4 sm:p-5 relative overflow-hidden border border-sky-400/25">
-        {/* Soft sapphire blue ambient glow */}
-        <div className="absolute top-0 right-0 w-80 h-80 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
+      {/* Quick Projection & Score Summary Card (Cozy Field Journal Header) */}
+      <div className="cozy-card pokeball-watermark p-5 sm:p-6 rounded-3xl relative overflow-hidden border border-[var(--surface-border)]">
+        {/* Soft atmospheric ambient glow */}
+        <div className="absolute top-0 right-0 w-80 h-80 bg-[var(--accent-glow)] rounded-full blur-3xl pointer-events-none" />
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
           <div>
-            <div className="flex items-center gap-2 text-sky-400 text-xs font-black uppercase tracking-wider mb-1">
-              <Sparkles className="w-4 h-4 text-sky-400" />
+            <div className="flex items-center gap-2 text-[var(--accent-primary)] text-xs font-bold uppercase tracking-wider mb-1">
+              <Sparkles className="w-4 h-4 text-[var(--accent-primary)]" />
               <span>Vigor Diario y Rango Semanal Estimado</span>
             </div>
             <div className="flex items-baseline gap-3">
-              <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight font-mono">
+              <h2 className="text-3xl sm:text-4xl font-display font-black text-[var(--text-heading)] tracking-tight">
                 {currentResult.totalDailyVigor.toLocaleString()}
               </h2>
-              <span className="text-slate-400 font-bold text-xs">pts / día</span>
+              <span className="text-slate-300 font-bold text-xs">pts / día</span>
             </div>
           </div>
 
           {/* Projected Weekly Rank Badge with Master Ball Sprite */}
           {currentWeeklyProj && (
-            <div className="inline-flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-sky-500/15 border border-sky-400/30 text-sky-200 text-xs font-bold shadow-md shadow-sky-950/40 self-start sm:self-auto">
+            <div className="inline-flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-[var(--surface-inner)] border border-[var(--surface-border)] text-slate-100 text-xs font-bold shadow-md self-start sm:self-auto">
               <img
                 src={getRankPokeballUrl(currentWeeklyProj.estadoRangoFinal.rangoActual)}
                 alt="Pokeball"
-                className="w-9 h-9 object-contain flex-shrink-0 drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)]"
+                className="w-10 h-10 object-contain flex-shrink-0 drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)]"
               />
               <div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] uppercase font-black tracking-wider text-sky-300 block">
-                    {isMidWeekCalibrated ? '🟢 Predicción Calibrada en Vivo' : 'Rango Semanal Estimado'}
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] uppercase font-black tracking-wider text-[var(--accent-primary)] block">
+                    {isMidWeekCalibrated ? 'Predicción Calibrada en Vivo' : 'Rango Semanal Estimado'}
                   </span>
                   {isMidWeekCalibrated && (
-                    <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-400/30">
-                      En Vivo
+                    <span className="whitespace-nowrap inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-400/30 shadow-sm">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      <span>En Vivo</span>
                     </span>
                   )}
                 </div>
                 <div className="text-sm font-black text-white flex items-center gap-1.5 flex-wrap">
                   <span>{currentWeeklyProj.estadoRangoFinal.rangoActual}</span>
-                  <span className="text-xs font-mono font-normal text-sky-300/80">
+                  <span className="text-xs font-mono font-normal text-slate-300">
                     (~{currentWeeklyProj.vigorFinalSemana.toLocaleString()} pts)
                   </span>
                 </div>
@@ -247,22 +249,22 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
         </div>
 
         {/* Quick Breakdown Pills & In-Game Team Assignment Button */}
-        <div className="mt-3 pt-3 border-t border-sky-400/15 flex flex-wrap items-center justify-between gap-3 text-xs relative z-10">
+        <div className="mt-4 pt-3.5 border-t border-[var(--surface-border)] flex flex-wrap items-center justify-between gap-3 text-xs relative z-10">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="px-2.5 py-1 rounded-full bg-rose-500/15 border border-rose-500/25 text-rose-300 text-[11px] font-bold flex items-center gap-1.5">
+            <span className="px-3 py-1 rounded-full bg-[var(--surface-inner)] border border-[var(--surface-border)] text-rose-300 text-[11px] font-bold flex items-center gap-1.5">
               <span>🍒</span> Bayas: <strong className="font-mono text-white font-black">{currentResult.berryVigorDaily.toLocaleString()}</strong> ({Math.round((currentResult.berryVigorDaily / currentResult.totalDailyVigor) * 100)}%)
             </span>
-            <span className="px-2.5 py-1 rounded-full bg-sky-500/15 border border-sky-400/25 text-sky-300 text-[11px] font-bold flex items-center gap-1.5">
+            <span className="px-3 py-1 rounded-full bg-[var(--surface-inner)] border border-[var(--surface-border)] text-sky-300 text-[11px] font-bold flex items-center gap-1.5">
               <span>🍲</span> Cocina: <strong className="font-mono text-white font-black">{currentResult.cookingVigorDaily.toLocaleString()}</strong> ({Math.round((currentResult.cookingVigorDaily / currentResult.totalDailyVigor) * 100)}%)
             </span>
-            <span className="px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/25 text-amber-300 text-[11px] font-bold flex items-center gap-1.5">
+            <span className="px-3 py-1 rounded-full bg-[var(--surface-inner)] border border-[var(--surface-border)] text-amber-300 text-[11px] font-bold flex items-center gap-1.5">
               <span>⚡</span> Skill: <strong className="font-mono text-white font-black">{currentResult.skillVigorDaily.toLocaleString()}</strong> ({Math.round((currentResult.skillVigorDaily / currentResult.totalDailyVigor) * 100)}%)
             </span>
           </div>
 
           <div className="flex items-center gap-2">
             {isCurrentSelectionInGame ? (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-xs font-bold shadow-sm">
+              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-xs font-bold shadow-sm">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                 <span>✓ Tu Equipo Actual en Juego</span>
                 {config.currentTeam?.updatedAt && (
@@ -274,7 +276,7 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
             ) : (
               <button
                 onClick={handleAssignCurrentTeam}
-                className="btn-cozy-secondary px-4 py-2 text-xs flex items-center gap-1.5 text-amber-200 border-amber-400/30 hover:border-amber-400/60"
+                className="btn-cozy-secondary px-4 py-2 text-xs flex items-center gap-1.5 text-amber-300 border-amber-400/30 hover:border-amber-400/60"
                 title="Establecer este equipo como el que tienes activo en tu partida de Pokémon Sleep"
               >
                 {saveTeamStatus ? <Check className="w-3.5 h-3.5" /> : <Star className="w-3.5 h-3.5 fill-current text-amber-300" />}
@@ -299,16 +301,16 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
           </div>
 
           {/* View mode toggle */}
-          <div className="flex items-center gap-1 bg-[#091f3a] p-1 rounded-xl border border-sky-400/20 self-start sm:self-auto shadow-inner">
+          <div className="flex items-center gap-1 bg-[var(--surface-inner)] p-1 rounded-2xl border border-[var(--surface-border)] self-start sm:self-auto shadow-inner">
             <button
               onClick={() => {
                 setTeamViewMode('compact');
                 onCardViewModeChange?.('compact');
               }}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold transition-all ${
                 effectiveViewMode === 'compact'
-                  ? 'bg-sky-500 text-white shadow-sm shadow-sky-500/20'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  ? 'bg-[var(--accent-primary)] text-slate-950 font-bold shadow-md shadow-[var(--accent-glow)]'
+                  : 'text-slate-300 hover:text-white hover:bg-white/5'
               }`}
             >
               <Smartphone className="w-3.5 h-3.5" />
@@ -319,10 +321,10 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
                 setTeamViewMode('detailed');
                 onCardViewModeChange?.('detailed');
               }}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold transition-all ${
                 effectiveViewMode === 'detailed'
-                  ? 'bg-sky-500 text-white shadow-sm shadow-sky-500/20'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  ? 'bg-[var(--accent-primary)] text-slate-950 font-bold shadow-md shadow-[var(--accent-glow)]'
+                  : 'text-slate-300 hover:text-white hover:bg-white/5'
               }`}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
@@ -363,16 +365,16 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
         )}
       </div>
 
-      {/* Detailed Meals & Filler Breakdown */}
-      <div className="poke-card p-5 sm:p-6">
+      {/* Detailed Meals & Filler Breakdown (Cozy Field Kitchen Journal) */}
+      <div className="cozy-card p-5 sm:p-6 rounded-3xl border border-[var(--surface-border)]">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Utensils className="w-5 h-5 text-amber-400" />
-            <h3 className="text-base font-black text-white">
+            <h3 className="text-base font-display font-bold text-[var(--text-heading)]">
               Plan Culinario y Relleno de Puchero (3 Comidas al Día)
             </h3>
           </div>
-          <span className="text-xs bg-white/5 border border-white/10 px-3.5 py-1.5 rounded-full text-slate-200 flex items-center gap-1 font-mono font-bold">
+          <span className="text-xs bg-[var(--surface-inner)] border border-[var(--surface-border)] px-3.5 py-1.5 rounded-full text-slate-200 flex items-center gap-1 font-mono font-bold">
             Capacidad: {getEffectivePotCapacity(config)}
             {config.goodCampTicket && <span className="text-amber-400 font-bold ml-1">🏕️ (+50%)</span>}
           </span>
@@ -382,20 +384,20 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
           {currentResult.meals.map((meal) => (
             <div
               key={meal.mealIndex}
-              className="bg-[#0c2444]/80 border border-sky-400/20 rounded-2xl p-4 flex flex-col justify-between shadow-md"
+              className="bg-[var(--surface-inner)] border border-[var(--surface-border)] rounded-2xl p-4 flex flex-col justify-between shadow-md hover:border-white/20 transition-all"
             >
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-black uppercase tracking-wider text-amber-300">
+                  <span className="text-xs font-black uppercase tracking-wider text-amber-400">
                     {meal.mealName}
                   </span>
-                  <span className="text-xs font-mono font-black text-sky-300">
+                  <span className="text-xs font-mono font-bold text-[var(--accent-primary)]">
                     +{meal.totalMealVigor.toLocaleString()} pts
                   </span>
                 </div>
 
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-14 h-14 rounded-2xl bg-sky-950/60 border border-sky-400/25 p-1 flex items-center justify-center flex-shrink-0 relative overflow-hidden shadow-inner">
+                  <div className="w-14 h-14 rounded-2xl bg-black/30 border border-white/10 p-1 flex items-center justify-center flex-shrink-0 relative overflow-hidden shadow-inner">
                     <img
                       src={getDishImageUrl(meal.recipe.name)}
                       alt={meal.recipe.name}
@@ -412,7 +414,7 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-black text-white text-sm truncate">
+                    <h4 className="font-bold text-white text-sm truncate">
                       {meal.recipe.name}
                     </h4>
                     <span className="text-[10px] text-amber-300 font-mono font-black bg-amber-400/15 border border-amber-400/30 px-2 py-0.5 rounded-full inline-block mt-0.5">
@@ -433,7 +435,7 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
                     {Object.entries(meal.recipe.ingredients).map(([ing, count]) => (
                       <span
                         key={ing}
-                        className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#08182c]/90 text-slate-200 border border-sky-400/20 flex items-center gap-1 font-mono font-bold"
+                        className="text-[10px] px-2.5 py-0.5 rounded-full bg-black/25 text-slate-200 border border-white/10 flex items-center gap-1 font-mono font-bold"
                       >
                         <img
                           src={getIngredientSpriteUrl(ing)}
@@ -471,7 +473,7 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
                 )}
               </div>
 
-              <div className="mt-3 pt-2.5 border-t border-sky-400/15 text-[10px] text-slate-400 flex items-center justify-between font-mono">
+              <div className="mt-3 pt-2.5 border-t border-white/10 text-[10px] text-slate-400 flex items-center justify-between font-mono">
                 <span>Base: {meal.recipeVigor.toLocaleString()}</span>
                 <span>Relleno: {meal.fillerVigor.toLocaleString()}</span>
               </div>
@@ -480,7 +482,7 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
         </div>
 
         {/* Daily Ingredients Production Strip */}
-        <div className="mt-5 pt-4 border-t border-sky-400/15">
+        <div className="mt-5 pt-4 border-t border-[var(--surface-border)]">
           <div className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
             Producción Diaria Total de Ingredientes del Equipo
           </div>
@@ -490,7 +492,7 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
               .map(([ing, count]) => (
                 <div
                   key={ing}
-                  className="px-2.5 py-1.5 rounded-xl bg-[#08182c]/90 border border-sky-400/20 text-xs flex items-center gap-1.5"
+                  className="px-2.5 py-1.5 rounded-xl bg-[var(--surface-inner)] border border-[var(--surface-border)] text-xs flex items-center gap-1.5"
                 >
                   <img
                     src={getIngredientSpriteUrl(ing)}

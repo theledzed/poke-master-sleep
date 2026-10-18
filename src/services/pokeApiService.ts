@@ -719,7 +719,7 @@ export const SPECIES_MAIN_SKILL_MAP: Record<string, string> = {
   kangaskhan: 'Imán ingredientes S',
   pinsir: 'Carga vigor S',
   ditto: 'Carga vigor S',
-  eevee: 'Impulso de ayuda S',
+  eevee: 'Imán ingredientes S',
   vaporeon: 'Imán ingredientes S',
   jolteon: 'Superútil S',
   flareon: 'Receta sustanciosa S',
@@ -791,6 +791,10 @@ export const SPECIES_MAIN_SKILL_MAP: Record<string, string> = {
 };
 
 export function getPokemonCanonicalSkill(name: string): string {
+  const master = getSpeciesMasterData(name);
+  if (master?.mainSkill) {
+    return master.mainSkill;
+  }
   const clean = name.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
   if (SPECIES_MAIN_SKILL_MAP[clean]) {
     return SPECIES_MAIN_SKILL_MAP[clean];

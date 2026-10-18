@@ -34,6 +34,7 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
 }) => {
   const [isStepperOpen, setIsStepperOpen] = useState(false);
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [activeBerrySlot, setActiveBerrySlot] = useState<number>(0);
 
   const currentIsland = ISLANDS.find(i => i.id === config.island) || ISLANDS[0];
 
@@ -159,15 +160,15 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
       {/* INTERACTIVE 4-STEP WIZARD MODAL */}
       {isStepperOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto">
-          <div className="poke-card pokeball-watermark rounded-3xl w-full max-w-xl shadow-2xl relative my-auto overflow-hidden border border-white/10">
+          <div className="cozy-card pokeball-watermark rounded-3xl w-full max-w-xl shadow-2xl relative my-auto overflow-hidden border border-[var(--surface-border)]">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-5 border-b border-white/10 bg-[#080C16]/80 relative z-10">
+            <div className="flex items-center justify-between p-5 border-b border-[var(--surface-border)] bg-[var(--surface-card)] relative z-10">
               <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-sky-500/20 border border-sky-400/40 flex items-center justify-center text-xl flex-shrink-0">
+                <div className="w-10 h-10 rounded-2xl bg-[var(--surface-inner)] border border-[var(--surface-border)] flex items-center justify-center text-xl flex-shrink-0 shadow-inner">
                   <span>⛺</span>
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-black text-white">
+                  <h3 className="text-base sm:text-lg font-display font-bold text-[var(--text-heading)]">
                     Asistente de Campamento Snorlax
                   </h3>
                   <p className="text-xs text-slate-300">
@@ -184,7 +185,7 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
             </div>
 
             {/* Stepper Progress Indicator */}
-            <div className="px-5 pt-4 pb-2 bg-[#080C16]/40 flex items-center justify-between relative z-10">
+            <div className="px-5 pt-4 pb-2 bg-[var(--surface-inner)] flex items-center justify-between relative z-10 border-b border-[var(--surface-border)]">
               {[1, 2, 3, 4].map((s) => (
                 <div
                   key={s}
@@ -196,7 +197,7 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
                   <div
                     className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black transition-all ${
                       step === s
-                        ? 'bg-sky-400 text-slate-950 shadow-md shadow-sky-400/30'
+                        ? 'bg-[var(--accent-primary)] text-slate-950 shadow-md shadow-[var(--accent-glow)]'
                         : step > s
                         ? 'bg-emerald-500 text-white'
                         : 'bg-white/10 text-slate-300'
@@ -270,17 +271,17 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
                           onClick={() => onChangeConfig({ ...config, dishType: dish.id })}
                           className={`p-4 rounded-3xl border text-center flex flex-col items-center justify-center gap-2 transition-all ${
                             isSelected
-                              ? 'bg-gradient-to-b from-sky-400/25 via-white/5 to-white/5 border-sky-400 text-white shadow-lg shadow-sky-500/10'
-                              : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                              ? 'bg-[var(--surface-inner)] border-[var(--accent-primary)] text-white shadow-lg shadow-[var(--accent-glow)] ring-2 ring-[var(--accent-primary)]/40'
+                              : 'bg-[var(--surface-inner)] border-[var(--surface-border)] text-slate-300 hover:border-white/20'
                           }`}
                         >
                           <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl ${
-                            isSelected ? 'bg-sky-400 text-slate-950 font-black' : 'bg-white/10 text-slate-300'
+                            isSelected ? 'bg-[var(--accent-primary)] text-slate-950 font-black' : 'bg-white/10 text-slate-300'
                           }`}>
                             <Icon className="w-6 h-6" />
                           </div>
                           <span className="text-xs font-black uppercase tracking-wider">{dish.label}</span>
-                          {isSelected && <span className="text-[10px] text-sky-300 font-bold">✓ Seleccionado</span>}
+                          {isSelected && <span className="text-[10px] text-[var(--accent-primary)] font-bold">✓ Seleccionado</span>}
                         </button>
                       );
                     })}
@@ -288,41 +289,126 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
                 </div>
               )}
 
-              {/* STEP 3: 3 BAYAS FAVORITAS */}
+              {/* STEP 3: 3 BAYAS FAVORITAS (Visual High-Res Berry Grid) */}
               {step === 3 && (
-                <div>
-                  <label className="block text-xs font-black text-slate-200 uppercase tracking-wider mb-1.5">
-                    3. Las 3 Bayas Favoritas de tu Snorlax (×2 Vigor)
-                  </label>
-                  {currentIsland.fixedBerries.length === 3 ? (
-                    <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl text-xs text-emerald-200 mb-2">
-                      ✨ Esta isla tiene bayas fijas fijadas por el juego.
+                <div className="space-y-3.5">
+                  <div>
+                    <label className="block text-xs font-black text-white uppercase tracking-wider">
+                      3. Las 3 Bayas Favoritas de tu Snorlax (×2 Vigor)
+                    </label>
+                    <p className="text-xs text-slate-300 mt-0.5">
+                      {currentIsland.fixedBerries.length === 3
+                        ? '✨ Esta isla cuenta con 3 bayas fijas predeterminadas por el juego.'
+                        : 'Toca una ranura y selecciona su baya con arte oficial:'}
+                    </p>
+                  </div>
+
+                  {/* 3 Berry Slots Display */}
+                  <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                    {[0, 1, 2].map((slotIdx) => {
+                      const berryName = config.favoriteBerries[slotIdx] || CANONICAL_BERRIES[slotIdx] || 'Baya Zanama';
+                      const berryMeta = BERRIES[berryName];
+                      const isSelectedSlot = activeBerrySlot === slotIdx;
+                      const isFixed = currentIsland.fixedBerries.length === 3;
+
+                      return (
+                        <button
+                          key={slotIdx}
+                          type="button"
+                          disabled={isFixed}
+                          onClick={() => setActiveBerrySlot(slotIdx)}
+                          className={`p-2.5 sm:p-3 rounded-2xl border text-center flex flex-col items-center justify-center transition-all relative ${
+                            isSelectedSlot && !isFixed
+                              ? 'bg-[var(--surface-inner)] border-[var(--accent-primary)] shadow-lg shadow-[var(--accent-glow)] ring-2 ring-[var(--accent-primary)]/40'
+                              : 'bg-[var(--surface-inner)] border-[var(--surface-border)] hover:border-white/20'
+                          } ${isFixed ? 'opacity-90 cursor-default' : 'cursor-pointer active:scale-95'}`}
+                        >
+                          <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1">
+                            <span>Ranura #{slotIdx + 1}</span>
+                            {isSelectedSlot && !isFixed && (
+                              <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)] animate-ping" />
+                            )}
+                          </div>
+
+                          <div className="w-12 h-12 rounded-xl bg-black/25 flex items-center justify-center p-1 my-0.5">
+                            <img
+                              src={getBerrySpriteUrl(berryName)}
+                              alt={berryName}
+                              className="w-10 h-10 object-contain filter drop-shadow"
+                            />
+                          </div>
+
+                          <span className="text-xs font-bold text-white truncate max-w-full mt-1">
+                            {berryName.replace('Baya ', '')}
+                          </span>
+
+                          <span className="text-[10px] font-semibold text-slate-300 mt-0.5 px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
+                            {berryMeta?.type || 'Normal'}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Interactive Berry Picker Grid (Only shown when not fixed island) */}
+                  {currentIsland.fixedBerries.length !== 3 ? (
+                    <div className="pt-1">
+                      <div className="flex items-center justify-between text-xs font-bold text-slate-300 mb-2">
+                        <span className="flex items-center gap-1.5">
+                          <span>🍒</span>
+                          <span>Elige baya para Ranura #{activeBerrySlot + 1}:</span>
+                        </span>
+                        <span className="text-[10px] text-[var(--accent-primary)] font-mono">
+                          18 Tipos Oficiales
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 max-h-48 overflow-y-auto p-2 rounded-2xl bg-[var(--surface-inner)] border border-[var(--surface-border)]">
+                        {CANONICAL_BERRIES.map((b) => {
+                          const meta = BERRIES[b];
+                          const isCurrentSlotBerry = config.favoriteBerries[activeBerrySlot] === b;
+
+                          return (
+                            <button
+                              key={b}
+                              type="button"
+                              onClick={() => {
+                                handleBerryChange(activeBerrySlot, b);
+                                if (activeBerrySlot < 2) {
+                                  setActiveBerrySlot(activeBerrySlot + 1);
+                                }
+                              }}
+                              className={`p-2 rounded-xl border flex flex-col items-center justify-center gap-1 transition-all ${
+                                isCurrentSlotBerry
+                                  ? 'bg-[var(--accent-primary)]/20 border-[var(--accent-primary)] text-white shadow-md ring-1 ring-[var(--accent-primary)]'
+                                  : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:text-white'
+                              } active:scale-95`}
+                            >
+                              <img
+                                src={getBerrySpriteUrl(b)}
+                                alt={b}
+                                className="w-8 h-8 object-contain filter drop-shadow"
+                                loading="lazy"
+                              />
+                              <span className="text-[11px] font-bold truncate max-w-full leading-tight">
+                                {b.replace('Baya ', '')}
+                              </span>
+                              <span className="text-[9px] text-slate-400 font-medium">
+                                {meta?.type}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   ) : (
-                    <p className="text-xs text-slate-300 mb-2">
-                      Elige las 3 bayas que Snorlax te solicitó esta semana:
-                    </p>
+                    <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl text-xs text-emerald-200 flex items-center gap-2">
+                      <span>🔒</span>
+                      <span>
+                        En <strong>{currentIsland.name}</strong> las 3 bayas favoritas están fijadas por la naturaleza de la isla y no pueden ser modificadas.
+                      </span>
+                    </div>
                   )}
-
-                  <div className="space-y-2">
-                    {[0, 1, 2].map((slotIdx) => (
-                      <div key={slotIdx} className="flex items-center gap-2">
-                        <span className="w-6 text-slate-400 font-bold text-xs">{slotIdx + 1}.</span>
-                        <select
-                          value={config.favoriteBerries[slotIdx] || CANONICAL_BERRIES[0]}
-                          onChange={(e) => handleBerryChange(slotIdx, e.target.value)}
-                          disabled={currentIsland.fixedBerries.length === 3}
-                          className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-full text-xs text-white font-bold focus:outline-none focus:ring-2 focus:ring-sky-400 disabled:opacity-60"
-                        >
-                          {CANONICAL_BERRIES.map(b => (
-                            <option key={b} value={b} className="bg-slate-900">
-                              {BERRIES[b]?.icon || '🍒'} {b} ({BERRIES[b]?.type})
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    ))}
-                  </div>
                 </div>
               )}
 

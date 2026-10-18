@@ -222,27 +222,27 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
   const pastDaysCount = timelineDias.filter(d => d.esPasado).length;
 
   return (
-    <div className="poke-card pokeball-watermark p-5 sm:p-6 space-y-6 relative overflow-hidden">
+    <div className="cozy-card pokeball-watermark p-5 sm:p-6 space-y-6 relative overflow-hidden border border-[var(--surface-border)]">
       {/* Top Header & Calibration Status */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-4 relative z-10">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--surface-border)] pb-4 relative z-10">
         <div>
-          <div className="flex items-center gap-2 text-sky-400 text-xs font-black uppercase tracking-wider mb-1">
-            <Trophy className="w-4 h-4 text-sky-400" />
+          <div className="flex items-center gap-2 text-[var(--accent-primary)] text-xs font-bold uppercase tracking-wider mb-1">
+            <Trophy className="w-4 h-4 text-[var(--accent-primary)]" />
             <span>Curva de Crecimiento & Rango Semanal de Snorlax</span>
           </div>
-          <h3 className="text-xl font-black text-white flex items-center gap-2 tracking-tight">
+          <h3 className="text-xl font-display font-bold text-[var(--text-heading)] flex items-center gap-2 tracking-tight">
             <span>Proyección Semanal: {teamLabel}</span>
           </h3>
           <p className="text-xs text-slate-300 mt-1 max-w-2xl">
             Simula la progresión día a día considerando el puchero normal (Lun–Sáb) y el{' '}
-            <strong className="text-sky-300">Súper Domingo</strong> de puchero doble con más probabilidad de ¡Riquísimo!
+            <strong className="text-[var(--accent-primary)]">Súper Domingo</strong> de puchero doble con más probabilidad de ¡Riquísimo!
           </p>
         </div>
 
         {/* Quick Calibration Action Pill */}
         <div className="flex items-center gap-2 self-start md:self-auto">
           {isCalibrated ? (
-            <div className="flex items-center gap-1.5 bg-[#092244] border border-emerald-400/40 p-1.5 pl-3 rounded-2xl shadow-md">
+            <div className="flex items-center gap-1.5 bg-[var(--surface-inner)] border border-emerald-400/40 p-1.5 pl-3 rounded-2xl shadow-md">
               <div className="flex items-center gap-1.5 text-xs">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 <span className="font-bold text-emerald-300 text-xs">
@@ -276,7 +276,7 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
             <button
               type="button"
               onClick={() => setIsDrawerOpen(true)}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 active:scale-95 text-white text-xs font-bold shadow-lg shadow-sky-500/25 transition-all cursor-pointer"
+              className="btn-cozy-primary px-4 py-2 text-xs flex items-center gap-2 cursor-pointer shadow-md"
             >
               <Zap className="w-3.5 h-3.5" />
               <span>Ajustar a Hoy en Juego 🎮</span>
@@ -287,11 +287,11 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
 
       {/* Inline Calibration Drawer (Accordion / Collapsible) */}
       {isDrawerOpen && (
-        <div className="bg-gradient-to-r from-[#0d2240] via-[#0f2a52] to-[#122849] border border-sky-400/40 rounded-3xl p-5 relative z-10 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="bg-[var(--surface-inner)] border border-[var(--surface-border)] rounded-3xl p-5 relative z-10 shadow-xl animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="flex items-start justify-between gap-4 mb-3">
             <div>
-              <div className="flex items-center gap-2 text-xs font-black text-sky-300 uppercase tracking-wider">
-                <Sliders className="w-4 h-4 text-sky-400" />
+              <div className="flex items-center gap-2 text-xs font-black text-[var(--accent-primary)] uppercase tracking-wider">
+                <Sliders className="w-4 h-4 text-[var(--accent-primary)]" />
                 <span>Calibra con los Puntos Actuales de tu Snorlax</span>
               </div>
               <p className="text-xs text-slate-200 mt-1 max-w-2xl leading-relaxed">
@@ -313,7 +313,7 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
               <select
                 value={currentDayIdx}
                 onChange={(e) => setCurrentDayIdx(parseInt(e.target.value, 10))}
-                className="bg-[#061122] border border-sky-400/30 text-white text-xs font-bold rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-sky-400 focus:outline-none"
+                className="bg-black/30 border border-white/15 text-white text-xs font-bold rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-[var(--accent-primary)] focus:outline-none"
               >
                 {DIAS_NOMBRES.map((d, idx) => (
                   <option key={idx} value={idx} className="bg-slate-900">
