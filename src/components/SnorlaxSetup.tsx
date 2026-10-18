@@ -79,25 +79,25 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
 
   return (
     <>
-      {/* COMPACT CAMP SUMMARY BAR (No more scrolling on mobile!) */}
-      <div className="poke-card p-3.5 sm:p-4 rounded-3xl relative overflow-hidden">
+      {/* COMPACT CAMP SUMMARY BAR (Cozy Field Journal Header) */}
+      <div className="cozy-card p-3.5 sm:p-4 rounded-3xl relative overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 relative z-10">
           {/* Snorlax Island & Conditions summary */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-sky-950/80 border border-sky-400/30 flex items-center justify-center text-xl flex-shrink-0 shadow-inner">
+            <div className="w-10 h-10 rounded-2xl bg-[var(--surface-inner)] border border-[var(--surface-border)] flex items-center justify-center text-xl flex-shrink-0 shadow-inner">
               <span>⛺</span>
             </div>
 
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-black text-white text-sm sm:text-base tracking-tight truncate">
+                <span className="font-display font-bold text-[var(--text-heading)] text-sm sm:text-base tracking-tight truncate">
                   {currentIsland.name}
                 </span>
-                <span className="text-[10px] font-bold px-2 py-0.2 rounded-full bg-sky-500/15 text-sky-300 border border-sky-400/30">
+                <span className="text-[10px] font-bold px-2 py-0.2 rounded-full bg-[var(--surface-inner)] text-[var(--accent-primary)] border border-[var(--surface-border)]">
                   +{config.areaBonus || 0}% Zona
                 </span>
                 {config.goodCampTicket && (
-                  <span className="text-[10px] font-bold px-2 py-0.2 rounded-full bg-sky-400/20 text-sky-200 border border-sky-400/30">
+                  <span className="text-[10px] font-bold px-2 py-0.2 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30">
                     🏕️ Pase
                   </span>
                 )}
@@ -105,17 +105,17 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
 
               {/* Badges: Menu + Pot + 3 Berries */}
               <div className="flex items-center gap-2 text-xs text-slate-300 mt-1 flex-wrap">
-                <span className="flex items-center gap-1 font-bold text-slate-200 bg-sky-950/60 px-2.5 py-0.5 rounded-lg border border-sky-400/20">
+                <span className="flex items-center gap-1 font-semibold text-slate-200 bg-[var(--surface-inner)] px-2.5 py-0.5 rounded-lg border border-[var(--surface-border)]">
                   <span>{dishEmoji}</span>
                   <span>{dishLabel}</span>
                 </span>
 
-                <span className="font-mono text-slate-300 font-bold bg-sky-950/60 px-2.5 py-0.5 rounded-lg border border-sky-400/20">
-                  Olla: <strong className="text-sky-300">{effectivePot}</strong>
+                <span className="font-mono text-slate-300 font-bold bg-[var(--surface-inner)] px-2.5 py-0.5 rounded-lg border border-[var(--surface-border)]">
+                  Olla: <strong className="text-[var(--accent-primary)]">{effectivePot}</strong>
                 </span>
 
                 {/* 3 Berries */}
-                <div className="flex items-center gap-1.5 bg-sky-950/60 px-2 py-0.5 rounded-lg border border-sky-400/20">
+                <div className="flex items-center gap-1.5 bg-[var(--surface-inner)] px-2 py-0.5 rounded-lg border border-[var(--surface-border)]">
                   {config.favoriteBerries.map((b, idx) => (
                     <img
                       key={idx}
@@ -137,17 +137,17 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
                 setStep(1);
                 setIsStepperOpen(true);
               }}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#091f3a] hover:bg-sky-500/20 border border-sky-400/25 text-sky-300 hover:text-white text-xs font-bold transition-all shadow-sm"
+              className="btn-cozy-secondary px-3.5 py-2 text-xs flex items-center gap-1.5"
               title="Abrir asistente de configuración semanal de Snorlax"
             >
-              <Settings2 className="w-3.5 h-3.5 text-sky-400" />
+              <Settings2 className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
               <span>Ajustar Snorlax</span>
             </button>
 
             <button
               onClick={onRunOptimizer}
               disabled={isCalculating}
-              className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white text-xs font-bold transition-all shadow-md shadow-sky-500/20 active:scale-95 disabled:opacity-50"
+              className="btn-cozy-primary px-5 py-2 text-xs flex items-center gap-1.5 shadow-md active:scale-95 disabled:opacity-50"
             >
               <Sparkles className={`w-3.5 h-3.5 stroke-[2.5] ${isCalculating ? 'animate-spin' : ''}`} />
               <span>{isCalculating ? 'Calculando...' : 'Optimizar'}</span>

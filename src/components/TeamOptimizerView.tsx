@@ -274,7 +274,7 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
             ) : (
               <button
                 onClick={handleAssignCurrentTeam}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white text-xs font-bold transition-all shadow-md shadow-sky-500/25 active:scale-95"
+                className="btn-cozy-secondary px-4 py-2 text-xs flex items-center gap-1.5 text-amber-200 border-amber-400/30 hover:border-amber-400/60"
                 title="Establecer este equipo como el que tienes activo en tu partida de Pokémon Sleep"
               >
                 {saveTeamStatus ? <Check className="w-3.5 h-3.5" /> : <Star className="w-3.5 h-3.5 fill-current text-amber-300" />}
@@ -289,7 +289,7 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
       <div>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
           <div>
-            <h3 className="text-base font-black text-white flex items-center gap-2">
+            <h3 className="text-base font-display font-bold text-white flex items-center gap-2">
               <span>🛡️</span>
               <span>Alineación Óptima de 5 Compañeros Pokémon</span>
             </h3>
