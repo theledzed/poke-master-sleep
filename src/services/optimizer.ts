@@ -76,12 +76,16 @@ interface PokemonProduction {
 
 // Determine actual skill level from notes, evolution stage and subskills
 export function getPokemonSkillLevel(pokemon: Pokemon): number {
+  if (typeof pokemon.mainSkillLevel === 'number' && pokemon.mainSkillLevel >= 1) {
+    return Math.min(7, Math.max(1, pokemon.mainSkillLevel));
+  }
+
   const noteMatch = pokemon.notes?.match(/Nv\.\s*(\d+)/i);
   let baseLevel = 1;
 
   if (noteMatch) {
     const parsed = parseInt(noteMatch[1], 10);
-    if (parsed >= 1 && parsed <= 6) {
+    if (parsed >= 1 && parsed <= 7) {
       baseLevel = parsed;
     }
   } else {
@@ -99,7 +103,7 @@ export function getPokemonSkillLevel(pokemon: Pokemon): number {
     if (sub.name === 'Nivel habilidad M') baseLevel += 2;
   }
 
-  return Math.min(6, Math.max(1, baseLevel));
+  return Math.min(7, Math.max(1, baseLevel));
 }
 
 // Calculate realistic vigor per trigger according to official Sleep tables
@@ -108,12 +112,12 @@ export function getSkillVigorPerTrigger(pokemon: Pokemon): number {
   const mainSkill = pokemon.mainSkillName || getPokemonCanonicalSkill(pokemon.name);
 
   if (mainSkill.includes('Carga vigor M')) {
-    const table = [0, 880, 1251, 1726, 2383, 3290, 4546];
+    const table = [0, 880, 1251, 1726, 2383, 3290, 4546, 6400];
     return table[skillLevel] || 1726;
   }
 
   if (mainSkill.includes('Carga vigor S')) {
-    const table = [0, 400, 569, 785, 1083, 1496, 2066];
+    const table = [0, 400, 569, 785, 1083, 1496, 2066, 3002];
     return table[skillLevel] || 785;
   }
 
@@ -124,17 +128,17 @@ export function getSkillVigorPerTrigger(pokemon: Pokemon): number {
 
   if (mainSkill.includes('Metrónomo')) {
     // Metronome picks randomly among 18 main skills. Expected direct vigor per trigger:
-    const table = [0, 450, 650, 900, 1150, 1450, 1850];
+    const table = [0, 450, 650, 900, 1150, 1450, 1850, 2400];
     return table[skillLevel] || 1150;
   }
 
   if (mainSkill.includes('Superútil S') || mainSkill.includes('Impulso de ayuda S')) {
-    const helps = [0, 4, 5, 6, 7, 8, 9];
+    const helps = [0, 4, 5, 6, 7, 8, 9, 10];
     return (helps[skillLevel] || 5) * 350;
   }
 
   if (mainSkill.includes('Bayamanía')) {
-    const table = [0, 800, 1200, 1800, 2500, 3400, 4500];
+    const table = [0, 800, 1200, 1800, 2500, 3400, 4500, 5800];
     return table[skillLevel] || 1800;
   }
 
@@ -191,7 +195,7 @@ export function calculateTeamEnergyFactor(team: Pokemon[]): {
     const dailyTriggers = approxHelpsPerDay * effectiveTriggerRate;
 
     const skillLevel = getPokemonSkillLevel(healer);
-    const healTable = [0, 5, 7, 9, 11, 15, 18];
+    const healTable = [0, 5, 7, 9, 11, 15, 18, 22];
     const energyPerHeal = healTable[skillLevel] || 5;
 
     totalDailyHealedEnergy += dailyTriggers * energyPerHeal;

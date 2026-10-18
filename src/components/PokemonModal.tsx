@@ -9,6 +9,7 @@ import {
   getPokemonCanonicalSkill,
   MAIN_SKILLS_META
 } from '../services/pokeApiService';
+import { getPokemonSkillLevel } from '../services/optimizer';
 import { X, Check, Plus, Trash2, Lock, CheckCircle2, Sparkles, Star } from 'lucide-react';
 
 interface PokemonModalProps {
@@ -37,6 +38,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
   const [berry, setBerry] = useState<string>('Baya Caquic');
   const [natureName, setNatureName] = useState<string>('Dócil');
   const [mainSkillName, setMainSkillName] = useState<string>('Carga vigor S');
+  const [mainSkillLevel, setMainSkillLevel] = useState<number>(1);
   const [notes, setNotes] = useState('');
 
   // 3 Ingredient slots
@@ -69,6 +71,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
       setBerry(pokemonToEdit.berry);
       setNatureName(pokemonToEdit.natureObj?.name || 'Dócil');
       setMainSkillName(pokemonToEdit.mainSkillName || getPokemonCanonicalSkill(pokemonToEdit.name));
+      setMainSkillLevel(pokemonToEdit.mainSkillLevel || getPokemonSkillLevel(pokemonToEdit) || 1);
       setNotes(pokemonToEdit.notes || '');
 
       const s1 = pokemonToEdit.ingredients[0];
@@ -106,6 +109,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
       setBerry('Baya Caquic');
       setNatureName('Dócil');
       setMainSkillName('Carga vigor S');
+      setMainSkillLevel(1);
       setNotes('');
       setIng1Name('Manzana Selecta');
       setIng1Count(1);
@@ -194,7 +198,8 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
       ingredients,
       subskills: parsedSubskills,
       notes: finalNotes,
-      mainSkillName: mainSkillName || getPokemonCanonicalSkill(name)
+      mainSkillName: mainSkillName || getPokemonCanonicalSkill(name),
+      mainSkillLevel: mainSkillLevel || 1
     };
 
     onSave(newPokemon);
@@ -364,14 +369,14 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
             </div>
           </div>
 
-          {/* Fila 3: Naturaleza y Habilidad Principal */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
+          {/* Fila 3: Naturaleza, Habilidad Principal y Nivel de Habilidad */}
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+            <div className="sm:col-span-5">
               <label className="block text-xs font-semibold text-slate-300 mb-1">Naturaleza</label>
               <select
                 value={natureName}
                 onChange={(e) => setNatureName(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium"
               >
                 {Object.keys(NATURES).map(natKey => {
                   const nat = NATURES[natKey];
@@ -386,16 +391,34 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                 })}
               </select>
             </div>
-            <div>
+            <div className="sm:col-span-5">
               <label className="block text-xs font-semibold text-slate-300 mb-1">Habilidad Principal</label>
               <select
                 value={mainSkillName}
                 onChange={(e) => setMainSkillName(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium truncate"
               >
                 {Object.keys(MAIN_SKILLS_META).map(sk => (
                   <option key={sk} value={sk}>
                     {MAIN_SKILLS_META[sk].iconSymbol} {sk}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center justify-between">
+                <span>Nivel</span>
+                <span className="text-[10px] text-sky-400 font-bold">1-7</span>
+              </label>
+              <select
+                value={mainSkillLevel}
+                onChange={(e) => setMainSkillLevel(parseInt(e.target.value, 10))}
+                className="w-full px-2.5 py-2 bg-slate-950 border border-sky-400/40 rounded-xl text-xs text-sky-300 font-black focus:outline-none focus:ring-2 focus:ring-sky-400 font-mono shadow-inner text-center"
+                title="Nivel de Habilidad Principal (1 a 7)"
+              >
+                {[1, 2, 3, 4, 5, 6, 7].map(lvl => (
+                  <option key={lvl} value={lvl} className="bg-slate-900 text-white font-bold">
+                    Nv. {lvl}
                   </option>
                 ))}
               </select>

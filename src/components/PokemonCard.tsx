@@ -11,6 +11,7 @@ import {
   getMainSkillMeta,
   isSpecialPokemon
 } from '../services/pokeApiService';
+import { getPokemonSkillLevel } from '../services/optimizer';
 import {
   Lock,
   CheckCircle2,
@@ -55,6 +56,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
   const isSpecial = isSpecialPokemon(pokemon);
   const mainSkill = pokemon.mainSkillName || getPokemonCanonicalSkill(pokemon.name);
   const mainSkillMeta = getMainSkillMeta(mainSkill);
+  const skillLevel = getPokemonSkillLevel(pokemon);
 
   // Specialty badge colors
   const specialtyBadge = {
@@ -208,8 +210,8 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
                 <span className="text-[10px]">{mainSkillMeta.iconSymbol}</span>
                 <span className="truncate font-semibold text-slate-200">{mainSkill}</span>
               </div>
-              <span className={`text-[8px] font-black px-1 py-0.2 rounded flex-shrink-0 ${mainSkillMeta.badgeBg} ${mainSkillMeta.badgeText}`}>
-                Skill
+              <span className={`text-[8px] font-black px-1.5 py-0.2 rounded flex-shrink-0 ${mainSkillMeta.badgeBg} ${mainSkillMeta.badgeText}`}>
+                Nv. {skillLevel}
               </span>
             </div>
 
@@ -587,10 +589,15 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
         {/* Habilidad Principal */}
         <div className="mb-2.5 flex items-center justify-between bg-sky-950/70 px-3 py-1.5 rounded-2xl border border-sky-400/15">
           <span className="text-[9px] uppercase tracking-wider text-slate-400 font-black">Habilidad</span>
-          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border flex items-center gap-1 shadow-sm ${mainSkillMeta.badgeBg} ${mainSkillMeta.badgeText}`}>
-            <span>{mainSkillMeta.iconSymbol}</span>
-            <span className="truncate max-w-[140px]">{mainSkill}</span>
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border flex items-center gap-1 shadow-sm ${mainSkillMeta.badgeBg} ${mainSkillMeta.badgeText}`}>
+              <span>{mainSkillMeta.iconSymbol}</span>
+              <span className="truncate max-w-[130px]">{mainSkill}</span>
+            </span>
+            <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md border ${mainSkillMeta.badgeBg} ${mainSkillMeta.badgeText}`}>
+              Nv. {skillLevel}
+            </span>
+          </div>
         </div>
 
         {/* Ingredientes Activos */}

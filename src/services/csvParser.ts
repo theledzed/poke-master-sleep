@@ -1,6 +1,7 @@
 import { Pokemon, IngredientSlot, Subskill, Specialty } from '../types/pokemon';
 import { KNOWN_SUBSKILLS, normalizeIngredientName, parseNature, BERRIES } from '../data/gameData';
 import { getPokemonCanonicalSkill } from './pokeApiService';
+import { getPokemonSkillLevel } from './optimizer';
 import * as XLSX from 'xlsx';
 
 // Parse time strings like "45 min 14s", "1h 5min 29s", "52min 21s"
@@ -97,6 +98,10 @@ export function parseCsvRows(rows: Record<string, any>[]): Pokemon[] {
     const ingredients = parseIngredientSlots(cleanRow['Ingredientes'] || '', level);
     const subskills = parseSubskills(cleanRow['Subhabilidades'] || '', level);
 
+    const mainSkillLevelRaw = cleanRow['Nivel Habilidad'] || cleanRow['Skill Level'] || cleanRow['Nivel de Habilidad'] || cleanRow['Nivel habilidad'];
+    const parsedSkillLevel = mainSkillLevelRaw ? (parseInt(mainSkillLevelRaw, 10) || undefined) : undefined;
+    const mainSkillLevel = (parsedSkillLevel && parsedSkillLevel >= 1 && parsedSkillLevel <= 7) ? parsedSkillLevel : undefined;
+
     return {
       id: `poke-${index + 1}-${name.toLowerCase()}`,
       name,
@@ -114,7 +119,8 @@ export function parseCsvRows(rows: Record<string, any>[]): Pokemon[] {
       encounterDate: cleanRow['Fecha de Encuentro'],
       sleepHours: cleanRow['Horas de Sueño'],
       notes: cleanRow['Sinergia / Estrategia'],
-      mainSkillName: cleanRow['Habilidad'] || cleanRow['Habilidad Principal'] || getPokemonCanonicalSkill(name)
+      mainSkillName: cleanRow['Habilidad'] || cleanRow['Habilidad Principal'] || getPokemonCanonicalSkill(name),
+      mainSkillLevel
     };
   });
 }
@@ -146,6 +152,8 @@ export function exportPokemonsToCsv(pokemons: Pokemon[]): string {
       'Nivel': p.level,
       'PA (Poder de Ayuda)': p.rp,
       'Especialidad': p.specialty,
+      'Habilidad': p.mainSkillName || getPokemonCanonicalSkill(p.name),
+      'Nivel Habilidad': p.mainSkillLevel || getPokemonSkillLevel(p),
       'Naturaleza': p.nature,
       'Ingredientes': ingString,
       'Subhabilidades': subString,
