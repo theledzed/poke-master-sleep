@@ -39,7 +39,7 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
             <h2 className="text-xl font-black text-white tracking-tight">
               Recetario Oficial de Pokémon Sleep
             </h2>
-            <span className="text-xs font-black px-3 py-1 rounded-full bg-sky-500/15 text-sky-300 border border-sky-400/30">
+            <span className="text-xs font-black px-3 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-400/30">
               78 Recetas
             </span>
           </div>
@@ -50,10 +50,10 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
 
         {/* Level Simulator Slider & Batch Save Button */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-          <div className="bg-[#08182c]/80 border border-sky-400/20 px-4 py-2 rounded-full flex items-center gap-3 shadow-inner">
+          <div className="bg-[var(--surface-inner)] border border-[var(--surface-border)] px-4 py-2 rounded-full flex items-center gap-3 shadow-inner">
             <div className="text-xs whitespace-nowrap">
               <span className="text-slate-400">Nivel de Plato: </span>
-              <span className="font-bold text-sky-300 font-mono">Nv. {previewLevel}</span>
+              <span className="font-bold text-amber-300 font-mono">Nv. {previewLevel}</span>
               <span className="text-emerald-400 text-[11px] ml-1.5 font-bold">(+{levelBonus}%)</span>
             </div>
             <input
@@ -62,7 +62,7 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
               max="65"
               value={previewLevel}
               onChange={(e) => setPreviewLevel(parseInt(e.target.value, 10))}
-              className="w-24 sm:w-28 accent-sky-400 cursor-pointer"
+              className="w-24 sm:w-28 accent-amber-400 cursor-pointer"
             />
           </div>
 

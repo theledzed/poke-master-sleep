@@ -180,12 +180,12 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
         };
       }
       return {
-        bg: 'bg-gradient-to-r from-blue-600 to-sky-600',
-        text: 'text-sky-200',
-        border: 'border-sky-500/40',
-        glow: 'shadow-sky-500/15 shadow-lg',
-        badge: 'bg-blue-600 text-white font-bold',
-        pillBg: 'bg-sky-500/20 text-sky-200 border-sky-400/30'
+        bg: 'bg-gradient-to-r from-amber-500 to-amber-600',
+        text: 'text-amber-200',
+        border: 'border-amber-400/40',
+        glow: 'shadow-amber-500/15 shadow-lg',
+        badge: 'bg-amber-400 text-slate-950 font-black',
+        pillBg: 'bg-amber-500/20 text-amber-200 border-amber-400/30'
       };
     }
     if (rango.startsWith('Ultra')) {
@@ -200,12 +200,12 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
     }
     if (rango.startsWith('Súper')) {
       return {
-        bg: 'bg-gradient-to-r from-sky-500 to-blue-600',
-        text: 'text-sky-200',
-        border: 'border-sky-500/40',
-        glow: 'shadow-sky-500/10 shadow-md',
-        badge: 'bg-sky-500 text-white font-bold',
-        pillBg: 'bg-sky-500/15 text-sky-300 border-sky-500/30'
+        bg: 'bg-gradient-to-r from-indigo-500 to-blue-600',
+        text: 'text-indigo-200',
+        border: 'border-indigo-500/40',
+        glow: 'shadow-indigo-500/10 shadow-md',
+        badge: 'bg-indigo-500 text-white font-bold',
+        pillBg: 'bg-indigo-500/15 text-indigo-200 border-indigo-500/30'
       };
     }
     return {
@@ -333,7 +333,7 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
                   setCurrentVigorInput(val);
                 }}
                 placeholder="Ej. 521439"
-                className="w-44 bg-[#061122] border border-sky-400/30 text-sky-200 font-mono font-bold text-sm rounded-xl px-3 py-2 focus:ring-2 focus:ring-sky-400 focus:outline-none"
+                className="w-44 bg-[var(--surface-inner)] border border-[var(--surface-border)] text-white font-mono font-bold text-sm rounded-xl px-3 py-2 focus:ring-2 focus:ring-[var(--accent-primary)] focus:outline-none"
               />
             </div>
 
@@ -359,10 +359,10 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
         </div>
       )}
 
-      {/* Main Hero Card: Rango Estimado + Estimación por Rango de tanto a tanto */}
-      <div className="poke-card p-5 sm:p-6 relative overflow-hidden border border-sky-400/25 shadow-xl shadow-[#040c17]/50 space-y-5">
-        {/* Soft sapphire ambient glow */}
-        <div className="absolute top-0 right-0 w-80 h-80 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
+      {/* Main Hero Card: Rango Estimado + Previsión para el Domingo */}
+      <div className="cozy-card pokeball-watermark p-5 sm:p-6 rounded-3xl relative overflow-hidden border border-[var(--surface-border)] shadow-xl space-y-5">
+        {/* Soft atmospheric ambient glow */}
+        <div className="absolute top-0 right-0 w-80 h-80 bg-[var(--accent-glow)] rounded-full blur-3xl pointer-events-none" />
 
         {/* Top Header Badge & Island */}
         <div className="flex items-center justify-between gap-2 flex-wrap relative z-10">
@@ -370,13 +370,13 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
             <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider border ${
               isCalibrated
                 ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/30 shadow-sm'
-                : 'bg-sky-500/20 text-sky-200 border-sky-400/30'
+                : 'bg-[var(--surface-inner)] text-[var(--accent-primary)] border-[var(--surface-border)]'
             }`}>
               {isCalibrated
                 ? '🟢 PREDICCIÓN CALIBRADA EN VIVO'
-                : 'PROYECCIÓN ESTIMADA (SEMANA COMPLETA)'}
+                : 'PROYECCIÓN ESTIMADA DE LA SEMANA'}
             </span>
-            <span className="text-xs text-slate-300 font-mono bg-[#08182c]/80 border border-sky-400/20 px-3 py-0.5 rounded-full font-bold">
+            <span className="text-xs text-slate-300 font-mono bg-[var(--surface-inner)] border border-[var(--surface-border)] px-3 py-0.5 rounded-full font-bold">
               🏝️ Isla: <span className="text-white capitalize font-black">{islaId.replace('_', ' ')}</span>
             </span>
           </div>
@@ -398,12 +398,12 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
             />
             <div>
               <div className="flex items-baseline gap-2">
-                <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+                <h2 className="text-3xl sm:text-4xl font-display font-black text-[var(--text-heading)] tracking-tight">
                   {estadoRangoFinal.rangoActual}
                 </h2>
               </div>
               <div className="text-xs text-slate-300 font-mono flex items-center gap-1.5 mt-0.5 flex-wrap">
-                <span className="text-sky-300 font-black text-lg">
+                <span className="text-[var(--accent-primary)] font-black text-lg">
                   ~{vigorFinalSemana.toLocaleString()} pts
                 </span>
                 <span className="text-slate-400">acumulados al cerrar el domingo</span>
@@ -412,11 +412,11 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
           </div>
 
           {/* Distance to next rank badge */}
-          <div className="bg-[#08182c]/90 border border-sky-400/20 rounded-2xl px-4 py-2.5 self-start sm:self-auto text-left sm:text-right shadow-inner">
+          <div className="bg-[var(--surface-inner)] border border-[var(--surface-border)] rounded-2xl px-4 py-2.5 self-start sm:self-auto text-left sm:text-right shadow-inner">
             <span className="text-[10px] text-slate-400 uppercase font-black tracking-wider block">
               {estadoRangoFinal.siguienteRango ? 'Próximo Rango' : 'Techo de la Isla'}
             </span>
-            <span className="text-xs sm:text-sm font-black text-sky-200 font-mono">
+            <span className="text-xs sm:text-sm font-black text-[var(--accent-primary)] font-mono">
               {estadoRangoFinal.siguienteRango
                 ? `${estadoRangoFinal.siguienteRango} (faltan ${estadoRangoFinal.vigorFaltanteSiguiente.toLocaleString()} pts)`
                 : 'Máster 20 completado'}
@@ -424,17 +424,17 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
           </div>
         </div>
 
-        {/* ESTiMACIÓN POR RANGO (Tanto a Tanto) - Solicitation from User */}
-        <div className="relative z-10 rounded-2xl bg-[#08182d]/90 border border-sky-400/30 p-4 sm:p-5 shadow-inner">
+        {/* PREVISIÓN DE SNORLAX (Cozy 3-Scenario Cards) */}
+        <div className="relative z-10 rounded-3xl bg-[var(--surface-inner)] border border-[var(--surface-border)] p-4 sm:p-5 shadow-inner">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
             <div className="flex items-center gap-2">
-              <Target className="w-4 h-4 text-sky-400" />
-              <h4 className="text-xs sm:text-sm font-black text-white uppercase tracking-wider">
-                Estimación por Rango de Rendimiento
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              <h4 className="text-xs sm:text-sm font-display font-bold text-[var(--text-heading)]">
+                Previsión de Snorlax para el Domingo
               </h4>
             </div>
             <div className="text-[11px] text-slate-300 font-mono">
-              Rango de Vigor:{' '}
+              Vigor Estimado:{' '}
               <strong className="text-white font-bold">{vigorMinSemana.toLocaleString()}</strong> ~{' '}
               <strong className="text-white font-bold">{vigorMaxSemana.toLocaleString()} pts</strong>
             </div>
@@ -442,113 +442,113 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
 
           {/* 3 Scenarios Cards: Mínimo / Esperado / Máximo */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-            {/* Scenario 1: Mínimo Seguro */}
-            <div className="p-3 rounded-xl bg-slate-900/70 border border-slate-700/80 flex flex-col justify-between">
+            {/* Scenario 1: Tranquilo */}
+            <div className="p-3.5 rounded-2xl bg-black/20 border border-white/5 flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between gap-1 mb-1">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
-                    <Shield className="w-3 h-3 text-slate-400" />
-                    Mínimo Garantizado
+                    <span>💤</span>
+                    <span>Ritmo Tranquilo</span>
                   </span>
-                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 font-mono">
+                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/5 text-slate-300 font-medium">
                     Sin Críticos
                   </span>
                 </div>
-                <div className="text-sm font-black text-slate-100 flex items-center gap-1.5 mt-0.5">
+                <div className="text-sm font-bold text-slate-100 flex items-center gap-1.5 mt-0.5">
                   <span>{estadoRangoMin.rangoActual}</span>
                 </div>
                 <div className="text-xs text-slate-400 font-mono mt-0.5">
                   {vigorMinSemana.toLocaleString()} pts
                 </div>
               </div>
-              <p className="text-[10px] text-slate-400 mt-2 leading-tight">
-                Peor escenario: 0 comidas ¡Riquísimo! y baja activación de habilidades.
+              <p className="text-[10px] text-slate-400 mt-2 leading-relaxed">
+                Sin comidas ¡Riquísimo! y ritmo relajado de habilidades.
               </p>
             </div>
 
             {/* Scenario 2: Esperado / Promedio */}
-            <div className="p-3 rounded-xl bg-sky-950/60 border border-sky-400/40 flex flex-col justify-between ring-1 ring-sky-400/20 shadow-md">
+            <div className="p-3.5 rounded-2xl bg-amber-400/10 border border-amber-400/30 flex flex-col justify-between ring-1 ring-amber-400/20 shadow-md">
               <div>
                 <div className="flex items-center justify-between gap-1 mb-1">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-sky-300 flex items-center gap-1">
-                    <Sparkles className="w-3 h-3 text-sky-400" />
-                    Más Probable (Objetivo)
+                  <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 flex items-center gap-1">
+                    <span>⭐</span>
+                    <span>Ritmo Esperado</span>
                   </span>
-                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-sky-500/20 text-sky-200 font-bold font-mono">
-                    Promedio
+                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-200 font-bold font-mono">
+                    Objetivo
                   </span>
                 </div>
                 <div className="text-base font-black text-white flex items-center gap-1.5 mt-0.5">
                   <span>{estadoRangoFinal.rangoActual}</span>
                 </div>
-                <div className="text-xs text-sky-300 font-mono font-bold mt-0.5">
+                <div className="text-xs text-amber-300 font-mono font-bold mt-0.5">
                   ~{vigorFinalSemana.toLocaleString()} pts
                 </div>
               </div>
-              <p className="text-[10px] text-sky-200/80 mt-2 leading-tight">
+              <p className="text-[10px] text-amber-200/80 mt-2 leading-relaxed">
                 Ritmo normal: probabilidad estándar (10% Lun–Sáb y 30% Súper Domingo).
               </p>
             </div>
 
-            {/* Scenario 3: Techo Optimista */}
-            <div className="p-3 rounded-xl bg-indigo-950/50 border border-indigo-400/40 flex flex-col justify-between">
+            {/* Scenario 3: Con Riquísimo */}
+            <div className="p-3.5 rounded-2xl bg-purple-500/10 border border-purple-400/25 flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between gap-1 mb-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-300 flex items-center gap-1">
-                    <Rocket className="w-3 h-3 text-indigo-400" />
-                    Techo con Críticos
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-purple-300 flex items-center gap-1">
+                    <span>🌟</span>
+                    <span>¡Con Riquísimo!</span>
                   </span>
-                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-200 font-mono">
-                    ¡Riquísimo!
+                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-200 font-mono">
+                    Críticos
                   </span>
                 </div>
-                <div className="text-sm font-black text-indigo-100 flex items-center gap-1.5 mt-0.5">
+                <div className="text-sm font-bold text-purple-100 flex items-center gap-1.5 mt-0.5">
                   <span>{estadoRangoMax.rangoActual}</span>
                 </div>
-                <div className="text-xs text-indigo-300 font-mono mt-0.5">
+                <div className="text-xs text-purple-300 font-mono mt-0.5">
                   hasta {vigorMaxSemana.toLocaleString()} pts
                 </div>
               </div>
-              <p className="text-[10px] text-indigo-300/80 mt-2 leading-tight">
-                Mejor escenario: varios ¡Riquísimo! en el puchero y alto RNG de habilidades.
+              <p className="text-[10px] text-purple-200/80 mt-2 leading-relaxed">
+                Varios ¡Riquísimo! en el puchero y buena activación de habilidades.
               </p>
             </div>
           </div>
 
           {/* Dynamic precision note */}
-          <div className="mt-3 pt-2.5 border-t border-sky-400/15 flex items-center justify-between text-[11px] text-slate-300">
+          <div className="mt-3 pt-2.5 border-t border-[var(--surface-border)] flex items-center justify-between text-[11px] text-slate-300">
             {isCalibrated ? (
               <span className="flex items-center gap-1.5 text-emerald-300">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
                 <span>
-                  <strong>Margen estrecho de alta precisión:</strong> Ya transcurrieron {pastDaysCount} días en tu partida, por lo que el rango solo varía por la producción restante.
+                  <strong>Calibrado con tus {pastDaysCount} días jugados:</strong> El margen de cálculo es mínimo y de altísima precisión.
                 </span>
               </span>
             ) : (
               <span className="flex items-center gap-1.5 text-slate-300">
-                <Sparkles className="w-3.5 h-3.5 text-sky-400 flex-shrink-0" />
+                <Sparkles className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
                 <span>
-                  <strong>Margen de 7 días completos:</strong> Puedes presionar <em>"Ajustar a Hoy en Juego"</em> arriba para fijar tus puntos reales y predecir con exactitud milimétrica.
+                  <strong>Proyección teórica de 7 días:</strong> Puedes presionar <em>"Ajustar a Hoy en Juego"</em> arriba para fijar tus puntos reales.
                 </span>
               </span>
             )}
           </div>
         </div>
 
-        {/* Progress bar towards next rank */}
-        <div className="bg-[#08182c]/90 border border-sky-400/20 rounded-2xl p-3.5 sm:p-4 shadow-inner relative z-10">
+        {/* Progress bar towards next rank (Warm Honey Glow) */}
+        <div className="bg-[var(--surface-inner)] border border-[var(--surface-border)] rounded-2xl p-3.5 sm:p-4 shadow-inner relative z-10">
           <div className="flex items-center justify-between text-xs font-mono font-bold text-slate-300 mb-1.5">
             <span className="text-[11px] text-slate-300">
               Progreso hacia <strong className="text-white">{estadoRangoFinal.siguienteRango || 'Máster 20'}</strong>
             </span>
-            <span className="text-sky-300 font-black font-mono">
+            <span className="text-amber-300 font-black font-mono">
               {estadoRangoFinal.porcentajeProgresoSiguiente.toFixed(0)}%
             </span>
           </div>
 
-          <div className="w-full h-3 rounded-full bg-slate-950/80 border border-sky-400/25 p-0.5 overflow-hidden">
+          <div className="w-full h-3 rounded-full bg-black/40 border border-white/10 p-0.5 overflow-hidden">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-blue-600 via-sky-400 to-cyan-300 transition-all duration-700 ease-out shadow-[0_0_8px_rgba(56,189,248,0.6)]"
+              className="h-full rounded-full bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-300 transition-all duration-700 ease-out shadow-[0_0_12px_rgba(245,158,11,0.45)]"
               style={{ width: `${Math.min(100, Math.max(3, estadoRangoFinal.porcentajeProgresoSiguiente))}%` }}
             />
           </div>
@@ -562,13 +562,13 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
         </div>
       </div>
 
-      {/* Daily Timeline (Lunes a Domingo) */}
+      {/* Daily Timeline (Lunes a Domingo - Cozy Calendar View) */}
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-3.5 flex-wrap gap-2">
           <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-sky-400" />
-            <h4 className="text-sm font-black text-white uppercase tracking-wider">
-              Línea Temporal de la Semana (Día a Día)
+            <Calendar className="w-4 h-4 text-amber-400" />
+            <h4 className="text-sm font-display font-bold text-[var(--text-heading)]">
+              Progresión de la Semana (Día a Día)
             </h4>
           </div>
 
@@ -577,7 +577,7 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
               <button
                 type="button"
                 onClick={() => setHidePastDays(!hidePastDays)}
-                className="text-xs px-2.5 py-1 rounded-lg bg-[#08182c] border border-sky-400/20 text-slate-300 hover:text-white"
+                className="btn-cozy-secondary text-xs px-2.5 py-1"
               >
                 {hidePastDays ? `Mostrar Días Pasados (${pastDaysCount})` : 'Ocultar Pasados'}
               </button>
@@ -586,7 +586,7 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
             <button
               type="button"
               onClick={() => setIsTimelineExpanded(!isTimelineExpanded)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#08182c]/90 hover:bg-sky-500/20 border border-sky-400/20 text-xs font-bold text-sky-300 hover:text-white transition-all shadow-sm"
+              className="btn-cozy-secondary flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold"
             >
               <span>{isTimelineExpanded ? 'Ocultar Días' : 'Ver Días'}</span>
               {isTimelineExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
@@ -596,7 +596,7 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
 
         {/* Expanded 7-day grid */}
         {isTimelineExpanded && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 sm:gap-3">
             {timelineDias
               .filter(dia => !(hidePastDays && dia.esPasado))
               .map((dia) => {
@@ -607,40 +607,40 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
                     key={dia.diaIdx}
                     className={`rounded-2xl p-3.5 flex flex-col justify-between border transition-all shadow-md relative overflow-hidden group ${
                       dia.esDomingo
-                        ? 'bg-gradient-to-b from-[#14325a] via-[#0c2444] to-[#08182c] border-sky-400/40 shadow-sky-950/40'
+                        ? 'bg-gradient-to-b from-amber-400/15 via-[var(--surface-inner)] to-[var(--surface-inner)] border-amber-400/40 shadow-sm'
                         : dia.esHoy
-                        ? 'bg-[#0e2a4f] border-emerald-400 ring-2 ring-emerald-400/30 shadow-lg'
+                        ? 'bg-[var(--surface-inner)] border-2 border-emerald-400/80 ring-2 ring-emerald-400/20 shadow-lg'
                         : dia.esPasado
-                        ? 'bg-[#081324]/80 border-slate-800 opacity-75'
-                        : 'bg-[#0c2444]/75 border-sky-400/15 hover:border-sky-400/30'
+                        ? 'bg-black/25 border-white/5 opacity-65'
+                        : 'bg-[var(--surface-inner)] border-[var(--surface-border)] hover:border-white/20'
                     }`}
                   >
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <span className={`text-xs font-black ${
-                          dia.esDomingo ? 'text-sky-200' : dia.esHoy ? 'text-emerald-300' : dia.esPasado ? 'text-slate-400' : 'text-slate-200'
+                        <span className={`text-xs font-bold ${
+                          dia.esDomingo ? 'text-amber-200' : dia.esHoy ? 'text-emerald-300 font-black' : dia.esPasado ? 'text-slate-400' : 'text-slate-200'
                         }`}>
                           {dia.diaNombre}
                         </span>
                         {dia.esDomingo && (
-                          <span className="text-[8px] bg-sky-400 text-slate-950 px-1.5 py-0.2 rounded font-black uppercase tracking-wider shadow-sm">
+                          <span className="text-[9px] bg-amber-400 text-slate-950 px-2 py-0.5 rounded-full font-black uppercase tracking-wider shadow-sm">
                             2x Olla
                           </span>
                         )}
                         {dia.esHoy && (
-                          <span className="text-[8px] bg-emerald-400 text-slate-950 px-1.5 py-0.2 rounded font-black uppercase tracking-wider shadow-sm">
+                          <span className="text-[9px] bg-emerald-400 text-slate-950 px-2 py-0.5 rounded-full font-black uppercase tracking-wider shadow-sm">
                             Hoy
                           </span>
                         )}
                         {dia.esPasado && (
-                          <span className="text-[8px] bg-slate-800 text-slate-400 px-1.5 py-0.2 rounded font-bold uppercase tracking-wider">
+                          <span className="text-[9px] bg-white/5 text-slate-400 px-1.5 py-0.5 rounded-full font-medium">
                             Hecho
                           </span>
                         )}
                       </div>
 
                       {/* Vigor Ganado Hoy */}
-                      <div className={`text-[11px] font-mono font-black ${dia.esPasado ? 'text-slate-400' : 'text-sky-300'}`}>
+                      <div className={`text-[11px] font-mono font-bold ${dia.esPasado ? 'text-slate-400' : 'text-amber-300'}`}>
                         +{dia.vigorGanadoDia.toLocaleString()} pts
                       </div>
 
@@ -651,13 +651,13 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
                     </div>
 
                     {/* Rango al final del día */}
-                    <div className="mt-3 pt-2 border-t border-sky-400/15 flex items-center justify-center gap-1.5">
+                    <div className="mt-3 pt-2 border-t border-[var(--surface-border)] flex items-center justify-center gap-1.5">
                       <img
                         src={getRankPokeballUrl(dia.rangoAlcanzado)}
                         alt={dia.rangoAlcanzado}
                         className="w-4 h-4 object-contain flex-shrink-0"
                       />
-                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border truncate uppercase tracking-wider ${rankTheme.pillBg}`}>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border truncate uppercase tracking-wider ${rankTheme.pillBg}`}>
                         {dia.rangoAlcanzado}
                       </span>
                     </div>
@@ -668,56 +668,56 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
         )}
       </div>
 
-      {/* Production rhythm & island objectives */}
+      {/* Production rhythm & island objectives (Cozy Field Cards) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
-        {/* Card 1: Ritmo Diario de Producción */}
-        <div className="bg-[#0c2444]/80 border border-sky-400/20 rounded-2xl p-4 sm:p-5 shadow-inner">
+        {/* Card 1: Energía del Campamento (Cocina & Olla) */}
+        <div className="cozy-card p-4 sm:p-5 rounded-2xl border border-[var(--surface-border)]">
           <div className="flex items-center gap-2 mb-3">
-            <TrendingUp className="w-4 h-4 text-sky-400" />
-            <h5 className="text-xs font-black text-white uppercase tracking-wider">
-              Ritmo de Producción del Equipo
+            <TrendingUp className="w-4 h-4 text-amber-400" />
+            <h5 className="text-xs font-display font-bold text-[var(--text-heading)] uppercase tracking-wider">
+              Energía del Campamento (Cocina & Olla)
             </h5>
           </div>
 
           <div className="space-y-2.5 text-xs text-slate-300">
-            <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-sky-400/15">
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-[var(--surface-inner)] border border-[var(--surface-border)]">
               <div>
                 <span className="font-bold text-white">Lunes a Sábado:</span>
                 <span className="block text-[11px] text-slate-400">Puchero estándar ({config.potSize} ingr.)</span>
               </div>
-              <span className="font-mono font-black text-sky-300">
+              <span className="font-mono font-bold text-amber-300">
                 ~{vigorDiaNormal.toLocaleString()} pts/día
               </span>
             </div>
 
-            <div className="flex items-center justify-between p-3 rounded-xl bg-sky-950/60 border border-sky-400/30">
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-amber-400/10 border border-amber-400/30">
               <div>
-                <span className="font-black text-sky-200">Súper Domingo:</span>
-                <span className="block text-[11px] text-sky-300/80">
+                <span className="font-black text-amber-200">Súper Domingo:</span>
+                <span className="block text-[11px] text-amber-200/80">
                   Puchero doble ({config.goodCampTicket ? '118 ingr.' : `${config.potSize * 2} ingr.`}) y más ¡Riquísimo!
                 </span>
               </div>
-              <span className="font-mono font-black text-cyan-300">
+              <span className="font-mono font-black text-amber-300">
                 ~{vigorDiaDomingo.toLocaleString()} pts
               </span>
             </div>
 
             <div className="text-[11px] text-slate-300 pt-1 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-sky-400 flex-shrink-0" />
+              <Sparkles className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
               <span>
-                El domingo suma <strong className="text-sky-300 font-bold">{Math.round((vigorDiaDomingo / (vigorDiaNormal * 6 + vigorDiaDomingo)) * 100)}%</strong> del vigor de toda la semana gracias a la olla doble.
+                El domingo aporta <strong className="text-amber-300 font-bold">{Math.round((vigorDiaDomingo / (vigorDiaNormal * 6 + vigorDiaDomingo)) * 100)}%</strong> del vigor total de la semana gracias al puchero doble.
               </span>
             </div>
           </div>
         </div>
 
-        {/* Card 2: Objetivos de la Isla */}
-        <div className="bg-[#0c2444]/80 border border-sky-400/20 rounded-2xl p-4 sm:p-5 shadow-inner">
+        {/* Card 2: Recompensas Semanales de la Isla */}
+        <div className="cozy-card p-4 sm:p-5 rounded-2xl border border-[var(--surface-border)]">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <Award className="w-4 h-4 text-sky-400" />
-              <h5 className="text-xs font-black text-white uppercase tracking-wider">
-                Objetivos de la Semana en la Isla
+              <Award className="w-4 h-4 text-amber-400" />
+              <h5 className="text-xs font-display font-bold text-[var(--text-heading)] uppercase tracking-wider">
+                Recompensas Semanales de la Isla
               </h5>
             </div>
           </div>
@@ -727,16 +727,16 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
             {(() => {
               const hitoIncienso = hitosClave.find(h => h.indiceRango === 17); // Máster 3
               return (
-                <div className="flex items-center justify-between p-2.5 px-3 rounded-xl bg-indigo-950/40 border border-indigo-400/30 text-xs">
+                <div className="flex items-center justify-between p-2.5 px-3 rounded-2xl bg-[var(--surface-inner)] border border-[var(--surface-border)] text-xs">
                   <div className="flex items-center gap-2">
                     {hitoIncienso?.alcanzable ? (
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
                     ) : (
-                      <Clock className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
+                      <Clock className="w-4 h-4 text-slate-500 flex-shrink-0" />
                     )}
                     <div>
                       <span className="font-bold text-white">Incienso Semanal (Máster 3)</span>
-                      <span className="block text-[10px] text-indigo-300/80">Recompensa fija de la isla</span>
+                      <span className="block text-[10px] text-slate-400">Recompensa fija de la isla</span>
                     </div>
                   </div>
                   <span className={`font-mono font-bold text-xs ${hitoIncienso?.alcanzable ? 'text-emerald-400' : 'text-slate-400'}`}>
@@ -747,23 +747,23 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
             })()}
 
             {/* Rango Final */}
-            <div className="flex items-center justify-between p-2.5 px-3 rounded-xl bg-sky-950/40 border border-sky-400/25 text-xs">
+            <div className="flex items-center justify-between p-2.5 px-3 rounded-2xl bg-[var(--surface-inner)] border border-[var(--surface-border)] text-xs">
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-3.5 h-3.5 text-sky-400 flex-shrink-0" />
+                <CheckCircle2 className="w-4 h-4 text-[var(--accent-primary)] flex-shrink-0" />
                 <div>
                   <span className="font-bold text-white">Rango Proyectado</span>
                   <span className="block text-[10px] text-slate-400">Al cerrar el Domingo</span>
                 </div>
               </div>
-              <span className="font-mono font-black text-sky-300 text-xs">
+              <span className="font-mono font-bold text-[var(--accent-primary)] text-xs">
                 {estadoRangoFinal.rangoActual}
               </span>
             </div>
 
             {/* Siguiente Escalón */}
-            <div className="flex items-center justify-between p-2.5 px-3 rounded-xl bg-white/5 border border-white/10 text-xs">
+            <div className="flex items-center justify-between p-2.5 px-3 rounded-2xl bg-[var(--surface-inner)] border border-[var(--surface-border)] text-xs">
               <div className="flex items-center gap-2">
-                <Target className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                <Target className="w-4 h-4 text-slate-400 flex-shrink-0" />
                 <div>
                   <span className="font-bold text-slate-200">
                     {estadoRangoFinal.siguienteRango ? `Hacia ${estadoRangoFinal.siguienteRango}` : 'Techo de la Isla'}

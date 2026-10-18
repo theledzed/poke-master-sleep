@@ -133,28 +133,28 @@ export const ViewSettingsDropdown: React.FC<ViewSettingsDropdownProps> = ({
         onClick={() => setIsOpen(!isOpen)}
         className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs shadow-sm transition-all flex-shrink-0 ${
           isOpen
-            ? 'bg-[#0f2d50] border-sky-400/60 text-white shadow-sky-500/20 shadow-md ring-1 ring-sky-400/30'
-            : 'bg-[#0a203a] hover:bg-[#0f2d50] border-sky-400/25 text-sky-200'
+            ? 'bg-[var(--surface-card)] border-[var(--accent-primary)] text-white shadow-md ring-1 ring-[var(--accent-primary)]/40'
+            : 'bg-[var(--surface-inner)] hover:bg-[var(--surface-card)] border-[var(--surface-border)] text-slate-200'
         }`}
         title="Personalizar interfaz: estilo de sprites, diseño de fichas y atmósfera climática"
       >
         <span className="text-xs leading-none">{currentSprite.icon}</span>
-        <CurrentWeatherIcon className="w-3.5 h-3.5 text-sky-400 flex-shrink-0" />
+        <CurrentWeatherIcon className="w-3.5 h-3.5 text-[var(--accent-primary)] flex-shrink-0" />
         <span className="text-[11px] font-bold hidden sm:inline">Interfaz</span>
         <ChevronDown
           className={`w-3 h-3 text-slate-400 transition-transform duration-200 ${
-            isOpen ? 'rotate-180 text-sky-300' : ''
+            isOpen ? 'rotate-180 text-[var(--accent-primary)]' : ''
           }`}
         />
       </button>
 
       {/* Floating Menu with categorized sections */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-72 max-h-[85vh] overflow-y-auto bg-[#0c2444] border border-sky-400/30 rounded-2xl shadow-2xl p-2.5 z-50 backdrop-blur-xl animate-in fade-in slide-in-from-top-2 duration-150 space-y-2.5 custom-scrollbar">
+        <div className="absolute right-0 top-full mt-2 w-72 max-h-[85vh] overflow-y-auto bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-2xl shadow-2xl p-2.5 z-50 backdrop-blur-xl animate-in fade-in slide-in-from-top-2 duration-150 space-y-2.5 custom-scrollbar">
           {/* Main Title Header */}
-          <div className="text-[10px] uppercase font-black tracking-wider text-sky-300 px-2 py-0.5 border-b border-sky-400/15 flex items-center justify-between">
+          <div className="text-[10px] uppercase font-black tracking-wider text-[var(--accent-primary)] px-2 py-0.5 border-b border-[var(--surface-border)] flex items-center justify-between">
             <span className="flex items-center gap-1.5">
-              <SlidersHorizontal className="w-3.5 h-3.5 text-sky-400" />
+              <SlidersHorizontal className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
               <span>Personalizar Interfaz</span>
             </span>
             <span className="text-[9px] text-slate-400 font-normal">Ajustes Visuales</span>
@@ -176,7 +176,7 @@ export const ViewSettingsDropdown: React.FC<ViewSettingsDropdownProps> = ({
                     onClick={() => onSelectSpriteStyle(opt.id)}
                     className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs transition-all text-left ${
                       isSelected
-                        ? 'bg-sky-500/25 text-white font-bold border border-sky-400/40 shadow-sm'
+                        ? 'bg-[var(--accent-primary)]/20 text-white font-bold border border-[var(--accent-primary)]/40 shadow-sm'
                         : 'text-slate-300 hover:bg-white/5 hover:text-white'
                     }`}
                   >
@@ -187,20 +187,20 @@ export const ViewSettingsDropdown: React.FC<ViewSettingsDropdownProps> = ({
                         <div className="text-[9px] text-slate-400 truncate">{opt.desc}</div>
                       </div>
                     </div>
-                    {isSelected && <Check className="w-4 h-4 text-sky-400 flex-shrink-0 stroke-[2.5]" />}
+                    {isSelected && <Check className="w-4 h-4 text-[var(--accent-primary)] flex-shrink-0 stroke-[2.5]" />}
                   </button>
                 );
               })}
             </div>
           </div>
 
-          <div className="h-px bg-sky-400/15" />
+          <div className="h-px bg-[var(--surface-border)]" />
 
           {/* Section 2: Tamaño / Modo de Tarjetas */}
           <div>
             <div className="text-[9px] uppercase font-bold text-slate-400 px-2 mb-1 flex items-center justify-between">
               <span>Diseño de Tarjetas</span>
-              <span className="text-[9px] text-sky-300 font-normal">Equipos y Caja</span>
+              <span className="text-[9px] text-slate-400 font-normal">Equipos y Caja</span>
             </div>
             <div className="grid grid-cols-2 gap-1">
               <button
@@ -208,8 +208,8 @@ export const ViewSettingsDropdown: React.FC<ViewSettingsDropdownProps> = ({
                 onClick={() => onSelectCardViewMode('compact')}
                 className={`flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-xl text-xs font-bold transition-all border ${
                   cardViewMode === 'compact'
-                    ? 'bg-sky-500 text-white border-sky-400 shadow-sm'
-                    : 'bg-slate-900/60 text-slate-300 border-slate-800 hover:bg-white/5'
+                    ? 'bg-[var(--accent-primary)] text-slate-950 font-black border-transparent shadow-sm'
+                    : 'bg-[var(--surface-inner)] text-slate-300 border-[var(--surface-border)] hover:bg-white/5'
                 }`}
               >
                 <Layers className="w-3.5 h-3.5" />
@@ -222,8 +222,8 @@ export const ViewSettingsDropdown: React.FC<ViewSettingsDropdownProps> = ({
                 onClick={() => onSelectCardViewMode('detailed')}
                 className={`flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-xl text-xs font-bold transition-all border ${
                   cardViewMode === 'detailed'
-                    ? 'bg-sky-500 text-white border-sky-400 shadow-sm'
-                    : 'bg-slate-900/60 text-slate-300 border-slate-800 hover:bg-white/5'
+                    ? 'bg-[var(--accent-primary)] text-slate-950 font-black border-transparent shadow-sm'
+                    : 'bg-[var(--surface-inner)] text-slate-300 border-[var(--surface-border)] hover:bg-white/5'
                 }`}
               >
                 <LayoutGrid className="w-3.5 h-3.5" />
@@ -247,8 +247,8 @@ export const ViewSettingsDropdown: React.FC<ViewSettingsDropdownProps> = ({
                     onClick={() => onSelectPokedexViewMode('cards')}
                     className={`flex items-center justify-center gap-1 px-2 py-1.5 rounded-xl text-[11px] font-bold transition-all border ${
                       pokedexViewMode === 'cards'
-                        ? 'bg-sky-500 text-white border-sky-400 shadow-sm'
-                        : 'bg-slate-900/60 text-slate-300 border-slate-800 hover:bg-white/5'
+                        ? 'bg-[var(--accent-primary)] text-slate-950 font-black border-transparent shadow-sm'
+                        : 'bg-[var(--surface-inner)] text-slate-300 border-[var(--surface-border)] hover:bg-white/5'
                     }`}
                   >
                     <span>📋 Fichas</span>
@@ -260,11 +260,11 @@ export const ViewSettingsDropdown: React.FC<ViewSettingsDropdownProps> = ({
                     onClick={() => onSelectPokedexViewMode('audit')}
                     className={`flex items-center justify-center gap-1 px-2 py-1.5 rounded-xl text-[11px] font-bold transition-all border ${
                       pokedexViewMode === 'audit'
-                        ? 'bg-sky-500 text-white border-sky-400 shadow-sm'
-                        : 'bg-slate-900/60 text-slate-300 border-slate-800 hover:bg-white/5'
+                        ? 'bg-[var(--accent-primary)] text-slate-950 font-black border-transparent shadow-sm'
+                        : 'bg-[var(--surface-inner)] text-slate-300 border-[var(--surface-border)] hover:bg-white/5'
                     }`}
                   >
-                    <Sparkles className="w-3 h-3 text-amber-300" />
+                    <Sparkles className="w-3 h-3 text-slate-950" />
                     <span>🔬 Matriz</span>
                     {pokedexViewMode === 'audit' && <Check className="w-3 h-3 stroke-[3]" />}
                   </button>
@@ -273,14 +273,14 @@ export const ViewSettingsDropdown: React.FC<ViewSettingsDropdownProps> = ({
             </>
           )}
 
-          <div className="h-px bg-sky-400/15" />
+          <div className="h-px bg-[var(--surface-border)]" />
 
           {/* Section 4: Atmósfera & Clima Dinámico */}
           <div>
             <div className="text-[9px] uppercase font-bold text-slate-400 px-2 mb-1 flex items-center justify-between">
               <span>Atmósfera & Clima</span>
               {isAutoWeather && (
-                <span className="text-[9px] bg-sky-500/20 text-sky-300 px-1 rounded font-bold">
+                <span className="text-[9px] bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] px-1 rounded font-bold">
                   Auto Activo
                 </span>
               )}
@@ -292,15 +292,15 @@ export const ViewSettingsDropdown: React.FC<ViewSettingsDropdownProps> = ({
               onClick={handleEnableAutoWeather}
               className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all mb-1.5 ${
                 isAutoWeather
-                  ? 'bg-sky-500/20 text-sky-200 border border-sky-400/30'
+                  ? 'bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] border border-[var(--accent-primary)]/30'
                   : 'text-slate-300 hover:bg-white/5'
               }`}
             >
               <span className="flex items-center gap-1.5">
-                <Compass className="w-3.5 h-3.5 text-sky-400" />
+                <Compass className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
                 <span>Auto (Hora & Clima Real)</span>
               </span>
-              {isAutoWeather && <Check className="w-3.5 h-3.5 text-sky-400" />}
+              {isAutoWeather && <Check className="w-3.5 h-3.5 text-[var(--accent-primary)]" />}
             </button>
 
             {/* Manual Weather Options Grid */}
@@ -315,8 +315,8 @@ export const ViewSettingsDropdown: React.FC<ViewSettingsDropdownProps> = ({
                     onClick={() => handleManualWeather(opt.mode)}
                     className={`flex items-center justify-between px-2 py-1.5 rounded-xl text-xs font-semibold transition-all border ${
                       isSelected
-                        ? 'bg-sky-500 text-white font-bold border-sky-400 shadow-sm'
-                        : 'bg-slate-900/60 text-slate-300 border-slate-800 hover:bg-white/5'
+                        ? 'bg-[var(--accent-primary)] text-slate-950 font-black border-transparent shadow-sm'
+                        : 'bg-[var(--surface-inner)] text-slate-300 border-[var(--surface-border)] hover:bg-white/5'
                     }`}
                   >
                     <span className="flex items-center gap-1.5 min-w-0">

@@ -454,12 +454,12 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
             </div>
 
             {/* Stepper Footer Buttons */}
-            <div className="p-4 border-t border-sky-400/20 bg-[#091f3a]/90 flex items-center justify-between relative z-10">
+            <div className="p-4 border-t border-[var(--surface-border)] bg-[var(--surface-inner)] flex items-center justify-between relative z-10">
               <button
                 type="button"
                 onClick={() => setStep((s) => Math.max(1, s - 1) as any)}
                 disabled={step === 1}
-                className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-sky-400/20 text-slate-300 text-xs font-bold transition-all disabled:opacity-30"
+                className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-[var(--surface-border)] text-slate-300 text-xs font-bold transition-all disabled:opacity-30"
               >
                 Anterior
               </button>
@@ -468,7 +468,7 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
                 <button
                   type="button"
                   onClick={() => setStep((s) => Math.min(4, s + 1) as any)}
-                  className="px-5 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-white text-xs font-bold transition-all shadow-md shadow-sky-500/20 flex items-center gap-1.5"
+                  className="btn-cozy-primary px-5 py-2 text-xs font-bold flex items-center gap-1.5 shadow-md"
                 >
                   <span>Siguiente</span>
                   <ChevronRight className="w-4 h-4" />

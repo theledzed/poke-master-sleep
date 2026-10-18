@@ -126,22 +126,22 @@ export const WeatherBackground: React.FC<WeatherBackgroundProps> = ({
         return {
           label: 'Lluvia Serena',
           icon: CloudRain,
-          iconColor: 'text-sky-300',
-          bgGradient: 'from-[#071929] via-[#0D2B42] to-[#06121C]',
+          iconColor: 'text-emerald-300',
+          bgGradient: 'from-[#142026] via-[#1a2930] to-[#10191f]',
           ambientRays:
-            'radial-gradient(ellipse 90% 70% at 50% -10%, rgba(56, 189, 248, 0.28), transparent 70%), radial-gradient(circle 600px at 20% 30%, rgba(16, 185, 129, 0.14), transparent)',
-          particleColor: 'bg-sky-200/70'
+            'radial-gradient(ellipse 90% 70% at 50% -10%, rgba(52, 211, 153, 0.18), transparent 70%), radial-gradient(circle 600px at 20% 30%, rgba(251, 191, 36, 0.08), transparent)',
+          particleColor: 'bg-emerald-100/60'
         };
       case 'night':
       default:
         return {
           label: 'Noche Estrellada',
           icon: Moon,
-          iconColor: 'text-cyan-300',
-          bgGradient: 'from-[#050C1D] via-[#0A1738] to-[#040815]',
+          iconColor: 'text-amber-200',
+          bgGradient: 'from-[#0e1322] via-[#141b33] to-[#0a0e1a]',
           ambientRays:
-            'radial-gradient(ellipse 90% 70% at 50% -10%, rgba(99, 102, 241, 0.30), transparent 70%), radial-gradient(circle 600px at 85% 15%, rgba(45, 212, 191, 0.18), transparent)',
-          particleColor: 'bg-indigo-100/70'
+            'radial-gradient(ellipse 90% 70% at 50% -10%, rgba(167, 139, 250, 0.20), transparent 70%), radial-gradient(circle 600px at 85% 15%, rgba(251, 191, 36, 0.12), transparent)',
+          particleColor: 'bg-amber-100/80'
         };
     }
   }, [activeWeather]);
@@ -156,17 +156,17 @@ export const WeatherBackground: React.FC<WeatherBackgroundProps> = ({
 
       {/* Atmospheric Particles */}
       {activeWeather === 'rain' ? (
-        /* Raindrops */
-        <div className="absolute inset-0 opacity-40">
+        /* Gentle soft rain mist */
+        <div className="absolute inset-0 opacity-20">
           <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
             <defs>
-              <pattern id="rain-pattern" width="60" height="80" patternUnits="userSpaceOnUse">
-                <line x1="10" y1="0" x2="5" y2="25" stroke="#38BDF8" strokeWidth="1.2" strokeOpacity="0.5" />
-                <line x1="40" y1="30" x2="35" y2="55" stroke="#38BDF8" strokeWidth="1.2" strokeOpacity="0.4" />
-                <line x1="25" y1="60" x2="20" y2="80" stroke="#38BDF8" strokeWidth="1" strokeOpacity="0.3" />
+              <pattern id="rain-pattern" width="80" height="100" patternUnits="userSpaceOnUse">
+                <line x1="10" y1="0" x2="6" y2="20" stroke="#ffffff" strokeWidth="0.8" strokeOpacity="0.35" />
+                <line x1="50" y1="35" x2="46" y2="55" stroke="#ffffff" strokeWidth="0.8" strokeOpacity="0.3" />
+                <line x1="30" y1="70" x2="26" y2="90" stroke="#ffffff" strokeWidth="0.8" strokeOpacity="0.25" />
               </pattern>
             </defs>
-            <rect width="100%" height="100%" fill="url(#rain-pattern)" className="animate-pulse" />
+            <rect width="100%" height="100%" fill="url(#rain-pattern)" />
           </svg>
         </div>
       ) : (
@@ -262,16 +262,16 @@ export const WeatherPill: React.FC<{
 
   return (
     <div className="relative" ref={menuRef}>
-      {/* Sleek Compact Trigger Pill (fits perfectly on mobile without bumping title) */}
+      {/* Sleek Compact Trigger Pill */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#0a203a] hover:bg-[#0f2d50] border border-sky-400/25 text-xs text-sky-200 shadow-sm transition-all flex-shrink-0"
+        className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--surface-inner)] hover:bg-white/10 border border-[var(--surface-border)] text-xs text-slate-200 shadow-sm transition-all flex-shrink-0"
         title="Cambiar atmósfera y clima dinámico"
       >
-        <CurrentIcon className="w-3.5 h-3.5 text-sky-400 flex-shrink-0" />
+        <CurrentIcon className="w-3.5 h-3.5 text-[var(--accent-primary)] flex-shrink-0" />
         <span className="text-[11px] font-bold hidden sm:inline">{currentOption.label}</span>
         {isAuto && (
-          <span className="text-[9px] bg-sky-500/20 text-sky-300 px-1 rounded font-black hidden sm:inline">
+          <span className="text-[9px] bg-white/10 text-slate-300 px-1 rounded font-black hidden sm:inline">
             Auto
           </span>
         )}
@@ -280,8 +280,8 @@ export const WeatherPill: React.FC<{
 
       {/* Floating Atmosphere Menu */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-48 bg-[#0c2444] border border-sky-400/30 rounded-2xl shadow-2xl p-2 z-50 backdrop-blur-xl animate-in fade-in slide-in-from-top-2 duration-150">
-          <div className="text-[10px] uppercase font-black tracking-wider text-slate-400 px-2 py-1 mb-1 border-b border-sky-400/15 flex items-center justify-between">
+        <div className="absolute right-0 top-full mt-2 w-48 cozy-card border border-[var(--surface-border)] rounded-2xl shadow-2xl p-2 z-50 backdrop-blur-xl animate-in fade-in slide-in-from-top-2 duration-150">
+          <div className="text-[10px] uppercase font-black tracking-wider text-slate-400 px-2 py-1 mb-1 border-b border-[var(--surface-border)] flex items-center justify-between">
             <span>Atmósfera & Clima</span>
           </div>
 
@@ -289,17 +289,17 @@ export const WeatherPill: React.FC<{
           <button
             onClick={handleEnableAuto}
             className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all mb-1 ${
-              isAuto ? 'bg-sky-500/20 text-sky-200 border border-sky-400/30' : 'text-slate-300 hover:bg-white/5'
+              isAuto ? 'bg-[var(--accent-primary)] text-slate-950 font-black shadow-sm' : 'text-slate-300 hover:bg-white/5'
             }`}
           >
             <span className="flex items-center gap-2">
-              <Compass className="w-3.5 h-3.5 text-sky-400" />
+              <Compass className="w-3.5 h-3.5" />
               <span>Auto (Hora y Clima)</span>
             </span>
-            {isAuto && <Check className="w-3.5 h-3.5 text-sky-400" />}
+            {isAuto && <Check className="w-3.5 h-3.5" />}
           </button>
 
-          <div className="h-px bg-sky-400/15 my-1" />
+          <div className="h-px bg-white/10 my-1" />
 
           {/* Manual Options */}
           {options.map((opt) => {
@@ -310,11 +310,11 @@ export const WeatherPill: React.FC<{
                 key={opt.mode}
                 onClick={() => handleManualSelect(opt.mode)}
                 className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                  isSelected ? 'bg-sky-500 text-white font-bold shadow-sm' : 'text-slate-300 hover:bg-white/5'
+                  isSelected ? 'bg-[var(--accent-primary)] text-slate-950 font-bold shadow-sm' : 'text-slate-300 hover:bg-white/5'
                 }`}
               >
                 <span className="flex items-center gap-2">
-                  <Icon className="w-3.5 h-3.5 text-sky-300" />
+                  <Icon className="w-3.5 h-3.5" />
                   <span>{opt.label}</span>
                 </span>
                 {isSelected && <Check className="w-3.5 h-3.5" />}

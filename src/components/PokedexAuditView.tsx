@@ -135,13 +135,13 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
   return (
     <div className="space-y-6">
       {/* Top Banner / Explanation */}
-      <div className="poke-card p-5 sm:p-6 relative overflow-hidden border border-sky-400/25 shadow-xl">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="cozy-card p-5 sm:p-6 relative overflow-hidden border border-[var(--surface-border)] shadow-xl">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-[var(--accent-primary)]/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 text-sky-400 text-xs font-black uppercase tracking-wider mb-1">
-              <Sparkles className="w-4 h-4 text-sky-400" />
+            <div className="flex items-center gap-2 text-[var(--accent-primary)] text-xs font-black uppercase tracking-wider mb-1">
+              <Sparkles className="w-4 h-4 text-[var(--accent-primary)]" />
               <span>Auditor Genético & Laboratorio del Profesor</span>
             </div>
             <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
@@ -152,7 +152,7 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
             </p>
           </div>
 
-          <div className="flex items-center gap-2 bg-[#08182c]/90 border border-sky-400/20 p-3 rounded-2xl self-start md:self-auto text-xs font-mono">
+          <div className="flex items-center gap-2 bg-[var(--surface-inner)] border border-[var(--surface-border)] p-3 rounded-2xl self-start md:self-auto text-xs font-mono">
             <div className="text-center px-2">
               <span className="text-[10px] text-slate-400 uppercase font-bold block">Colección</span>
               <span className="text-lg font-black text-white">{pokemons.length}</span>
@@ -164,8 +164,8 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
             </div>
             <div className="h-6 w-px bg-white/10" />
             <div className="text-center px-2">
-              <span className="text-[10px] text-sky-400 uppercase font-bold block">Promesas</span>
-              <span className="text-lg font-black text-sky-300">{counts.PROMESA_INVERTIR}</span>
+              <span className="text-[10px] text-amber-400 uppercase font-bold block">Promesas</span>
+              <span className="text-lg font-black text-amber-300">{counts.PROMESA_INVERTIR}</span>
             </div>
             <div className="h-6 w-px bg-white/10" />
             <div className="text-center px-2">
@@ -178,12 +178,12 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
 
       {/* Filter Tabs by Verdict Category */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-1.5 bg-[#091f3a] p-1.5 rounded-2xl border border-sky-400/20 overflow-x-auto max-w-full">
+        <div className="flex items-center gap-1.5 bg-[var(--surface-inner)] p-1.5 rounded-2xl border border-[var(--surface-border)] overflow-x-auto max-w-full">
           <button
             onClick={() => setFilterCategory('ALL')}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
               filterCategory === 'ALL'
-                ? 'bg-sky-500 text-white shadow-sm shadow-sky-500/25'
+                ? 'bg-[var(--accent-primary)] text-slate-950 font-black shadow-sm'
                 : 'text-slate-300 hover:text-white hover:bg-white/5'
             }`}
           >
@@ -256,14 +256,14 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
             placeholder="Buscar por nombre o nota..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 bg-[#0c2444]/90 border border-sky-400/20 rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-sky-400 font-medium"
+            className="w-full pl-9 pr-3 py-2 bg-[var(--surface-inner)] border border-[var(--surface-border)] rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[var(--accent-primary)] font-medium"
           />
         </div>
       </div>
 
       {/* Grid of Diagnosed Pokemon Cards */}
       {filteredResults.length === 0 ? (
-        <div className="poke-card p-10 text-center text-slate-400 text-sm">
+        <div className="cozy-card p-10 text-center text-slate-400 text-sm">
           No hay Pokémon que coincidan con el filtro seleccionado.
         </div>
       ) : (
@@ -278,14 +278,14 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
             return (
               <div
                 key={pokemon.id}
-                className={`poke-card p-4 sm:p-5 flex flex-col justify-between border transition-all relative overflow-hidden group shadow-md hover:shadow-xl ${
+                className={`cozy-card p-4 sm:p-5 flex flex-col justify-between border transition-all relative overflow-hidden group shadow-md hover:shadow-xl ${
                   verdict === 'CAMBIAR_CARAMELOS'
-                    ? 'border-rose-500/30 hover:border-rose-500/60 bg-gradient-to-b from-[#18111e]/90 to-[#0e1726]/90'
+                    ? 'border-rose-500/30 hover:border-rose-500/60'
                     : verdict === 'TITULAR_ELITE'
-                    ? 'border-emerald-500/35 hover:border-emerald-400/60 bg-gradient-to-b from-[#0e2738]/90 to-[#0a1b2d]/90'
+                    ? 'border-emerald-500/35 hover:border-emerald-400/60'
                     : verdict === 'PROMESA_INVERTIR'
-                    ? 'border-sky-400/35 hover:border-sky-400/60 bg-gradient-to-b from-[#0c2444]/90 to-[#08182c]/90'
-                    : 'border-sky-400/20 hover:border-sky-400/40 bg-[#0c2444]/80'
+                    ? 'border-amber-400/35 hover:border-amber-400/60'
+                    : 'border-[var(--surface-border)] hover:border-slate-500'
                 }`}
               >
                 <div>
@@ -311,7 +311,7 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
                       <div>
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <h4 className="font-black text-white text-base leading-tight">{pokemon.name}</h4>
-                          <span className="text-[10px] font-black text-sky-200 bg-sky-500/20 px-2 py-0.2 rounded-full border border-sky-400/30">
+                          <span className="text-[10px] font-black text-amber-200 bg-amber-500/20 px-2 py-0.2 rounded-full border border-amber-400/30 font-mono">
                             Nv. {pokemon.level}
                           </span>
                         </div>

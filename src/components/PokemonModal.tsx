@@ -523,16 +523,16 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
 
           {/* Datamined Master Info Strip */}
           {matchedMaster && (
-            <div className="p-3 bg-gradient-to-r from-sky-950/70 via-slate-900/80 to-indigo-950/70 border border-sky-400/25 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+            <div className="p-3 bg-[var(--surface-inner)] border border-[var(--surface-border)] rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center text-sky-300 flex-shrink-0">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center text-amber-300 flex-shrink-0">
                   <Wand2 className="w-4 h-4" />
                 </div>
                 <div>
                   <div className="font-bold text-white flex items-center gap-2">
                     <span>{matchedMaster.name}</span>
                     <span className="text-[10px] text-slate-400 font-mono">#{String(matchedMaster.dexNumber).padStart(3, '0')}</span>
-                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-sky-500/20 text-sky-300 border border-sky-400/30 capitalize font-medium">
+                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-200 border border-amber-400/30 capitalize font-medium">
                       {matchedMaster.type}
                     </span>
                   </div>
@@ -541,7 +541,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                     <span>•</span>
                     <span>Ratio Ingr: <strong className="text-emerald-300 font-mono">{matchedMaster.ingredientRate}%</strong></span>
                     <span>•</span>
-                    <span>Ratio Hab: <strong className="text-sky-300 font-mono">{matchedMaster.skillRate}%</strong></span>
+                    <span>Ratio Hab: <strong className="text-amber-300 font-mono">{matchedMaster.skillRate}%</strong></span>
                     <span>•</span>
                     <span>Frec. Base: <strong className="text-amber-300 font-mono">{matchedMaster.frequencyStr}</strong></span>
                   </div>
@@ -586,7 +586,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                     setSuggestions(searchMasterSpecies(name, 8));
                     setShowSuggestions(true);
                   }}
-                  className="w-full pl-3 pr-8 py-2 bg-slate-950 border border-slate-800 focus:border-sky-500 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium"
+                  className="w-full pl-3 pr-8 py-2 bg-slate-950 border border-slate-800 focus:border-amber-400 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-amber-400 font-medium"
                 />
                 <button
                   type="button"
@@ -605,9 +605,9 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
               {showSuggestions && suggestions.length > 0 && (
                 <div
                   ref={suggestionsRef}
-                  className="absolute left-0 right-0 top-full mt-1.5 bg-[#08182c] border border-sky-400/30 rounded-2xl shadow-2xl z-50 max-h-64 overflow-y-auto divide-y divide-sky-950/60 backdrop-blur-xl"
+                  className="absolute left-0 right-0 top-full mt-1.5 bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-2xl shadow-2xl z-50 max-h-64 overflow-y-auto divide-y divide-white/10 backdrop-blur-xl"
                 >
-                  <div className="p-2 bg-sky-950/40 text-[10px] text-sky-300 font-semibold uppercase tracking-wider flex items-center justify-between">
+                  <div className="p-2 bg-[var(--surface-inner)] text-[10px] text-amber-300 font-semibold uppercase tracking-wider flex items-center justify-between">
                     <span>Especies de Pokémon Sleep</span>
                     <span className="text-slate-400 font-normal text-[9px]">Click para autocompletar</span>
                   </div>
@@ -620,10 +620,10 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                         key={entry.name}
                         type="button"
                         onClick={() => handleSelectSpecies(entry)}
-                        className="w-full text-left px-3 py-2.5 hover:bg-sky-900/40 flex items-center justify-between gap-2 transition-colors group"
+                        className="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center justify-between gap-2 transition-colors group"
                       >
                         <div className="flex items-center gap-2.5 truncate">
-                          <div className="w-9 h-9 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-center p-0.5 flex-shrink-0 group-hover:border-sky-400/40">
+                          <div className="w-9 h-9 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-center p-0.5 flex-shrink-0 group-hover:border-amber-400/40">
                             <img
                               src={artworkUrl}
                               alt={entry.name}
@@ -848,12 +848,12 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
             <div className="sm:col-span-2">
               <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center justify-between">
                 <span>Nivel</span>
-                <span className="text-[10px] text-sky-400 font-bold">1-7</span>
+                <span className="text-[10px] text-amber-400 font-bold">1-7</span>
               </label>
               <select
                 value={mainSkillLevel}
                 onChange={(e) => setMainSkillLevel(parseInt(e.target.value, 10))}
-                className="w-full px-2.5 py-2 bg-slate-950 border border-sky-400/40 rounded-xl text-xs text-sky-300 font-black focus:outline-none focus:ring-2 focus:ring-sky-400 font-mono shadow-inner text-center"
+                className="w-full px-2.5 py-2 bg-slate-950 border border-amber-400/40 rounded-xl text-xs text-amber-300 font-black focus:outline-none focus:ring-2 focus:ring-amber-400 font-mono shadow-inner text-center"
                 title="Nivel de Habilidad Principal (1 a 7)"
               >
                 {[1, 2, 3, 4, 5, 6, 7].map(lvl => (

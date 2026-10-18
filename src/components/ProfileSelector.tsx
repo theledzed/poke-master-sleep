@@ -16,13 +16,13 @@ export const ProfileSelector: React.FC<ProfileSelectorProps> = ({
   return (
     <div className="flex items-center gap-1.5 sm:gap-2">
       {/* Segmented Profile Switcher Pill */}
-      <div className="flex items-center bg-[#071322] border border-sky-400/25 rounded-full p-0.5 shadow-inner">
+      <div className="flex items-center bg-[var(--surface-inner)] border border-[var(--surface-border)] rounded-full p-0.5 shadow-inner">
         <button
           type="button"
           onClick={() => onSelectProfile('cris')}
           className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-full text-xs font-black transition-all ${
             activeProfile === 'cris'
-              ? 'bg-gradient-to-r from-blue-600 to-sky-500 text-white shadow-md shadow-sky-500/25 scale-[1.02]'
+              ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-md shadow-amber-500/25 scale-[1.02]'
               : 'text-slate-400 hover:text-slate-200'
           }`}
           title="Perfil de Cris (Caja y Snorlax)"
@@ -36,7 +36,7 @@ export const ProfileSelector: React.FC<ProfileSelectorProps> = ({
           onClick={() => onSelectProfile('ady')}
           className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-full text-xs font-black transition-all ${
             activeProfile === 'ady'
-              ? 'bg-gradient-to-r from-pink-600 to-rose-400 text-white shadow-md shadow-rose-500/25 scale-[1.02]'
+              ? 'bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-md shadow-rose-500/25 scale-[1.02]'
               : 'text-slate-400 hover:text-slate-200'
           }`}
           title="Perfil de Ady (Caja y Snorlax)"
@@ -48,7 +48,7 @@ export const ProfileSelector: React.FC<ProfileSelectorProps> = ({
 
       {/* Cloud Sync Status Indicator */}
       <div
-        className="flex items-center justify-center w-7 h-7 rounded-full bg-[#0a203a] border border-sky-400/20 shadow-sm"
+        className="flex items-center justify-center w-7 h-7 rounded-full bg-[var(--surface-inner)] border border-[var(--surface-border)] shadow-sm"
         title={
           syncStatus === 'syncing'
             ? 'Sincronizando con Supabase Cloud...'

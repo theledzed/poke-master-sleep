@@ -92,15 +92,15 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-2xl bg-[#091b33] border border-sky-400/40 rounded-3xl shadow-2xl overflow-hidden text-white flex flex-col max-h-[92vh]">
+      <div className="relative w-full max-w-2xl cozy-card border border-[var(--surface-border)] rounded-3xl shadow-2xl overflow-hidden text-white flex flex-col max-h-[92vh]">
         {/* Glowing Top Ambient Header */}
-        <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-sky-500/20 via-sky-400/5 to-transparent pointer-events-none" />
+        <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-amber-500/10 via-transparent to-transparent pointer-events-none" />
 
         {/* Modal Header */}
-        <div className="p-4 sm:p-5 border-b border-sky-400/20 flex items-center justify-between relative z-10">
+        <div className="p-4 sm:p-5 border-b border-[var(--surface-border)] flex items-center justify-between relative z-10">
           <div className="flex items-center gap-2.5">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-300 p-0.5 shadow-lg shadow-amber-500/25 flex items-center justify-center">
-              <div className="w-full h-full bg-[#08182c] rounded-[14px] flex items-center justify-center">
+              <div className="w-full h-full bg-[var(--surface-inner)] rounded-[14px] flex items-center justify-center">
                 <Dna className="w-5 h-5 text-amber-300 animate-pulse" />
               </div>
             </div>
@@ -109,7 +109,7 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
                 <h3 className="text-base sm:text-lg font-black tracking-tight text-white flex items-center gap-1.5">
                   <span>Laboratorio de Evolución</span>
                 </h3>
-                <span className="text-[10px] font-black uppercase tracking-wider bg-sky-500/20 text-sky-300 border border-sky-400/30 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-400/30 px-2 py-0.5 rounded-full">
                   What-If
                 </span>
               </div>
@@ -133,7 +133,7 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
           {/* Branching Evolutions Selector (e.g. Eevee, Kirlia, Slowpoke) */}
           {availableEvolutions.length > 1 && (
             <div>
-              <label className="block text-xs font-bold text-sky-200 mb-1.5 flex items-center justify-between">
+              <label className="block text-xs font-bold text-slate-200 mb-1.5 flex items-center justify-between">
                 <span>Ramas de Evolución Disponibles ({availableEvolutions.length})</span>
                 <span className="text-[10px] text-amber-300 font-semibold">Selecciona tu objetivo</span>
               </label>
@@ -148,7 +148,7 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
                       onClick={() => setSelectedTargetIndex(idx)}
                       className={`flex items-center gap-2 p-2 rounded-xl border text-xs font-bold transition-all text-left ${
                         isSelected
-                          ? 'bg-sky-500/30 border-sky-400 text-white shadow-md shadow-sky-500/20 ring-1 ring-sky-400'
+                          ? 'bg-amber-500/25 border-amber-400 text-white shadow-md shadow-amber-500/20 ring-1 ring-amber-400'
                           : 'bg-slate-900/70 border-slate-800 text-slate-300 hover:bg-white/5 hover:border-slate-700'
                       }`}
                     >
@@ -270,21 +270,21 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
 
               {/* Evolved Stats List */}
               <div className="space-y-1.5 text-xs pt-1">
-                <div className="flex items-center justify-between bg-sky-950/60 border border-sky-400/20 px-2 py-1 rounded-lg">
+                <div className="flex items-center justify-between bg-[var(--surface-inner)] border border-[var(--surface-border)] px-2 py-1 rounded-lg">
                   <span className="text-slate-300 text-[11px]">Habilidad:</span>
                   <span className="font-bold text-amber-300 truncate max-w-[140px] text-right flex items-center gap-1">
                     <span>Nv. {preview.skillLevelAfter}</span>
                     <span className="text-[9px] bg-amber-400/20 text-amber-300 px-1 rounded font-black">+1</span>
                   </span>
                 </div>
-                <div className="flex items-center justify-between bg-sky-950/60 border border-sky-400/20 px-2 py-1 rounded-lg">
+                <div className="flex items-center justify-between bg-[var(--surface-inner)] border border-[var(--surface-border)] px-2 py-1 rounded-lg">
                   <span className="text-slate-300 text-[11px]">Inventario:</span>
                   <span className="font-bold font-mono text-emerald-300 flex items-center gap-1">
                     <span>{preview.carryLimitAfter} slots</span>
                     <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-1 rounded font-black">+5</span>
                   </span>
                 </div>
-                <div className="flex items-center justify-between bg-sky-950/60 border border-sky-400/20 px-2 py-1 rounded-lg">
+                <div className="flex items-center justify-between bg-[var(--surface-inner)] border border-[var(--surface-border)] px-2 py-1 rounded-lg">
                   <span className="text-slate-300 text-[11px]">Puntos Ayuda (PA):</span>
                   <span className="font-bold font-mono text-emerald-300 flex items-center gap-1">
                     <span>~{preview.rpAfter}</span>
@@ -296,7 +296,7 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
           </div>
 
           {/* Quick Metrics Banner: Estimated Vigor Boost */}
-          <div className="bg-gradient-to-r from-emerald-950/60 via-slate-900/80 to-sky-950/60 border border-emerald-500/30 rounded-2xl p-3 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs shadow-md">
+          <div className="bg-[var(--surface-inner)] border border-emerald-500/30 rounded-2xl p-3 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs shadow-md">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center flex-shrink-0">
                 <TrendingUp className="w-4 h-4 text-emerald-400" />
@@ -323,7 +323,7 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 sm:p-5 border-t border-sky-400/20 bg-slate-950/80 flex items-center justify-between gap-3 relative z-10">
+        <div className="p-4 sm:p-5 border-t border-[var(--surface-border)] bg-[var(--surface-inner)] flex items-center justify-between gap-3 relative z-10">
           <button
             type="button"
             onClick={onClose}

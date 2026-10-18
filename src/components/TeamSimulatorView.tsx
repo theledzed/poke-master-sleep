@@ -290,15 +290,15 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
   return (
     <div className="space-y-6 my-6">
       {/* Top Header */}
-      <div className="poke-card pokeball-watermark p-5 sm:p-6 relative overflow-hidden">
+      <div className="cozy-card pokeball-watermark p-5 sm:p-6 rounded-3xl relative overflow-hidden border border-[var(--surface-border)] shadow-xl">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
           <div>
             <div className="flex items-center gap-2 text-amber-400 text-xs font-black uppercase tracking-wider mb-1">
               <Swords className="w-4 h-4 text-amber-400" />
-              <span>Laboratorio de Equipos & Banco de Pruebas</span>
+              <span>Laboratorio de Campamento</span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
-              <span>Simulador de Equipos Personalizados</span>
+            <h2 className="text-xl sm:text-2xl font-display font-bold text-[var(--text-heading)] tracking-tight flex items-center gap-2">
+              <span>Simulador de Equipos</span>
             </h2>
             <p className="text-xs text-slate-300 mt-1 max-w-2xl">
               Elige 5 Pokémon de tu caja para simular su vigor diario, evaluar sus 3 comidas y compararlo frente al equipo óptimo de Snorlax.
@@ -306,7 +306,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
           </div>
 
           {/* Snorlax Context Pills */}
-          <div className="flex flex-wrap items-center gap-2 bg-[#080C16]/80 p-3 rounded-2xl border border-white/10 self-start md:self-auto text-xs backdrop-blur-md">
+          <div className="flex flex-wrap items-center gap-2 bg-[var(--surface-inner)] p-2.5 rounded-2xl border border-[var(--surface-border)] self-start md:self-auto text-xs shadow-inner">
             <span className="flex items-center gap-1.5 text-slate-200 font-bold px-2.5 py-1 rounded-full bg-white/5 border border-white/10">
               <span>{config.dishType === 'curry' ? '🍲' : config.dishType === 'salad' ? '🥗' : '☕'}</span>
               <span className="capitalize">{config.dishType === 'curry' ? 'Curris' : config.dishType === 'salad' ? 'Ensaladas' : 'Postres'}</span>
@@ -366,34 +366,34 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
         </div>
 
         {/* Team Tabs & Action Buttons */}
-        <div className="mt-5 pt-4 border-t border-sky-400/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
-          <div className="flex items-center gap-1 bg-[#091f3a] p-1 rounded-xl border border-sky-400/20">
+        <div className="mt-5 pt-4 border-t border-[var(--surface-border)] flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
+          <div className="flex items-center gap-1 bg-[var(--surface-inner)] p-1 rounded-2xl border border-[var(--surface-border)] shadow-inner">
             <button
               onClick={() => setActiveCustomTeamIndex(0)}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
                 activeCustomTeamIndex === 0
-                  ? 'bg-sky-500 text-white shadow-sm shadow-sky-500/30'
+                  ? 'bg-amber-400 text-slate-950 font-black shadow-md shadow-amber-400/25'
                   : 'text-slate-300 hover:text-white hover:bg-white/5'
               }`}
             >
-              <span>🔵 Mi Equipo 1</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono font-bold ${
-                activeCustomTeamIndex === 0 ? 'bg-sky-950/40 text-sky-100' : 'bg-white/10 text-slate-400'
+              <span>⭐ Mi Equipo 1</span>
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-lg font-mono font-bold ${
+                activeCustomTeamIndex === 0 ? 'bg-black/20 text-slate-950' : 'bg-white/10 text-slate-400'
               }`}>
                 {team1Ids.filter(Boolean).length}/5
               </span>
             </button>
             <button
               onClick={() => setActiveCustomTeamIndex(1)}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
                 activeCustomTeamIndex === 1
-                  ? 'bg-sky-500 text-white shadow-sm shadow-sky-500/30'
+                  ? 'bg-amber-400 text-slate-950 font-black shadow-md shadow-amber-400/25'
                   : 'text-slate-300 hover:text-white hover:bg-white/5'
               }`}
             >
-              <span>🟣 Mi Equipo 2</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono font-bold ${
-                activeCustomTeamIndex === 1 ? 'bg-sky-950/40 text-sky-100' : 'bg-white/10 text-slate-400'
+              <span>🌟 Mi Equipo 2</span>
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-lg font-mono font-bold ${
+                activeCustomTeamIndex === 1 ? 'bg-black/20 text-slate-950' : 'bg-white/10 text-slate-400'
               }`}>
                 {team2Ids.filter(Boolean).length}/5
               </span>
@@ -405,7 +405,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
             {config.currentTeam?.pokemonIds && config.currentTeam.pokemonIds.length > 0 && (
               <button
                 onClick={handleLoadCurrentTeam}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#091f3a] hover:bg-emerald-500/20 border border-sky-400/20 hover:border-emerald-500/40 text-emerald-300 hover:text-white text-xs font-bold transition-all shadow-sm"
+                className="btn-cozy-secondary px-3.5 py-2 text-xs text-emerald-300 border-emerald-500/30 flex items-center gap-1.5"
                 title="Cargar los Pokémon que tienes marcados como tu Equipo Actual en Juego"
               >
                 <Download className="w-3.5 h-3.5" />
@@ -416,14 +416,14 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
             {/* Set as in-game team button or badge */}
             {currentTeamPokemons.length === 5 && (
               isCurrentCustomTeamInGame ? (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-xs font-bold shadow-sm">
+                <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-xs font-bold shadow-sm">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                   <span>En Juego ⭐</span>
                 </div>
               ) : (
                 <button
                   onClick={handleSaveAsCurrentTeam}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md shadow-emerald-600/25 active:scale-95"
+                  className="btn-cozy-secondary px-3.5 py-2 text-xs text-amber-300 border-amber-400/40 flex items-center gap-1.5"
                   title="Establecer esta alineación de 5 Pokémon como tu Equipo Actual en Juego"
                 >
                   {saveTeamStatus ? <Check className="w-3.5 h-3.5" /> : <Star className="w-3.5 h-3.5 fill-current text-amber-300" />}
@@ -435,7 +435,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
             {recommendedResult && (
               <button
                 onClick={handleCopyRecommended}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white text-xs font-bold transition-all shadow-md shadow-sky-500/20"
+                className="btn-cozy-primary px-4 py-2 text-xs flex items-center gap-1.5"
                 title="Copiar los 5 Pokémon recomendados por el algoritmo a este equipo"
               >
                 <Copy className="w-3.5 h-3.5" />
@@ -444,7 +444,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
             )}
             <button
               onClick={handleClearTeam}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#091f3a] hover:bg-rose-950/40 border border-sky-400/20 hover:border-rose-500/40 text-slate-300 hover:text-rose-300 text-xs font-bold transition-all shadow-sm"
+              className="btn-cozy-secondary px-3 py-2 text-xs text-rose-300 border-rose-500/25 flex items-center gap-1.5"
               title="Vaciar los 5 espacios"
             >
               <Trash2 className="w-3.5 h-3.5" />
@@ -454,28 +454,25 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
         </div>
       </div>
 
-      {/* Head-to-Head Comparative Banner (Pokemon Stadium / GO Battle League style) */}
+      {/* Head-to-Head Comparative Banner */}
       {recommendedResult && customEvaluation && currentTeamPokemons.length === 5 && comparisonDiff && (
-        <div className="poke-card p-5 sm:p-6 relative overflow-hidden border border-sky-400/25 shadow-xl">
-          {/* Ambient battle glow */}
-          <div className="absolute top-0 right-0 w-80 h-80 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
-
+        <div className="cozy-card p-5 sm:p-6 rounded-3xl relative overflow-hidden border border-[var(--surface-border)] shadow-xl">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
             <div className="flex-1">
-              <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-sky-400 mb-3">
-                <Scale className="w-4 h-4 text-sky-400" />
-                <span>Duelo de Rendimiento de Campamento</span>
+              <div className="flex items-center gap-2 text-xs font-display font-bold uppercase tracking-wider text-[var(--text-heading)] mb-3">
+                <Scale className="w-4 h-4 text-amber-400" />
+                <span>Comparativa de Rendimiento del Campamento</span>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 items-center">
                 {/* Recommended Score */}
-                <div className="bg-[#08182c]/85 p-4 rounded-2xl border border-sky-400/20 shadow-inner">
+                <div className="bg-[var(--surface-inner)] p-4 rounded-2xl border border-[var(--surface-border)] shadow-inner">
                   <div className="flex items-center justify-between gap-1 mb-1">
-                    <span className="text-[11px] text-amber-300 font-black flex items-center gap-1 uppercase tracking-wider">
+                    <span className="text-[11px] text-amber-300 font-bold flex items-center gap-1 uppercase tracking-wider">
                       <Trophy className="w-3.5 h-3.5" /> Recomendado
                     </span>
                     {recommendedWeeklyProj && (
-                      <span className="text-[9px] bg-amber-400/20 text-amber-300 font-black px-2 py-0.5 rounded-full border border-amber-400/30 truncate">
+                      <span className="text-[9px] bg-amber-400/20 text-amber-300 font-bold px-2 py-0.5 rounded-full border border-amber-400/30 truncate">
                         🏅 {recommendedWeeklyProj.estadoRangoFinal.rangoActual}
                       </span>
                     )}
@@ -486,7 +483,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                   <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono mt-0.5">
                     <span>pts / día</span>
                     {recommendedWeeklyProj && (
-                      <span className="text-sky-300 font-bold">
+                      <span className="text-amber-300 font-bold">
                         ~{recommendedWeeklyProj.vigorFinalSemana.toLocaleString()} /sem
                       </span>
                     )}
@@ -494,13 +491,13 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                 </div>
 
                 {/* Custom Team Score */}
-                <div className="bg-[#08182c]/85 p-4 rounded-2xl border border-sky-400/20 shadow-inner">
+                <div className="bg-[var(--surface-inner)] p-4 rounded-2xl border border-[var(--surface-border)] shadow-inner">
                   <div className="flex items-center justify-between gap-1 mb-1">
-                    <span className="text-[11px] text-slate-200 font-black flex items-center gap-1 uppercase tracking-wider">
-                      <span>{activeCustomTeamIndex === 0 ? '🔵' : '🟣'}</span> Tu Equipo
+                    <span className="text-[11px] text-slate-200 font-bold flex items-center gap-1 uppercase tracking-wider">
+                      <span>⭐</span> Tu Equipo
                     </span>
                     {customWeeklyProj && (
-                      <span className="text-[9px] bg-sky-500/20 text-sky-200 font-black px-2 py-0.5 rounded-full border border-sky-400/30 truncate">
+                      <span className="text-[9px] bg-[var(--surface-inner)] text-slate-200 font-bold px-2 py-0.5 rounded-full border border-white/10 truncate">
                         🏅 {customWeeklyProj.estadoRangoFinal.rangoActual}
                       </span>
                     )}
@@ -511,7 +508,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                   <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono mt-0.5">
                     <span>pts / día</span>
                     {customWeeklyProj && (
-                      <span className="text-sky-300 font-bold">
+                      <span className="text-slate-300 font-bold">
                         ~{customWeeklyProj.vigorFinalSemana.toLocaleString()} /sem
                       </span>
                     )}
@@ -524,7 +521,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                     ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
                     : 'bg-rose-500/15 border-rose-500/30 text-rose-300'
                 }`}>
-                  <span className="text-[10px] uppercase font-black tracking-wider flex items-center gap-1">
+                  <span className="text-[10px] uppercase font-bold tracking-wider flex items-center gap-1">
                     {comparisonDiff.diffTotal >= 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
                     Diferencia
                   </span>
@@ -611,16 +608,16 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                 <button
                   key={slotIdx}
                   onClick={() => setPickerSlotIndex(slotIdx)}
-                  className="h-[142px] max-h-[142px] min-h-[142px] rounded-2xl border-2 border-dashed border-sky-400/25 hover:border-sky-400/50 bg-[#0c2444]/40 hover:bg-[#0c2444]/70 p-3 flex items-center justify-center gap-3 transition-all group shadow-sm relative overflow-hidden"
+                  className="h-[142px] max-h-[142px] min-h-[142px] rounded-2xl border-2 border-dashed border-[var(--surface-border)] hover:border-[var(--accent-primary)]/50 bg-[var(--surface-inner)]/50 hover:bg-[var(--surface-inner)] p-3 flex items-center justify-center gap-3 transition-all group shadow-sm relative overflow-hidden"
                 >
-                  <div className="w-12 h-12 rounded-xl bg-sky-500/10 group-hover:bg-sky-500/20 border border-sky-400/20 group-hover:border-sky-400/40 flex items-center justify-center transition-all shadow-inner flex-shrink-0">
-                    <Plus className="w-5 h-5 text-sky-400 group-hover:scale-110 transition-transform" />
+                  <div className="w-12 h-12 rounded-xl bg-[var(--accent-primary)]/10 group-hover:bg-[var(--accent-primary)]/20 border border-[var(--accent-primary)]/20 group-hover:border-[var(--accent-primary)]/40 flex items-center justify-center transition-all shadow-inner flex-shrink-0">
+                    <Plus className="w-5 h-5 text-[var(--accent-primary)] group-hover:scale-110 transition-transform" />
                   </div>
                   <div className="text-left">
-                    <span className="text-[10px] font-mono font-black text-sky-300 block">
+                    <span className="text-[10px] font-mono font-black text-[var(--accent-primary)] block">
                       Espacio #{slotIdx + 1}
                     </span>
-                    <span className="text-xs font-bold text-white group-hover:text-sky-200 transition-colors">
+                    <span className="text-xs font-bold text-white group-hover:text-[var(--accent-primary)] transition-colors">
                       + Elegir Pokémon
                     </span>
                   </div>
@@ -645,7 +642,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                       e.stopPropagation();
                       setPickerSlotIndex(slotIdx);
                     }}
-                    className="p-1 rounded-lg bg-[#08182c]/90 hover:bg-sky-500 text-sky-300 hover:text-white border border-sky-400/30 transition-all shadow-md"
+                    className="p-1 rounded-lg bg-[var(--surface-card)] hover:bg-[var(--accent-primary)] text-slate-200 hover:text-slate-950 border border-[var(--surface-border)] transition-all shadow-md"
                     title="Cambiar este Pokémon (Swap)"
                   >
                     <ArrowRightLeft className="w-3 h-3 stroke-[2.5]" />
@@ -655,7 +652,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                       e.stopPropagation();
                       handleRemoveFromSlot(slotIdx);
                     }}
-                    className="p-1 rounded-lg bg-[#08182c]/90 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/30 transition-all shadow-md"
+                    className="p-1 rounded-lg bg-[var(--surface-card)] hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/30 transition-all shadow-md"
                     title="Quitar del equipo"
                   >
                     <X className="w-3 h-3" />
@@ -686,7 +683,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
 
       {/* Custom Team Meals & Production Breakdown */}
       {customEvaluation && (
-        <div className="poke-card p-5 sm:p-6 border border-sky-400/20 shadow-xl">
+        <div className="cozy-card p-5 sm:p-6 border border-[var(--surface-border)] shadow-xl">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Utensils className="w-5 h-5 text-amber-300" />
@@ -694,8 +691,8 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                 Plan Culinario y Relleno de {activeCustomTeamIndex === 0 ? 'Mi Equipo 1' : 'Mi Equipo 2'}
               </h3>
             </div>
-            <span className="text-xs bg-[#08182c]/80 border border-sky-400/20 px-3 py-1 rounded-full text-slate-200 font-mono">
-              Vigor Cocina: <strong className="text-sky-300 font-black">{customEvaluation.cookingVigorDaily.toLocaleString()}</strong> pts/día
+            <span className="text-xs bg-[var(--surface-inner)] border border-[var(--surface-border)] px-3 py-1 rounded-full text-slate-200 font-mono">
+              Vigor Cocina: <strong className="text-[var(--accent-primary)] font-black">{customEvaluation.cookingVigorDaily.toLocaleString()}</strong> pts/día
             </span>
           </div>
 
@@ -703,7 +700,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
             {customEvaluation.meals.map((meal) => (
               <div
                 key={meal.mealIndex}
-                className="bg-[#0c2444]/80 border border-sky-400/20 rounded-2xl p-4 flex flex-col justify-between shadow-md"
+                className="cozy-card border border-[var(--surface-border)] rounded-2xl p-4 flex flex-col justify-between shadow-md"
               >
                 <div>
                   <div className="flex items-center justify-between mb-2">
@@ -711,7 +708,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                       {meal.mealName}
                     </span>
                     <div className="text-right">
-                      <span className="text-xs font-mono font-black text-sky-300">
+                      <span className="text-xs font-mono font-black text-[var(--accent-primary)]">
                         +{meal.totalMealVigor.toLocaleString()} pts
                       </span>
                       <span className="block text-[9px] text-slate-400 font-sans">
@@ -868,11 +865,11 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
       {/* Pokemon Selection Modal / Drawer */}
       {pickerSlotIndex !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto">
-          <div className="bg-[#0c2444] pokeball-watermark rounded-3xl w-full max-w-3xl max-h-[85vh] flex flex-col shadow-2xl relative my-auto overflow-hidden border border-sky-400/25">
+          <div className="cozy-card pokeball-watermark rounded-3xl w-full max-w-3xl max-h-[85vh] flex flex-col shadow-2xl relative my-auto overflow-hidden border border-[var(--surface-border)]">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-5 border-b border-sky-400/20 bg-[#08182c]/90 relative z-10">
+            <div className="flex items-center justify-between p-5 border-b border-[var(--surface-border)] bg-[var(--surface-inner)] relative z-10">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center text-xl flex-shrink-0 shadow-sm">
+                <div className="w-10 h-10 rounded-2xl bg-[var(--accent-primary)]/20 border border-[var(--accent-primary)]/30 flex items-center justify-center text-xl flex-shrink-0 shadow-sm">
                   <span>🐾</span>
                 </div>
                 <div>
@@ -893,7 +890,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
             </div>
 
             {/* Modal Filters */}
-            <div className="p-4 bg-[#08182c]/80 border-b border-sky-400/20 grid grid-cols-1 sm:grid-cols-4 gap-2.5 relative z-10">
+            <div className="p-4 bg-[var(--surface-inner)] border-b border-[var(--surface-border)] grid grid-cols-1 sm:grid-cols-4 gap-2.5 relative z-10">
               <div className="relative sm:col-span-2">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5" />
                 <input
@@ -901,7 +898,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                   placeholder="Buscar por nombre..."
                   value={pickerSearch}
                   onChange={(e) => setPickerSearch(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-sky-950/60 border border-sky-400/20 rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-sky-400"
+                  className="w-full pl-9 pr-3 py-2 bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[var(--accent-primary)]"
                 />
               </div>
 
@@ -909,13 +906,13 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                 <select
                   value={pickerSpecialty}
                   onChange={(e) => setPickerSpecialty(e.target.value)}
-                  className="w-full px-3 py-2 bg-sky-950/60 border border-sky-400/20 rounded-xl text-xs text-slate-200 font-bold focus:outline-none focus:ring-1 focus:ring-sky-400"
+                  className="w-full px-3 py-2 bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-xl text-xs text-slate-200 font-bold focus:outline-none focus:ring-1 focus:ring-[var(--accent-primary)]"
                 >
-                  <option value="all" className="bg-[#0c2444]">Todas las especialidades</option>
-                  <option value="Bayas" className="bg-[#0c2444]">Bayas</option>
-                  <option value="Ingredientes" className="bg-[#0c2444]">Ingredientes</option>
-                  <option value="Habilidades" className="bg-[#0c2444]">Habilidades</option>
-                  <option value="Todo" className="bg-[#0c2444]">Todo (Mew)</option>
+                  <option value="all">Todas las especialidades</option>
+                  <option value="Bayas">Bayas</option>
+                  <option value="Ingredientes">Ingredientes</option>
+                  <option value="Habilidades">Habilidades</option>
+                  <option value="Todo">Todo (Mew)</option>
                 </select>
               </div>
 
@@ -923,30 +920,30 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                 <select
                   value={pickerSort}
                   onChange={(e) => setPickerSort(e.target.value as any)}
-                  className="w-full px-3 py-2 bg-sky-950/60 border border-sky-400/20 rounded-xl text-xs text-slate-200 font-bold focus:outline-none focus:ring-1 focus:ring-sky-400"
+                  className="w-full px-3 py-2 bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-xl text-xs text-slate-200 font-bold focus:outline-none focus:ring-1 focus:ring-[var(--accent-primary)]"
                 >
-                  <option value="level" className="bg-[#0c2444]">Mayor Nivel</option>
-                  <option value="rp" className="bg-[#0c2444]">Mayor Poder (PA)</option>
-                  <option value="speed" className="bg-[#0c2444]">Mayor Rapidez</option>
-                  <option value="name" className="bg-[#0c2444]">Alfabético</option>
+                  <option value="level">Mayor Nivel</option>
+                  <option value="rp">Mayor Poder (PA)</option>
+                  <option value="speed">Mayor Rapidez</option>
+                  <option value="name">Alfabético</option>
                 </select>
               </div>
             </div>
 
             {/* Quick Filter Pill */}
-            <div className="px-5 py-2.5 bg-[#08182c]/60 border-b border-sky-400/15 flex items-center justify-between text-xs relative z-10">
+            <div className="px-5 py-2.5 bg-[var(--surface-inner)]/60 border-b border-[var(--surface-border)] flex items-center justify-between text-xs relative z-10">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={pickerOnlyFavorites}
                   onChange={(e) => setPickerOnlyFavorites(e.target.checked)}
-                  className="rounded bg-sky-950 border-sky-400/30 text-sky-500 focus:ring-sky-500 h-4 w-4"
+                  className="rounded bg-slate-900 border-[var(--surface-border)] text-amber-500 focus:ring-amber-500 h-4 w-4"
                 />
                 <span className="text-slate-200 flex items-center gap-1.5 font-bold">
                   <span>🍒</span> Solo con Baya Favorita de la semana (×2)
                 </span>
               </label>
-              <span className="text-sky-300 text-[11px] font-mono font-bold">
+              <span className="text-[var(--accent-primary)] text-[11px] font-mono font-bold">
                 {pickerList.length} disponibles
               </span>
             </div>
@@ -971,16 +968,16 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                     onClick={() => handleSelectPokemonForSlot(p.id)}
                     className={`p-3 rounded-2xl border text-left flex items-center gap-3 transition-all relative overflow-hidden group flex-shrink-0 min-h-[76px] ${
                       isAlreadyInTeam
-                        ? 'bg-sky-950/20 border-sky-400/10 opacity-50'
+                        ? 'bg-[var(--surface-inner)]/30 border-white/5 opacity-40'
                         : wouldConflictSpecial
                         ? 'bg-amber-950/25 border-amber-500/30 hover:border-amber-400'
                         : isFavorite
-                        ? 'bg-gradient-to-b from-sky-900/30 via-[#0c2444] to-[#0c2444] border-amber-400/35 hover:border-amber-400'
-                        : 'bg-[#0c2444]/80 border-sky-400/20 hover:border-sky-400/40 hover:bg-[#10325c]'
+                        ? 'cozy-card border-amber-400/40 hover:border-amber-400'
+                        : 'cozy-card border-[var(--surface-border)] hover:border-[var(--accent-primary)]/50 hover:bg-white/5'
                     }`}
                   >
                     {/* Centered Pedestal with Showdown Sprite */}
-                    <div className="w-[52px] h-[52px] min-w-[52px] min-h-[52px] max-w-[52px] max-h-[52px] rounded-xl bg-gradient-to-b from-sky-400/15 to-transparent border border-sky-400/25 flex items-center justify-center p-0.5 relative shadow-inner overflow-hidden flex-shrink-0">
+                    <div className="w-[52px] h-[52px] min-w-[52px] min-h-[52px] max-w-[52px] max-h-[52px] rounded-xl bg-[var(--surface-inner)] border border-[var(--surface-border)] flex items-center justify-center p-0.5 relative shadow-inner overflow-hidden flex-shrink-0">
                       <div
                         className="absolute inset-0 opacity-20 rounded-xl blur-xs"
                         style={{ backgroundColor: typeTheme.glow }}

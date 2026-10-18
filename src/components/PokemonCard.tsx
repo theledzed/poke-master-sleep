@@ -393,13 +393,13 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
 
               {/* Specialty & Berry */}
               <div className="grid grid-cols-2 gap-2 mb-3">
-                <div className="bg-[#08182c]/90 border border-sky-400/20 p-2.5 rounded-xl">
+                <div className="bg-[var(--surface-inner)] border border-[var(--surface-border)] p-2.5 rounded-xl">
                   <span className="text-[9px] uppercase font-black text-slate-400 block mb-1">Especialidad</span>
                   <span className={`text-xs font-bold px-2 py-0.5 rounded-md inline-block ${specialtyBadge.bg} ${specialtyBadge.text} border ${specialtyBadge.border}`}>
                     {pokemon.specialty}
                   </span>
                 </div>
-                <div className="bg-[#08182c]/90 border border-sky-400/20 p-2.5 rounded-xl">
+                <div className="bg-[var(--surface-inner)] border border-[var(--surface-border)] p-2.5 rounded-xl">
                   <span className="text-[9px] uppercase font-black text-slate-400 block mb-1">Baya ({berryMultiplier}x)</span>
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-200">
                     <img src={getBerrySpriteUrl(pokemon.berry)} alt={pokemon.berry} className="w-4 h-4 object-contain" />
@@ -410,7 +410,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
               </div>
 
               {/* Habilidad Principal */}
-              <div className="bg-[#08182c]/90 border border-sky-400/20 p-2.5 rounded-xl mb-3">
+              <div className="bg-[var(--surface-inner)] border border-[var(--surface-border)] p-2.5 rounded-xl mb-3">
                 <span className="text-[9px] uppercase font-black text-slate-400 block mb-1">Habilidad Principal</span>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-xs font-bold text-white">
@@ -433,7 +433,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
               </div>
 
               {/* Subhabilidades */}
-              <div className="bg-[#08182c]/90 border border-sky-400/20 p-2.5 rounded-xl mb-3">
+              <div className="bg-[var(--surface-inner)] border border-[var(--surface-border)] p-2.5 rounded-xl mb-3">
                 <span className="text-[9px] uppercase font-black text-slate-400 block mb-1.5">
                   Subhabilidades (Nv 10 / 25 / 50 / 75 / 100)
                 </span>
@@ -444,7 +444,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
                         ? 'bg-amber-400/20 text-amber-300 border-amber-400/50 font-black'
                         : 'bg-slate-900/50 text-slate-500 border-slate-800 line-through',
                       'blue': sub.enabled
-                        ? 'bg-sky-400/20 text-sky-300 border-sky-400/50 font-black'
+                        ? 'bg-indigo-500/20 text-indigo-200 border-indigo-400/50 font-bold'
                         : 'bg-slate-900/50 text-slate-500 border-slate-800 line-through',
                       'white': sub.enabled
                         ? 'bg-slate-800 text-slate-200 border-slate-700 font-semibold'
@@ -467,7 +467,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
               </div>
 
               {/* Ingredientes Timeline */}
-              <div className="bg-[#08182c]/90 border border-sky-400/20 p-2.5 rounded-xl mb-3">
+              <div className="bg-[var(--surface-inner)] border border-[var(--surface-border)] p-2.5 rounded-xl mb-3">
                 <span className="text-[9px] uppercase font-black text-slate-400 block mb-1.5">
                   Ingredientes por Nivel
                 </span>
@@ -477,7 +477,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
                       key={idx}
                       className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs ${
                         ing.enabled
-                          ? 'bg-sky-950/70 border border-sky-400/30 text-white'
+                          ? 'bg-black/30 border border-[var(--surface-border)] text-white'
                           : 'bg-slate-900/40 border border-dashed border-slate-800 text-slate-500'
                       }`}
                     >
@@ -506,7 +506,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
               )}
 
               {/* Actions footer */}
-              <div className="flex items-center justify-between gap-2 pt-2 border-t border-sky-400/20">
+              <div className="flex items-center justify-between gap-2 pt-2 border-t border-[var(--surface-border)]">
                 {canPokemonEvolve(pokemon.name) && onEvolve && (
                   <button
                     onClick={() => {

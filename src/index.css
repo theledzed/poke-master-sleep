@@ -59,20 +59,20 @@
 }
 
 [data-theme-weather="rain"] {
-  --bg-app-top: #101e28;
-  --bg-app-bottom: #182b38;
-  --surface-card: rgba(26, 46, 60, 0.88);
-  --surface-card-hover: rgba(34, 58, 76, 0.94);
-  --surface-card-glass: rgba(20, 36, 48, 0.65);
-  --surface-inner: rgba(12, 24, 32, 0.45);
-  --surface-border: rgba(56, 189, 248, 0.20);
-  --border-specular: rgba(56, 189, 248, 0.40);
-  --accent-primary: #38BDF8;
-  --accent-secondary: #6EE7B7;
-  --accent-glow: rgba(56, 189, 248, 0.25);
+  --bg-app-top: #142026;
+  --bg-app-bottom: #1a2930;
+  --surface-card: rgba(28, 44, 52, 0.88);
+  --surface-card-hover: rgba(36, 56, 66, 0.94);
+  --surface-card-glass: rgba(22, 36, 42, 0.65);
+  --surface-inner: rgba(14, 24, 28, 0.50);
+  --surface-border: rgba(52, 211, 153, 0.16);
+  --border-specular: rgba(52, 211, 153, 0.32);
+  --accent-primary: #34D399;
+  --accent-secondary: #FBBF24;
+  --accent-glow: rgba(52, 211, 153, 0.20);
   --text-heading: #F0FDF4;
-  --card-shadow: 0 10px 28px -6px rgba(8, 20, 28, 0.50), 0 0 0 1px var(--surface-border);
-  --sky-glow: radial-gradient(ellipse 90% 65% at 50% -10%, rgba(56, 189, 248, 0.25), transparent 70%);
+  --card-shadow: 0 10px 28px -6px rgba(6, 16, 20, 0.50), 0 0 0 1px var(--surface-border);
+  --sky-glow: radial-gradient(ellipse 90% 65% at 50% -10%, rgba(52, 211, 153, 0.18), transparent 70%);
 }
 
 @layer base {
