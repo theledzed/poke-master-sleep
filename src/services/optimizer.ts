@@ -175,26 +175,18 @@ export function calculateTeamEnergyFactor(team: Pokemon[]): {
     else if (name.includes('jigglypuff') || name.includes('kirlia') || name.includes('pawmo')) baseTriggerRate = 0.028;
     else if (name.includes('igglybuff') || name.includes('pawmi') || name.includes('ralts')) baseTriggerRate = 0.018;
 
-    let triggerMod = 1.0;
+    let triggerSubskillBonus = 0;
     for (const sub of healer.subskills) {
       if (!sub.enabled) continue;
-      if (sub.name === 'Activación S') triggerMod *= 1.18;
-      if (sub.name === 'Activación M') triggerMod *= 1.36;
+      if (sub.name === 'Activación S') triggerSubskillBonus += 0.18;
+      if (sub.name === 'Activación M') triggerSubskillBonus += 0.36;
     }
-    triggerMod *= (healer.natureObj?.skillMod || 1.0);
+    const triggerMod = (1 + triggerSubskillBonus) * (healer.natureObj?.skillMod || 1.0);
 
     const effectiveTriggerRate = baseTriggerRate * triggerMod;
 
-    let freq = healer.frequencySeconds;
-    let subskillSpeedReduction = 0;
-    for (const sub of healer.subskills) {
-      if (!sub.enabled) continue;
-      if (sub.name === 'Velocidad ayuda S') subskillSpeedReduction += 0.07;
-      if (sub.name === 'Velocidad ayuda M') subskillSpeedReduction += 0.14;
-    }
-    subskillSpeedReduction = Math.min(0.35, subskillSpeedReduction);
-    freq *= (1 - subskillSpeedReduction) * (healer.natureObj?.speedMod || 1.0);
-    const approxHelpsPerDay = Math.floor(86400 / (freq / BASE_ENERGY_FACTOR));
+    // Note: healer.frequencySeconds already includes individual level, nature, and individual subskills
+    const approxHelpsPerDay = Math.floor(86400 / (healer.frequencySeconds / BASE_ENERGY_FACTOR));
 
     const dailyTriggers = approxHelpsPerDay * effectiveTriggerRate;
 
@@ -333,13 +325,13 @@ export function calculatePokemonProduction(
 
   // 9. Skill production
   let baseTriggerRate = pokemon.specialty === 'Habilidades' ? 0.042 : 0.024;
-  let triggerMod = 1.0;
+  let triggerSubskillBonus = 0;
   for (const sub of pokemon.subskills) {
     if (!sub.enabled) continue;
-    if (sub.name === 'Activación S') triggerMod *= 1.18;
-    if (sub.name === 'Activación M') triggerMod *= 1.36;
+    if (sub.name === 'Activación S') triggerSubskillBonus += 0.18;
+    if (sub.name === 'Activación M') triggerSubskillBonus += 0.36;
   }
-  triggerMod *= (pokemon.natureObj?.skillMod || 1.0);
+  const triggerMod = (1 + triggerSubskillBonus) * (pokemon.natureObj?.skillMod || 1.0);
 
   const skillTriggersPerDay = helpsPerDay * baseTriggerRate * triggerMod;
   const isHealer = ['jigglypuff', 'wigglytuff', 'pawmi', 'pawmo', 'pawmot', 'ralts', 'kirlia', 'gardevoir', 'sylveon'].some(
@@ -381,8 +373,14 @@ export function planTeamMeals(
     return requiredTotal <= potCapacity;
   });
 
-  // Sort candidate recipes by base vigor descending
-  fittingRecipes.sort((a, b) => b.baseVigor - a.baseVigor);
+  // Sort candidate recipes by effective vigor (considering user's recipe level bonus) descending
+  fittingRecipes.sort((a, b) => {
+    const lvlA = config.recipeLevels?.[a.name] || 1;
+    const lvlB = config.recipeLevels?.[b.name] || 1;
+    const vigA = a.baseVigor * (1 + (DISH_LEVEL_BONUS[lvlA] || 0) / 100);
+    const vigB = b.baseVigor * (1 + (DISH_LEVEL_BONUS[lvlB] || 0) / 100);
+    return vigB - vigA;
+  });
 
   // Expected multiplier for Extra Tasty (Riquísimo):
   // Mon-Sat: 10% chance of 2x (+100%) -> 1 + 0.10 * 1 = 1.10
@@ -402,6 +400,7 @@ export function planTeamMeals(
 
   // Step 1: Select the 3 recipes for the day, deducting required ingredients first (Reserve Rule)
   const chosenMealRecipes: { recipe: Recipe; isRealRecipe: boolean; recipeLevel: number; recipeVigor: number; recipeIngCount: number }[] = [];
+  let dailyBagBufferUsed = 0; // Cap total daily bag buffer to max 4 ingredients across all 3 meals
 
   for (let i = 0; i < 3; i++) {
     let chosenRecipe: Recipe = MIXED_DISHES[config.dishType];
@@ -410,12 +409,16 @@ export function planTeamMeals(
     // Search for highest-vigor fitting recipe
     for (const recipe of fittingRecipes) {
       let canAfford = true;
+      let bufferNeededThisRecipe = 0;
+
       for (const [ing, needed] of Object.entries(recipe.ingredients)) {
         const avail = poolCopy[ing] || 0;
         const missing = needed - avail;
         if (missing > 0) {
-          // If only 1-2 ingredients missing for a large recipe (e.g. 28/30 oil), bag buffer / magnet covers it!
-          if (missing <= 2 && (avail / needed) >= 0.80) {
+          // If only 1-2 ingredients missing for a large recipe (e.g. 28/30 oil), bag buffer covers it,
+          // but strictly cap total buffer to max 4 units per day to prevent multi-ingredient deficits
+          if (missing <= 2 && (dailyBagBufferUsed + bufferNeededThisRecipe + missing) <= 4 && (avail / needed) >= 0.80) {
+            bufferNeededThisRecipe += missing;
             continue;
           }
           canAfford = false;
@@ -426,6 +429,7 @@ export function planTeamMeals(
       if (canAfford) {
         chosenRecipe = recipe;
         isRealRecipe = true;
+        dailyBagBufferUsed += bufferNeededThisRecipe;
         // Deduct recipe ingredients strictly from available pool
         for (const [ing, needed] of Object.entries(recipe.ingredients)) {
           poolCopy[ing] = Math.max(0, (poolCopy[ing] || 0) - needed);
