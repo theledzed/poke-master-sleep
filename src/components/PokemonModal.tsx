@@ -15,6 +15,7 @@ interface PokemonModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (pokemon: Pokemon) => void;
+  onDelete?: (pokemonId: string) => void;
   pokemonToEdit?: Pokemon | null;
 }
 
@@ -22,6 +23,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
   isOpen,
   onClose,
   onSave,
+  onDelete,
   pokemonToEdit
 }) => {
   const isEditing = Boolean(pokemonToEdit);
@@ -568,21 +570,40 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
           </div>
 
           {/* Buttons (Pokemon GO Action Pills) */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-5 py-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 text-xs font-bold transition-all active:scale-95"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              className="px-7 py-2.5 rounded-full bg-gradient-to-r from-blue-600 via-sky-500 to-blue-600 hover:from-blue-500 hover:to-sky-400 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-sky-500/25 active:scale-95 flex items-center gap-2 transition-all"
-            >
-              <Check className="w-4 h-4 stroke-[3]" />
-              <span>{isEditing ? 'Guardar Cambios' : 'Registrar Pokémon'}</span>
-            </button>
+          <div className="flex items-center justify-between pt-4 border-t border-white/10">
+            {isEditing && onDelete && pokemonToEdit ? (
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm(`¿Estás seguro de que deseas eliminar a ${pokemonToEdit.name} de tu caja?`)) {
+                    onDelete(pokemonToEdit.id);
+                  }
+                }}
+                className="px-4 py-2.5 rounded-full bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 text-xs font-bold transition-all active:scale-95 flex items-center gap-1.5"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+                <span>Eliminar</span>
+              </button>
+            ) : (
+              <div />
+            )}
+
+            <div className="flex items-center gap-2 sm:gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-5 py-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 text-xs font-bold transition-all active:scale-95"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="px-6 sm:px-7 py-2.5 rounded-full bg-gradient-to-r from-blue-600 via-sky-500 to-blue-600 hover:from-blue-500 hover:to-sky-400 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-sky-500/25 active:scale-95 flex items-center gap-2 transition-all"
+              >
+                <Check className="w-4 h-4 stroke-[3]" />
+                <span>{isEditing ? 'Guardar Cambios' : 'Registrar Pokémon'}</span>
+              </button>
+            </div>
           </div>
         </form>
       </div>

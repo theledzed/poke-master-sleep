@@ -1,6 +1,19 @@
 import React from 'react';
-import { Zap, BookOpen, Utensils, FileSpreadsheet, PlusCircle, Swords, Sparkles } from 'lucide-react';
+import {
+  Zap,
+  BookOpen,
+  Utensils,
+  FileSpreadsheet,
+  PlusCircle,
+  Swords,
+  Sparkles,
+  CloudUpload,
+  CloudCheck,
+  AlertCircle,
+  HardDrive
+} from 'lucide-react';
 import { WeatherPill, WeatherMode } from './WeatherBackground';
+import { ProfileId, SyncStatus } from '../services/cloudSync';
 
 export type ActiveTab = 'optimizer' | 'simulator' | 'pokedex' | 'recipes' | 'excel' | 'add';
 
@@ -10,6 +23,9 @@ interface NavbarProps {
   pokemonCount: number;
   currentWeather: WeatherMode;
   onWeatherChange: (mode: WeatherMode) => void;
+  activeProfile: ProfileId;
+  onSelectProfile: (id: ProfileId) => void;
+  syncStatus: SyncStatus;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -17,7 +33,10 @@ export const Navbar: React.FC<NavbarProps> = ({
   setActiveTab,
   pokemonCount,
   currentWeather,
-  onWeatherChange
+  onWeatherChange,
+  activeProfile,
+  onSelectProfile,
+  syncStatus
 }) => {
   const tabs = [
     { id: 'optimizer' as ActiveTab, label: 'Optimizador', shortLabel: 'Equipo', icon: Zap, badge: 'Snorlax' },
@@ -91,13 +110,70 @@ export const Navbar: React.FC<NavbarProps> = ({
             </nav>
 
             {/* Header Right Actions */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              {/* Profile Switcher [ 👦🏻 Cris | 👩🏻 Ady ] */}
+              <div className="flex items-center bg-[#071322] border border-sky-400/25 rounded-full p-0.5 shadow-inner">
+                <button
+                  type="button"
+                  onClick={() => onSelectProfile('cris')}
+                  className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-full text-xs font-black transition-all ${
+                    activeProfile === 'cris'
+                      ? 'bg-gradient-to-r from-blue-600 to-sky-500 text-white shadow-md shadow-sky-500/25 scale-[1.02]'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                  title="Caja y Snorlax de Cris"
+                >
+                  <span className="text-sm leading-none">👦🏻</span>
+                  <span className="hidden sm:inline">Cris</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onSelectProfile('ady')}
+                  className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-full text-xs font-black transition-all ${
+                    activeProfile === 'ady'
+                      ? 'bg-gradient-to-r from-pink-600 to-rose-400 text-white shadow-md shadow-rose-500/25 scale-[1.02]'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                  title="Caja y Snorlax de Ady"
+                >
+                  <span className="text-sm leading-none">👩🏻</span>
+                  <span className="hidden sm:inline">Ady</span>
+                </button>
+              </div>
+
+              {/* Cloud Sync Status Indicator */}
+              <div
+                className="flex items-center justify-center w-7 h-7 rounded-full bg-[#0a203a] border border-sky-400/20 shadow-sm"
+                title={
+                  syncStatus === 'syncing'
+                    ? 'Sincronizando con Supabase Cloud...'
+                    : syncStatus === 'synced'
+                    ? 'Sincronizado con Supabase Cloud (seguro)'
+                    : syncStatus === 'error'
+                    ? 'Error de conexión con la nube (guardado en LocalStorage)'
+                    : 'Modo local (sin credenciales Supabase)'
+                }
+              >
+                {syncStatus === 'syncing' && (
+                  <CloudUpload className="w-3.5 h-3.5 text-sky-400 animate-pulse" />
+                )}
+                {syncStatus === 'synced' && (
+                  <CloudCheck className="w-3.5 h-3.5 text-emerald-400" />
+                )}
+                {syncStatus === 'error' && (
+                  <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
+                )}
+                {syncStatus === 'local' && (
+                  <HardDrive className="w-3.5 h-3.5 text-slate-400" />
+                )}
+              </div>
+
               {/* Weather Atmosphere Switcher */}
               <WeatherPill currentWeather={currentWeather} onSelectWeather={onWeatherChange} />
 
-              {/* Mobile Pokemon Count Pill */}
-              <div className="flex items-center">
-                <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#0a203a] text-sky-300 border border-sky-400/20 shadow-sm font-mono">
+              {/* Mobile/Desktop Pokemon Count Pill */}
+              <div className="hidden xs:flex items-center">
+                <span className="text-xs font-bold px-2 sm:px-2.5 py-1 rounded-full bg-[#0a203a] text-sky-300 border border-sky-400/20 shadow-sm font-mono whitespace-nowrap">
                   {pokemonCount} 🐾
                 </span>
               </div>

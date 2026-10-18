@@ -2,7 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { Pokemon, Specialty } from '../types/pokemon';
 import { PokemonCard } from './PokemonCard';
 import { BERRIES, INGREDIENTS, CANONICAL_BERRIES } from '../data/gameData';
-import { Search, Filter, ArrowUpDown, Plus, Sparkles, CheckCircle2, RotateCcw, SlidersHorizontal } from 'lucide-react';
+import { Search, Filter, ArrowUpDown, Plus, Sparkles, CheckCircle2, RotateCcw, SlidersHorizontal, FileSpreadsheet, Heart } from 'lucide-react';
+import { ProfileId } from '../services/cloudSync';
 
 interface PokedexViewProps {
   pokemons: Pokemon[];
@@ -10,6 +11,8 @@ interface PokedexViewProps {
   onEditPokemon: (pokemon: Pokemon) => void;
   onAddNew: () => void;
   spriteStyle?: 'artwork' | 'showdown';
+  activeProfile?: ProfileId;
+  onGoToDatabase?: () => void;
 }
 
 export const PokedexView: React.FC<PokedexViewProps> = ({
@@ -17,7 +20,9 @@ export const PokedexView: React.FC<PokedexViewProps> = ({
   favoriteBerries,
   onEditPokemon,
   onAddNew,
-  spriteStyle = 'artwork'
+  spriteStyle = 'artwork',
+  activeProfile = 'cris',
+  onGoToDatabase
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSpecialty, setSelectedSpecialty] = useState<string>('all');
@@ -198,8 +203,49 @@ export const PokedexView: React.FC<PokedexViewProps> = ({
         </div>
       </div>
 
-      {/* Grid of Pokemon */}
-      {filteredPokemons.length === 0 ? (
+      {/* Grid of Pokemon or Empty State */}
+      {pokemons.length === 0 ? (
+        <div className="poke-card p-8 sm:p-12 text-center max-w-lg mx-auto border-pink-500/25 shadow-xl shadow-pink-500/5 my-6">
+          <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-pink-500/20 to-rose-400/20 border border-pink-400/30 flex items-center justify-center mx-auto mb-5 text-4xl shadow-inner">
+            {activeProfile === 'ady' ? '🌸' : '🐾'}
+          </div>
+          <h3 className="font-black text-white text-xl mb-2 flex items-center justify-center gap-2">
+            <span>
+              {activeProfile === 'ady'
+                ? '¡Bienvenida a tu Pokédex, Ady!'
+                : '¡Tu Caja de Ayudantes está lista!'}
+            </span>
+          </h3>
+          <p className="text-slate-300 text-xs sm:text-sm leading-relaxed mb-6">
+            {activeProfile === 'ady'
+              ? 'Aún no tienes Pokémon registrados en tu caja. Da de alta a tus primeros compañeros de Pokémon Sleep para que el optimizador encuentre tu equipo ideal.'
+              : 'Aún no tienes ningún Pokémon registrado. Comienza agregando a tus ayudantes o importa tu base de datos.'}
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <button
+              onClick={onAddNew}
+              className={`w-full sm:w-auto px-6 py-3 rounded-full text-white text-xs font-black uppercase tracking-wider shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 ${
+                activeProfile === 'ady'
+                  ? 'bg-gradient-to-r from-pink-600 to-rose-500 hover:from-pink-500 hover:to-rose-400 shadow-pink-500/25'
+                  : 'bg-gradient-to-r from-blue-600 to-sky-500 hover:from-blue-500 hover:to-sky-400 shadow-sky-500/25'
+              }`}
+            >
+              <Plus className="w-4 h-4 stroke-[2.5]" />
+              <span>Registrar Mi Primer Pokémon</span>
+            </button>
+            {onGoToDatabase && (
+              <button
+                onClick={onGoToDatabase}
+                className="w-full sm:w-auto px-5 py-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 text-xs font-bold transition-all flex items-center justify-center gap-2 active:scale-95"
+              >
+                <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+                <span>Importar desde Excel</span>
+              </button>
+            )}
+          </div>
+        </div>
+      ) : filteredPokemons.length === 0 ? (
         <div className="bg-slate-900/60 border border-slate-800/80 rounded-3xl p-12 text-center max-w-md mx-auto">
           <div className="w-16 h-16 rounded-3xl bg-slate-800/50 border border-slate-700/50 flex items-center justify-center mx-auto mb-4 text-3xl">
             🔍

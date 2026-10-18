@@ -1,7 +1,5 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Pokemon, SnorlaxConfig, OptimizedTeamResult } from './types/pokemon';
-import { DEFAULT_CSV_DATA } from './data/defaultPokedex';
-import { parseCsvText } from './services/csvParser';
 import { optimizeTeam } from './services/optimizer';
 import { Navbar, ActiveTab } from './components/Navbar';
 import { SnorlaxSetup } from './components/SnorlaxSetup';
@@ -12,46 +10,48 @@ import { RecipesView } from './components/RecipesView';
 import { ExcelManager } from './components/ExcelManager';
 import { PokemonModal } from './components/PokemonModal';
 import { WeatherBackground, WeatherMode, getAutoWeather } from './components/WeatherBackground';
+import {
+  ProfileId,
+  SyncStatus,
+  loadProfileFromLocal,
+  saveProfileToLocal,
+  fetchProfileFromCloud,
+  pushProfileToCloud,
+  queueCloudSync,
+  cancelPendingCloudSync,
+  isCloudSyncConfigured,
+  STORAGE_KEY_ACTIVE_PROFILE
+} from './services/cloudSync';
 
-const STORAGE_KEY_POKEDEX = 'sleep_master_pokedex_v1';
-const STORAGE_KEY_CONFIG = 'sleep_master_config_v1';
 const STORAGE_KEY_WEATHER = 'sleep_master_weather_v1';
 
 export const App: React.FC = () => {
-  // Load initial Pokemons from localStorage or default CSV
-  const [pokemons, setPokemons] = useState<Pokemon[]>(() => {
+  // Active Profile ('cris' | 'ady')
+  const [activeProfile, setActiveProfile] = useState<ProfileId>(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY_POKEDEX);
-      if (saved) {
-        return JSON.parse(saved);
+      const saved = localStorage.getItem(STORAGE_KEY_ACTIVE_PROFILE);
+      if (saved === 'cris' || saved === 'ady') {
+        return saved as ProfileId;
       }
     } catch (e) {
-      console.error('Error loading saved pokedex', e);
+      // ignore
     }
-    return parseCsvText(DEFAULT_CSV_DATA);
+    return 'cris';
   });
 
-  // Load initial Snorlax Config
+  // Cloud Sync Status ('local' | 'syncing' | 'synced' | 'error')
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>(() => {
+    return isCloudSyncConfigured ? 'synced' : 'local';
+  });
+
+  // Load initial Pokemons from profile-specific LocalStorage (with legacy migration for Cris)
+  const [pokemons, setPokemons] = useState<Pokemon[]>(() => {
+    return loadProfileFromLocal(activeProfile).pokemons;
+  });
+
+  // Load initial Snorlax Config from profile-specific LocalStorage
   const [config, setConfig] = useState<SnorlaxConfig>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_CONFIG);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.areaBonus === undefined) parsed.areaBonus = 0;
-        return parsed;
-      }
-    } catch (e) {
-      console.error('Error loading saved config', e);
-    }
-    return {
-      island: 'greengrass',
-      dishType: 'curry',
-      favoriteBerries: ['Baya Uvav', 'Baya Zanama', 'Baya Aranja'],
-      potSize: 45,
-      isSunday: false,
-      recipeLevels: {},
-      areaBonus: 0
-    };
+    return loadProfileFromLocal(activeProfile).config;
   });
 
   // Weather state (Morning, Afternoon, Night, Rain)
@@ -76,23 +76,86 @@ export const App: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pokemonToEdit, setPokemonToEdit] = useState<Pokemon | null>(null);
 
-  // Save to localStorage when pokedex changes
+  // Background cloud fetch on initial mount
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY_POKEDEX, JSON.stringify(pokemons));
-    } catch (e) {
-      console.error('Error saving pokedex', e);
+    if (isCloudSyncConfigured) {
+      setSyncStatus('syncing');
+      fetchProfileFromCloud(activeProfile)
+        .then((cloudData) => {
+          if (cloudData && Array.isArray(cloudData.pokemons)) {
+            setPokemons(cloudData.pokemons);
+            setConfig(cloudData.config);
+            saveProfileToLocal(activeProfile, cloudData.pokemons, cloudData.config);
+            setSyncStatus('synced');
+          } else {
+            // First time cloud setup: push current local state
+            const currentLocal = loadProfileFromLocal(activeProfile);
+            pushProfileToCloud(activeProfile, currentLocal.pokemons, currentLocal.config).then(() => {
+              setSyncStatus('synced');
+            });
+          }
+        })
+        .catch((err) => {
+          console.warn('Initial cloud sync error:', err);
+          setSyncStatus('error');
+        });
     }
-  }, [pokemons]);
+  }, []);
 
-  // Save to localStorage when config changes
+  // Auto-sync whenever pokemons or config change
+  const isInitialMount = useRef(true);
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(config));
-    } catch (e) {
-      console.error('Error saving config', e);
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
     }
-  }, [config]);
+    queueCloudSync(activeProfile, pokemons, config, setSyncStatus);
+  }, [pokemons, config, activeProfile]);
+
+  // Profile switch handler
+  const handleSelectProfile = useCallback(async (newProfile: ProfileId) => {
+    if (newProfile === activeProfile) return;
+
+    // 1. Cancel pending cloud sync timer & persist current profile to local
+    cancelPendingCloudSync();
+    saveProfileToLocal(activeProfile, pokemons, config);
+
+    // 2. Load target profile immediately from LocalStorage (0ms UI lag)
+    const targetLocal = loadProfileFromLocal(newProfile);
+
+    // 3. Update active profile state & localStorage key
+    try {
+      localStorage.setItem(STORAGE_KEY_ACTIVE_PROFILE, newProfile);
+    } catch (e) {
+      // ignore
+    }
+    setActiveProfile(newProfile);
+    setPokemons(targetLocal.pokemons);
+    setConfig(targetLocal.config);
+
+    // 4. Asynchronously fetch latest data from Supabase Cloud if configured
+    if (isCloudSyncConfigured) {
+      setSyncStatus('syncing');
+      try {
+        const cloudData = await fetchProfileFromCloud(newProfile);
+        if (cloudData && Array.isArray(cloudData.pokemons)) {
+          setPokemons(cloudData.pokemons);
+          setConfig(cloudData.config);
+          saveProfileToLocal(newProfile, cloudData.pokemons, cloudData.config);
+          setSyncStatus('synced');
+        } else {
+          // If profile does not exist yet on Supabase, initialize it with local data
+          await pushProfileToCloud(newProfile, targetLocal.pokemons, targetLocal.config);
+          setSyncStatus('synced');
+        }
+      } catch (err) {
+        console.warn('Error fetching cloud profile on switch:', err);
+        setSyncStatus('error');
+      }
+    } else {
+      setSyncStatus('local');
+    }
+  }, [activeProfile, pokemons, config]);
 
   // Run optimizer
   const handleRunOptimizer = useCallback(() => {
@@ -184,6 +247,9 @@ export const App: React.FC = () => {
         pokemonCount={pokemons.length}
         currentWeather={weather}
         onWeatherChange={setWeather}
+        activeProfile={activeProfile}
+        onSelectProfile={handleSelectProfile}
+        syncStatus={syncStatus}
       />
 
       {/* Main Container */}
@@ -230,6 +296,8 @@ export const App: React.FC = () => {
             onEditPokemon={handleEditPokemon}
             onAddNew={handleAddNewPokemon}
             spriteStyle={spriteStyle}
+            activeProfile={activeProfile}
+            onGoToDatabase={() => setActiveTab('excel')}
           />
         )}
 
@@ -258,6 +326,10 @@ export const App: React.FC = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSavePokemon}
+        onDelete={(id) => {
+          setPokemons(prev => prev.filter(p => p.id !== id));
+          setIsModalOpen(false);
+        }}
         pokemonToEdit={pokemonToEdit}
       />
     </div>
