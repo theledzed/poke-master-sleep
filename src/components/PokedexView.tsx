@@ -3,7 +3,7 @@ import { Pokemon, Specialty } from '../types/pokemon';
 import { PokemonCard } from './PokemonCard';
 import { BERRIES, INGREDIENTS, CANONICAL_BERRIES } from '../data/gameData';
 import { Search, Filter, ArrowUpDown, Plus, Sparkles, CheckCircle2, RotateCcw, SlidersHorizontal, FileSpreadsheet, Heart } from 'lucide-react';
-import { ProfileId } from '../services/cloudSync';
+import { ProfileId } from '../services/supabase';
 
 interface PokedexViewProps {
   pokemons: Pokemon[];

@@ -13,15 +13,15 @@ import { WeatherBackground, WeatherMode, getAutoWeather } from './components/Wea
 import {
   ProfileId,
   SyncStatus,
-  loadProfileFromLocal,
+  loadProfileData,
+  saveProfileData,
+  getProfileFromLocal,
   saveProfileToLocal,
-  fetchProfileFromCloud,
-  pushProfileToCloud,
-  queueCloudSync,
-  cancelPendingCloudSync,
-  isCloudSyncConfigured,
+  queueProfileSave,
+  cancelPendingSave,
+  isSupabaseConfigured,
   STORAGE_KEY_ACTIVE_PROFILE
-} from './services/cloudSync';
+} from './services/supabase';
 
 const STORAGE_KEY_WEATHER = 'sleep_master_weather_v1';
 
@@ -41,17 +41,17 @@ export const App: React.FC = () => {
 
   // Cloud Sync Status ('local' | 'syncing' | 'synced' | 'error')
   const [syncStatus, setSyncStatus] = useState<SyncStatus>(() => {
-    return isCloudSyncConfigured ? 'synced' : 'local';
+    return isSupabaseConfigured ? 'synced' : 'local';
   });
 
   // Load initial Pokemons from profile-specific LocalStorage (with legacy migration for Cris)
   const [pokemons, setPokemons] = useState<Pokemon[]>(() => {
-    return loadProfileFromLocal(activeProfile).pokemons;
+    return getProfileFromLocal(activeProfile).pokemons;
   });
 
   // Load initial Snorlax Config from profile-specific LocalStorage
   const [config, setConfig] = useState<SnorlaxConfig>(() => {
-    return loadProfileFromLocal(activeProfile).config;
+    return getProfileFromLocal(activeProfile).config;
   });
 
   // Weather state (Morning, Afternoon, Night, Rain)
@@ -78,21 +78,14 @@ export const App: React.FC = () => {
 
   // Background cloud fetch on initial mount
   useEffect(() => {
-    if (isCloudSyncConfigured) {
+    if (isSupabaseConfigured) {
       setSyncStatus('syncing');
-      fetchProfileFromCloud(activeProfile)
-        .then((cloudData) => {
-          if (cloudData && Array.isArray(cloudData.pokemons)) {
-            setPokemons(cloudData.pokemons);
-            setConfig(cloudData.config);
-            saveProfileToLocal(activeProfile, cloudData.pokemons, cloudData.config);
-            setSyncStatus('synced');
-          } else {
-            // First time cloud setup: push current local state
-            const currentLocal = loadProfileFromLocal(activeProfile);
-            pushProfileToCloud(activeProfile, currentLocal.pokemons, currentLocal.config).then(() => {
-              setSyncStatus('synced');
-            });
+      loadProfileData(activeProfile)
+        .then((profileData) => {
+          if (profileData && Array.isArray(profileData.pokemons)) {
+            setPokemons(profileData.pokemons);
+            setConfig(profileData.config);
+            setSyncStatus(profileData.isCloud ? 'synced' : 'local');
           }
         })
         .catch((err) => {
@@ -109,7 +102,7 @@ export const App: React.FC = () => {
       isInitialMount.current = false;
       return;
     }
-    queueCloudSync(activeProfile, pokemons, config, setSyncStatus);
+    queueProfileSave(activeProfile, pokemons, config, setSyncStatus);
   }, [pokemons, config, activeProfile]);
 
   // Profile switch handler
@@ -117,11 +110,11 @@ export const App: React.FC = () => {
     if (newProfile === activeProfile) return;
 
     // 1. Cancel pending cloud sync timer & persist current profile to local
-    cancelPendingCloudSync();
+    cancelPendingSave();
     saveProfileToLocal(activeProfile, pokemons, config);
 
     // 2. Load target profile immediately from LocalStorage (0ms UI lag)
-    const targetLocal = loadProfileFromLocal(newProfile);
+    const targetLocal = getProfileFromLocal(newProfile);
 
     // 3. Update active profile state & localStorage key
     try {
@@ -134,19 +127,14 @@ export const App: React.FC = () => {
     setConfig(targetLocal.config);
 
     // 4. Asynchronously fetch latest data from Supabase Cloud if configured
-    if (isCloudSyncConfigured) {
+    if (isSupabaseConfigured) {
       setSyncStatus('syncing');
       try {
-        const cloudData = await fetchProfileFromCloud(newProfile);
+        const cloudData = await loadProfileData(newProfile);
         if (cloudData && Array.isArray(cloudData.pokemons)) {
           setPokemons(cloudData.pokemons);
           setConfig(cloudData.config);
-          saveProfileToLocal(newProfile, cloudData.pokemons, cloudData.config);
-          setSyncStatus('synced');
-        } else {
-          // If profile does not exist yet on Supabase, initialize it with local data
-          await pushProfileToCloud(newProfile, targetLocal.pokemons, targetLocal.config);
-          setSyncStatus('synced');
+          setSyncStatus(cloudData.isCloud ? 'synced' : 'local');
         }
       } catch (err) {
         console.warn('Error fetching cloud profile on switch:', err);
