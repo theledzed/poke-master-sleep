@@ -336,13 +336,7 @@ export const App: React.FC = () => {
       {/* Navbar */}
       <Navbar
         activeTab={activeTab}
-        setActiveTab={(tab) => {
-          if (tab === 'add') {
-            handleAddNewPokemon();
-          } else {
-            setActiveTab(tab);
-          }
-        }}
+        setActiveTab={setActiveTab}
         pokemonCount={pokemons.length}
         currentWeather={weather}
         onWeatherChange={setWeather}

@@ -100,14 +100,14 @@ export const PokedexView: React.FC<PokedexViewProps> = ({
   return (
     <div className="space-y-6 my-6">
       {/* Top action & title bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 poke-card p-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 cozy-card p-5">
         <div>
           <div className="flex items-center gap-2.5">
             <span className="text-2xl">📖</span>
-            <h2 className="text-xl font-black text-white tracking-tight">
+            <h2 className="text-xl font-display font-bold text-[var(--text-heading)] tracking-tight">
               Mi Caja de Ayudantes
             </h2>
-            <span className="text-xs font-black px-3 py-1 rounded-full bg-sky-500/15 text-sky-300 border border-sky-400/30">
+            <span className="text-xs font-display font-bold px-3 py-1 rounded-full bg-[var(--surface-inner)] text-[var(--accent-primary)] border border-[var(--surface-border)]">
               {filteredPokemons.length} de {pokemons.length} Pokémon
             </span>
           </div>
@@ -117,105 +117,50 @@ export const PokedexView: React.FC<PokedexViewProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          {/* Sprite style segmented toggle: Showdown / Sleep / Artwork */}
-          <div className="flex items-center gap-1 bg-[#091f3a] p-1 rounded-full border border-sky-400/20 shadow-inner">
-            <button
-              type="button"
-              onClick={() => onSpriteStyleChange?.('showdown')}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                spriteStyle === 'showdown'
-                  ? 'bg-sky-500 text-white shadow-sm shadow-sky-500/25'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-              title="Modelos 3D animados de Pokémon Showdown"
-            >
-              <span>🎬 Animado</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => onSpriteStyleChange?.('sleep')}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                spriteStyle === 'sleep'
-                  ? 'bg-amber-400 text-slate-950 font-black shadow-sm shadow-amber-400/30'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-              title="Retratos oficiales de Pokémon Sleep"
-            >
-              <span>💤 Oficial Sleep</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => onSpriteStyleChange?.('artwork')}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                spriteStyle === 'artwork'
-                  ? 'bg-indigo-500 text-white shadow-sm shadow-indigo-500/25'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-              title="Ilustración oficial Sugimori"
-            >
-              <span>🎨 Arte</span>
-            </button>
-          </div>
-
-          {/* Card size compact toggle */}
-          <div className="flex items-center gap-1 bg-[#091f3a] p-1 rounded-full border border-sky-400/20 shadow-inner">
-            <button
-              type="button"
-              onClick={() => onCardViewModeChange?.('compact')}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                cardViewMode === 'compact'
-                  ? 'bg-sky-500 text-white shadow-sm shadow-sky-500/25'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-              title="Fichas compactas para ver más Pokémon"
-            >
-              <span>🔲 Compactas</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => onCardViewModeChange?.('detailed')}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                cardViewMode === 'detailed'
-                  ? 'bg-sky-500 text-white shadow-sm shadow-sky-500/25'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-              title="Fichas detalladas con todos los slots"
-            >
-              <span>🖼️ Completas</span>
-            </button>
-          </div>
-
-          {/* View mode segmented toggle */}
-          <div className="flex items-center gap-1 bg-[#091f3a] p-1 rounded-full border border-sky-400/20 shadow-inner">
+          {/* View mode segmented toggle: Fichas vs Auditoria */}
+          <div className="flex items-center gap-1 bg-[var(--surface-inner)] p-1 rounded-full border border-[var(--surface-border)] shadow-inner">
             <button
               onClick={() => handleViewModeToggle('cards')}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-display font-bold transition-all ${
                 activeViewMode === 'cards'
-                  ? 'bg-sky-500 text-white shadow-sm shadow-sky-500/25'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'btn-cozy-primary text-white scale-[1.02]'
+                  : 'text-slate-300 hover:text-white'
               }`}
             >
               <span>📋 Fichas</span>
             </button>
             <button
               onClick={() => handleViewModeToggle('audit')}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-display font-bold transition-all ${
                 activeViewMode === 'audit'
-                  ? 'bg-sky-500 text-white shadow-sm shadow-sky-500/25'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'btn-cozy-primary text-white scale-[1.02]'
+                  : 'text-slate-300 hover:text-white'
               }`}
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-              <span>🔬 Auditoría Genética</span>
+              <span>🔬 Auditoría</span>
             </button>
           </div>
 
+          {/* Excel / Database Contextual Button */}
+          {onGoToDatabase && (
+            <button
+              onClick={onGoToDatabase}
+              className="btn-cozy-secondary px-3.5 py-2 text-xs flex items-center gap-1.5"
+              title="Abrir base de datos e importador Excel"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden sm:inline">Excel / CSV</span>
+            </button>
+          )}
+
+          {/* Primary Add Pokemon Button */}
           <button
             onClick={onAddNew}
-            className="flex items-center justify-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-blue-600 via-sky-500 to-blue-600 hover:from-blue-500 hover:to-sky-400 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-sky-500/25 active:scale-95 transition-all"
+            className="btn-cozy-primary px-5 py-2 text-xs flex items-center justify-center gap-2"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span>Registrar</span>
+            <span>Registrar Pokémon</span>
           </button>
         </div>
       </div>
@@ -412,6 +357,18 @@ export const PokedexView: React.FC<PokedexViewProps> = ({
       )}
         </>
       )}
+
+      {/* Floating Action Button (Mobile FAB) for Quick Pokemon Registration */}
+      <div className="lg:hidden fixed bottom-20 right-4 z-40">
+        <button
+          onClick={onAddNew}
+          className="btn-cozy-primary w-13 h-13 p-3.5 rounded-full flex items-center justify-center shadow-2xl active:scale-90"
+          aria-label="Registrar Pokémon"
+          title="Registrar nuevo Pokémon"
+        >
+          <Plus className="w-6 h-6 stroke-[3] text-white" />
+        </button>
+      </div>
     </div>
   );
 };
