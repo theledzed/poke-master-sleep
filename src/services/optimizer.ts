@@ -127,9 +127,10 @@ export function getSkillVigorPerTrigger(pokemon: Pokemon): number {
   }
 
   if (mainSkill.includes('Metrónomo')) {
-    // Metronome picks randomly among 18 main skills. Expected direct vigor per trigger:
-    const table = [0, 450, 650, 900, 1150, 1450, 1850, 2400];
-    return table[skillLevel] || 1150;
+    // Metronome triggers any main skill at the current skill level (Charge Strength M, Ingredient Magnet S, Extra Helpful S, E4E, etc.)
+    // Expected average equivalent vigor value across all possible skill outcomes:
+    const table = [0, 850, 1300, 1900, 2700, 3800, 5300, 7000];
+    return table[skillLevel] || 2700;
   }
 
   if (mainSkill.includes('Superútil S') || mainSkill.includes('Impulso de ayuda S')) {
@@ -143,7 +144,9 @@ export function getSkillVigorPerTrigger(pokemon: Pokemon): number {
   }
 
   if (mainSkill.includes('Onda Mental') || mainSkill.includes('Mal Sueño')) {
-    return 2000 + skillLevel * 500;
+    // Legendary psychic / dark burst damage (aligned with standard Carga Vigor M scaling)
+    const table = [0, 900, 1300, 1800, 2500, 3500, 4800, 6400];
+    return table[skillLevel] || 1800;
   }
 
   return 300 + skillLevel * 150;
@@ -248,7 +251,7 @@ export function calculatePokemonProduction(
   if (!baseIngChance) {
     if (pokemon.specialty === 'Ingredientes') baseIngChance = 0.26;
     else if (pokemon.specialty === 'Bayas') baseIngChance = 0.15;
-    else if (pokemon.specialty === 'Todo') baseIngChance = 0.22;
+    else if (pokemon.specialty === 'Todo') baseIngChance = 0.25;
     else baseIngChance = 0.18;
   }
 
@@ -271,8 +274,8 @@ export function calculatePokemonProduction(
   // 7. Dynamic Inventory & Sneaky Snacking calculation
   // Stage 1: ~12-14, Stage 2: ~16-18, Stage 3: ~20-24
   let baseInventory = 13;
-  if (['gengar', 'blastoise', 'charizard', 'venusaur', 'raichu', 'typhlosion', 'feraligatr', 'meganium', 'ampharos', 'tyranitar', 'walrein', 'gardevoir', 'gallade', 'magnezone', 'togekiss', 'dragonite'].some(s => cleanName.includes(s))) {
-    baseInventory = 20;
+  if (['gengar', 'blastoise', 'charizard', 'venusaur', 'raichu', 'typhlosion', 'feraligatr', 'meganium', 'ampharos', 'tyranitar', 'walrein', 'gardevoir', 'gallade', 'magnezone', 'togekiss', 'dragonite', 'mew', 'mewtwo', 'raikou', 'entei', 'suicune'].some(s => cleanName.includes(s))) {
+    baseInventory = 22;
   } else if (['haunter', 'espeon', 'flareon', 'vaporeon', 'jolteon', 'umbreon', 'leafeon', 'glaceon', 'sylveon', 'flaaffy', 'quilava', 'croconaw', 'bayleef', 'ivysaur', 'wartortle', 'charmeleon', 'graveler', 'dugtrio', 'sealeo', 'kirlia', 'pupitar', 'togetic', 'dragonair'].some(s => cleanName.includes(s))) {
     baseInventory = 16;
   } else if (pokemon.specialty === 'Ingredientes') {
@@ -328,7 +331,12 @@ export function calculatePokemonProduction(
   }
 
   // 9. Skill production
-  let baseTriggerRate = pokemon.specialty === 'Habilidades' ? 0.042 : 0.024;
+  let baseTriggerRate = 0.024;
+  if (pokemon.specialty === 'Habilidades') {
+    baseTriggerRate = 0.042;
+  } else if (pokemon.specialty === 'Todo') {
+    baseTriggerRate = 0.048; // Mythical Mew has exceptional skill frequency!
+  }
   let triggerSubskillBonus = 0;
   for (const sub of pokemon.subskills) {
     if (!sub.enabled) continue;
@@ -685,6 +693,8 @@ function getPokemonScore(pokemon: Pokemon, config: SnorlaxConfig, potCapacity: n
 
   if (pokemon.specialty === 'Ingredientes') {
     score += ingValuation * 25;
+  } else if (pokemon.specialty === 'Todo') {
+    score += ingValuation * 20;
   } else {
     score += ingValuation * 8;
   }
