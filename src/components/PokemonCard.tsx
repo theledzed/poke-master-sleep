@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Pokemon } from '../types/pokemon';
 import { BERRIES } from '../data/gameData';
 import {
@@ -12,6 +12,7 @@ import {
   isSpecialPokemon
 } from '../services/pokeApiService';
 import { getPokemonSkillLevel } from '../services/optimizer';
+import { evaluateSinglePokemonGenetics } from '../services/pokedexEvaluator';
 import {
   Lock,
   CheckCircle2,
@@ -57,6 +58,9 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
   const mainSkill = pokemon.mainSkillName || getPokemonCanonicalSkill(pokemon.name);
   const mainSkillMeta = getMainSkillMeta(mainSkill);
   const skillLevel = getPokemonSkillLevel(pokemon);
+
+  // Intrinsic genetic evaluation for quick grade display
+  const genetic = useMemo(() => evaluateSinglePokemonGenetics(pokemon), [pokemon]);
 
   // Specialty badge colors
   const specialtyBadge = {
@@ -170,6 +174,15 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
               <div className="flex items-center justify-center gap-1 text-[9px] font-mono mt-0.5">
                 <span className="text-emerald-300 font-bold bg-emerald-500/20 px-1 py-0.2 rounded">
                   Nv.{pokemon.level}
+                </span>
+                <span className={`px-1 py-0.2 rounded font-black text-[8px] ${
+                  genetic.score >= 88 ? 'bg-violet-500/20 text-violet-300 border border-violet-400/40' :
+                  genetic.score >= 76 ? 'bg-sky-500/20 text-sky-300 border border-sky-400/40' :
+                  genetic.score >= 64 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/40' :
+                  genetic.score >= 50 ? 'bg-amber-500/20 text-amber-300 border border-amber-400/40' :
+                  'bg-slate-700 text-slate-300'
+                }`} title={`Genética: ${genetic.score} pts`}>
+                  {genetic.score >= 88 ? 'S+' : genetic.score >= 76 ? 'S' : genetic.score >= 64 ? 'A' : genetic.score >= 50 ? 'B' : 'C'}
                 </span>
                 <span className="text-sky-300 font-bold bg-sky-500/20 px-1 py-0.2 rounded font-black">
                   PA {pokemon.rp.toLocaleString()}
@@ -301,10 +314,19 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
                   />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-black text-lg text-white">{pokemon.name}</h3>
                     <span className="text-[10px] font-black text-emerald-300 bg-emerald-500/20 px-2 py-0.2 rounded-full border border-emerald-500/40">
                       Nv. {pokemon.level}
+                    </span>
+                    <span className={`text-[10px] font-black px-2 py-0.2 rounded-full border ${
+                      genetic.score >= 88 ? 'bg-violet-500/20 text-violet-200 border-violet-400/40' :
+                      genetic.score >= 76 ? 'bg-sky-500/20 text-sky-200 border-sky-400/40' :
+                      genetic.score >= 64 ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/40' :
+                      genetic.score >= 50 ? 'bg-amber-500/20 text-amber-200 border-amber-400/40' :
+                      'bg-slate-700 text-slate-300 border-slate-600'
+                    }`} title={`Genética: ${genetic.score} pts`}>
+                      {genetic.score >= 88 ? 'Grado S+' : genetic.score >= 76 ? 'Grado S' : genetic.score >= 64 ? 'Grado A' : genetic.score >= 50 ? 'Grado B' : 'Grado C'} ({genetic.score} pts)
                     </span>
                     {dexId && (
                       <span className="text-[10px] font-mono text-slate-400 bg-white/5 px-2 py-0.2 rounded-full">

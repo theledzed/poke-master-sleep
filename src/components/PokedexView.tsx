@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Pokemon, Specialty } from '../types/pokemon';
 import { PokemonCard } from './PokemonCard';
+import { PokedexAuditView } from './PokedexAuditView';
 import { BERRIES, INGREDIENTS, CANONICAL_BERRIES } from '../data/gameData';
 import { Search, Filter, ArrowUpDown, Plus, Sparkles, CheckCircle2, RotateCcw, SlidersHorizontal, FileSpreadsheet, Heart } from 'lucide-react';
 import { ProfileId } from '../services/supabase';
@@ -9,6 +10,7 @@ interface PokedexViewProps {
   pokemons: Pokemon[];
   favoriteBerries: string[];
   onEditPokemon: (pokemon: Pokemon) => void;
+  onDeletePokemon?: (pokemonId: string) => void;
   onAddNew: () => void;
   spriteStyle?: 'artwork' | 'showdown';
   activeProfile?: ProfileId;
@@ -19,11 +21,13 @@ export const PokedexView: React.FC<PokedexViewProps> = ({
   pokemons,
   favoriteBerries,
   onEditPokemon,
+  onDeletePokemon,
   onAddNew,
   spriteStyle = 'artwork',
   activeProfile = 'cris',
   onGoToDatabase
 }) => {
+  const [viewMode, setViewMode] = useState<'cards' | 'audit'>('cards');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSpecialty, setSelectedSpecialty] = useState<string>('all');
   const [selectedBerry, setSelectedBerry] = useState<string>('all');
@@ -92,16 +96,52 @@ export const PokedexView: React.FC<PokedexViewProps> = ({
           </p>
         </div>
 
-        <button
-          onClick={onAddNew}
-          className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-gradient-to-r from-blue-600 via-sky-500 to-blue-600 hover:from-blue-500 hover:to-sky-400 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-sky-500/25 active:scale-95 transition-all"
-        >
-          <Plus className="w-4 h-4 stroke-[2.5]" />
-          <span>Registrar Nuevo Ayudante</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* View mode segmented toggle */}
+          <div className="flex items-center gap-1 bg-[#091f3a] p-1 rounded-full border border-sky-400/20 shadow-inner">
+            <button
+              onClick={() => setViewMode('cards')}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+                viewMode === 'cards'
+                  ? 'bg-sky-500 text-white shadow-sm shadow-sky-500/25'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <span>📋 Fichas</span>
+            </button>
+            <button
+              onClick={() => setViewMode('audit')}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+                viewMode === 'audit'
+                  ? 'bg-sky-500 text-white shadow-sm shadow-sky-500/25'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+              <span>🔬 Auditoría Genética</span>
+            </button>
+          </div>
+
+          <button
+            onClick={onAddNew}
+            className="flex items-center justify-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-blue-600 via-sky-500 to-blue-600 hover:from-blue-500 hover:to-sky-400 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-sky-500/25 active:scale-95 transition-all"
+          >
+            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <span>Registrar</span>
+          </button>
+        </div>
       </div>
 
-      {/* Filter and Search Bar */}
+      {viewMode === 'audit' ? (
+        <PokedexAuditView
+          pokemons={pokemons}
+          onEditPokemon={onEditPokemon}
+          onDeletePokemon={onDeletePokemon}
+          spriteStyle={spriteStyle}
+        />
+      ) : (
+        <>
+          {/* Filter and Search Bar */}
       <div className="poke-card p-5 space-y-4">
         <div className="flex items-center justify-between text-xs text-slate-400 font-black uppercase tracking-wider pb-2 border-b border-white/10">
           <span className="flex items-center gap-1.5 text-slate-200">
@@ -275,6 +315,8 @@ export const PokedexView: React.FC<PokedexViewProps> = ({
             />
           ))}
         </div>
+      )}
+        </>
       )}
     </div>
   );

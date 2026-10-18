@@ -266,6 +266,19 @@ export const App: React.FC = () => {
     });
   }, []);
 
+  // Delete / Transfer Pokemon handler
+  const handleDeletePokemon = useCallback((id: string) => {
+    setPokemons(prev => {
+      const updated = prev.filter(p => p.id !== id);
+      saveProfileData(activeProfile, updated, config).then(res => {
+        if (res.cloudSynced) setSyncStatus('synced');
+      });
+      return updated;
+    });
+    setIsModalOpen(false);
+    setPokemonToEdit(null);
+  }, [activeProfile, config]);
+
   return (
     <div className="min-h-screen text-slate-100 flex flex-col pb-24 md:pb-10 relative">
       {/* Dynamic Ambient Sky / Weather Background */}
@@ -338,6 +351,7 @@ export const App: React.FC = () => {
             pokemons={pokemons}
             favoriteBerries={config.favoriteBerries}
             onEditPokemon={handleEditPokemon}
+            onDeletePokemon={handleDeletePokemon}
             onAddNew={handleAddNewPokemon}
             spriteStyle={spriteStyle}
             activeProfile={activeProfile}
@@ -371,17 +385,7 @@ export const App: React.FC = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSavePokemon}
-        onDelete={(id) => {
-          setPokemons(prev => {
-            const updated = prev.filter(p => p.id !== id);
-            saveProfileData(activeProfile, updated, config).then(res => {
-              if (res.cloudSynced) setSyncStatus('synced');
-            });
-            return updated;
-          });
-          setIsModalOpen(false);
-          setPokemonToEdit(null);
-        }}
+        onDelete={handleDeletePokemon}
         pokemonToEdit={pokemonToEdit}
       />
     </div>
