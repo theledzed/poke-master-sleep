@@ -71,7 +71,8 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
   const staticFallbackUrl = getPokemonArtworkUrl(pokemon.name, 'artwork', isShiny);
 
   // Berry calculation (Base + Recuentobayas / Berry Finding S if present)
-  const baseBerryCount = pokemon.specialty === 'Bayas' ? 2 : 1;
+  // WikiDex: Los Pokémon con la especialidad "Todo" tienen los efectos de bayas (1 baya adicional = 2 base)
+  const baseBerryCount = (pokemon.specialty === 'Bayas' || pokemon.specialty === 'Todo') ? 2 : 1;
   const hasBfs = pokemon.subskills?.some(
     s => (s.name?.toLowerCase().includes('recuentobayas') || s.name?.toLowerCase().includes('berry finding')) && s.enabled
   );

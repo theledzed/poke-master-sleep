@@ -249,9 +249,8 @@ export function calculatePokemonProduction(
   const cleanName = pokemon.name.toLowerCase().trim();
   let baseIngChance = SPECIES_BASE_ING_RATES[cleanName];
   if (!baseIngChance) {
-    if (pokemon.specialty === 'Ingredientes') baseIngChance = 0.26;
+    if (pokemon.specialty === 'Ingredientes' || pokemon.specialty === 'Todo') baseIngChance = 0.26;
     else if (pokemon.specialty === 'Bayas') baseIngChance = 0.15;
-    else if (pokemon.specialty === 'Todo') baseIngChance = 0.25;
     else baseIngChance = 0.18;
   }
 
@@ -267,7 +266,8 @@ export function calculatePokemonProduction(
   const ingChance = Math.min(0.70, baseIngChance * ingSubskillMod * natureIngMod);
 
   // 6. Berry multiplier per help
-  let berriesPerHelp = pokemon.specialty === 'Bayas' ? 2 : 1;
+  // WikiDex: Especialidad "Todo" (Mew, Darkrai) obtiene los efectos de Bayas (+1 baya = 2 base)
+  let berriesPerHelp = (pokemon.specialty === 'Bayas' || pokemon.specialty === 'Todo') ? 2 : 1;
   const hasBFS = pokemon.subskills.some(s => s.enabled && s.name === 'Busca bayas S');
   if (hasBFS) berriesPerHelp += 1;
 
@@ -666,7 +666,8 @@ function getPokemonScore(pokemon: Pokemon, config: SnorlaxConfig, potCapacity: n
   const freq = Math.max(1200, pokemon.frequencySeconds);
 
   // 1. Berry Score
-  let berries = pokemon.specialty === 'Bayas' ? 2 : 1;
+  // WikiDex: Especialidad "Todo" (Mew, Darkrai) obtiene una baya adicional (+1 = 2 base)
+  let berries = (pokemon.specialty === 'Bayas' || pokemon.specialty === 'Todo') ? 2 : 1;
   if (pokemon.subskills.some(s => s.enabled && s.name === 'Busca bayas S')) berries += 1;
   const dailyHelps = 86400 / freq;
   const berryDaily = dailyHelps * (isFavorite ? 2 : 1) * berryVal * berries * 0.75;
@@ -738,9 +739,9 @@ export function optimizeTeam(
     score: getPokemonScore(p, config, potCapacity)
   }));
 
-  // Separate by specialty
-  const berryMons = scoredAll.filter(x => x.pokemon.specialty === 'Bayas').sort((a, b) => b.score - a.score);
-  const ingMons = scoredAll.filter(x => x.pokemon.specialty === 'Ingredientes').sort((a, b) => b.score - a.score);
+  // Separate by specialty (WikiDex: Todo combines effects of Bayas, Ingredientes and Habilidades)
+  const berryMons = scoredAll.filter(x => x.pokemon.specialty === 'Bayas' || x.pokemon.specialty === 'Todo').sort((a, b) => b.score - a.score);
+  const ingMons = scoredAll.filter(x => x.pokemon.specialty === 'Ingredientes' || x.pokemon.specialty === 'Todo').sort((a, b) => b.score - a.score);
   const skillMons = scoredAll.filter(x => x.pokemon.specialty === 'Habilidades' || x.pokemon.specialty === 'Todo').sort((a, b) => b.score - a.score);
 
   // Take top candidates from each category
