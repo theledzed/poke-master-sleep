@@ -74,33 +74,54 @@ interface PokemonProduction {
   isHealer: boolean;
 }
 
-// Determine actual skill level from notes, evolution stage and subskills
-export function getPokemonSkillLevel(pokemon: Pokemon): number {
-  if (typeof pokemon.mainSkillLevel === 'number' && pokemon.mainSkillLevel >= 1) {
-    return Math.min(7, Math.max(1, pokemon.mainSkillLevel));
-  }
+// Helper unificado para detectar sanadores de equipo según WikiDex
+export function isTeamHealer(pokemon: Pokemon): boolean {
+  const name = pokemon.name.toLowerCase();
+  const skill = pokemon.mainSkillName || getPokemonCanonicalSkill(pokemon.name);
+  return (
+    skill.includes('Energía para todos') ||
+    skill.includes('Zumo de Baya') ||
+    skill.includes('Plegaria Lunar') ||
+    [
+      'jigglypuff', 'wigglytuff', 'igglybuff',
+      'pawmi', 'pawmo', 'pawmot',
+      'ralts', 'kirlia', 'gardevoir',
+      'sylveon', 'cresselia', 'shuckle',
+      'turtwig', 'grotle', 'torterra'
+    ].some(h => name.includes(h))
+  );
+}
 
-  const noteMatch = pokemon.notes?.match(/Nv\.\s*(\d+)/i);
+// Determine actual skill level from explicit property, notes, evolution stage and subskills
+export function getPokemonSkillLevel(pokemon: Pokemon): number {
   let baseLevel = 1;
 
+  // 1. Si existe nota explícita, tomamos nota primero
+  const noteMatch = pokemon.notes?.match(/Nv\.\s*(\d+)/i);
   if (noteMatch) {
     const parsed = parseInt(noteMatch[1], 10);
     if (parsed >= 1 && parsed <= 7) {
       baseLevel = parsed;
     }
+  } else if (typeof pokemon.mainSkillLevel === 'number' && pokemon.mainSkillLevel >= 1) {
+    baseLevel = pokemon.mainSkillLevel;
   } else {
     const name = pokemon.name.toLowerCase();
-    if (['gengar', 'blastoise', 'charizard', 'venusaur', 'raichu', 'typhlosion', 'feraligatr', 'meganium', 'ampharos', 'tyranitar', 'walrein', 'gardevoir', 'gallade', 'magnezone', 'togekiss'].some(s => name.includes(s))) {
+    if (['gengar', 'blastoise', 'charizard', 'venusaur', 'raichu', 'typhlosion', 'feraligatr', 'meganium', 'ampharos', 'tyranitar', 'walrein', 'gardevoir', 'gallade', 'magnezone', 'togekiss', 'sceptile', 'blaziken', 'swampert', 'empoleon', 'torterra', 'infernape', 'luxray', 'aggron', 'flygon', 'vikavolt', 'bewear', 'meowscarada', 'skeledirge', 'quaquaval'].some(s => name.includes(s))) {
       baseLevel = 3;
-    } else if (['haunter', 'espeon', 'flareon', 'vaporeon', 'jolteon', 'umbreon', 'leafeon', 'glaceon', 'sylveon', 'flaaffy', 'quilava', 'croconaw', 'bayleef', 'ivysaur', 'wartortle', 'charmeleon', 'graveler', 'dugtrio', 'sealeo', 'kirlia', 'pupitar', 'togetic'].some(s => name.includes(s))) {
+    } else if (['haunter', 'espeon', 'flareon', 'vaporeon', 'jolteon', 'umbreon', 'leafeon', 'glaceon', 'sylveon', 'flaaffy', 'quilava', 'croconaw', 'bayleef', 'ivysaur', 'wartortle', 'charmeleon', 'graveler', 'dugtrio', 'sealeo', 'kirlia', 'pupitar', 'togetic', 'grovyle', 'combusken', 'marshtomp', 'prinplup', 'grotle', 'monferno', 'luxio', 'lairon', 'vibrava', 'charjabug', 'floragato', 'crocalor', 'quaxwell'].some(s => name.includes(s))) {
       baseLevel = 2;
     }
   }
 
-  for (const sub of pokemon.subskills) {
-    if (!sub.enabled) continue;
-    if (sub.name === 'Nivel habilidad S') baseLevel += 1;
-    if (sub.name === 'Nivel habilidad M') baseLevel += 2;
+  // 2. Si NO venía ya calculado en las notas, sumamos las subskills activas (incluyendo Nivel habilidad L = +3)
+  if (!noteMatch) {
+    for (const sub of pokemon.subskills) {
+      if (!sub.enabled) continue;
+      if (sub.name === 'Nivel habilidad S') baseLevel += 1;
+      if (sub.name === 'Nivel habilidad M') baseLevel += 2;
+      if (sub.name === 'Nivel habilidad L') baseLevel += 3;
+    }
   }
 
   return Math.min(7, Math.max(1, baseLevel));
@@ -121,31 +142,26 @@ export function getSkillVigorPerTrigger(pokemon: Pokemon): number {
     return table[skillLevel] || 785;
   }
 
-  if (mainSkill.includes('Imán ingredientes S') || mainSkill.includes('Más (Imán ingredientes')) {
-    // Ingredient Magnet grants ingredients consumed via Cooking pot. Direct vigor is 0 to avoid double-counting.
+  if (mainSkill.includes('Imán ingredientes S') || mainSkill.includes('Más (Imán') || mainSkill.includes('Presente')) {
     return 0;
   }
 
-  if (mainSkill.includes('Ingrediente aleatorio S') || mainSkill.includes('Afortunado')) {
-    // Draws 6 to 21 random ingredients per trigger (approx 110 vigor eq value per ingredient)
+  if (mainSkill.includes('Ingrediente aleatorio S') || mainSkill.includes('Afortunado') || mainSkill.includes('Corte Fuerte')) {
     const ingCounts = [0, 6, 8, 11, 14, 17, 21, 25];
     return (ingCounts[skillLevel] || 8) * 110;
   }
 
   if (mainSkill.includes('Receta sustanciosa') || mainSkill.includes('Menos (Receta')) {
-    // Pot expansion (+7 to +31 ingredients for next meal)
     const potBoost = [0, 7, 10, 14, 18, 22, 27, 31];
     return (potBoost[skillLevel] || 10) * 85;
   }
 
-  if (mainSkill.includes('Cocinitas S')) {
-    // Extra-tasty crit chance bonus
+  if (mainSkill.includes('Cocinitas S') || mainSkill.includes('Corpulencia')) {
     const critBonus = [0, 4, 5, 6, 7, 8, 10, 12];
     return (critBonus[skillLevel] || 5) * 220;
   }
 
-  if (mainSkill.includes('Metrónomo')) {
-    // Metronome triggers any main skill at the current skill level
+  if (mainSkill.includes('Metrónomo') || mainSkill.includes('Transformación') || mainSkill.includes('Mimético') || mainSkill.includes('Copia habilidades')) {
     const table = [0, 850, 1300, 1900, 2700, 3800, 5300, 7000];
     return table[skillLevel] || 2700;
   }
@@ -160,8 +176,7 @@ export function getSkillVigorPerTrigger(pokemon: Pokemon): number {
     return table[skillLevel] || 1800;
   }
 
-  if (mainSkill.includes('Ánimo enérgico') || mainSkill.includes('Pulso Cura') || mainSkill.includes('Moflete Estático')) {
-    // Energy cheer to a random teammate
+  if (mainSkill.includes('Ánimo enérgico') || mainSkill.includes('Pulso Cura') || mainSkill.includes('Moflete Estático') || mainSkill.includes('Luz Lunar')) {
     const energy = [0, 14, 19, 24, 31, 39, 48, 55];
     return (energy[skillLevel] || 19) * 35;
   }
@@ -171,10 +186,15 @@ export function getSkillVigorPerTrigger(pokemon: Pokemon): number {
     return table[skillLevel] || 500;
   }
 
-  if (mainSkill.includes('Onda Mental') || mainSkill.includes('Mal Sueño')) {
-    // Legendary psychic / dark burst damage
+  if (mainSkill.includes('Onda Mental')) {
     const table = [0, 900, 1300, 1800, 2500, 3500, 4800, 6400];
     return table[skillLevel] || 1800;
+  }
+
+  if (mainSkill.includes('Mal Sueño')) {
+    // Penalización por drenar 12 de energía a compañeros no-Siniestro
+    const table = [0, 750, 1100, 1550, 2150, 3000, 4100, 5500];
+    return table[skillLevel] || 1550;
   }
 
   return 300 + skillLevel * 150;
@@ -189,14 +209,7 @@ export function calculateTeamEnergyFactor(team: Pokemon[]): {
   const BASE_ENERGY_FACTOR = 1.42;
   const MAX_HEALER_BONUS = 0.68; // 1.42 + 0.68 = 2.10 max
 
-  const healers = team.filter(p => {
-    const name = p.name.toLowerCase();
-    const skill = p.mainSkillName || getPokemonCanonicalSkill(p.name);
-    return skill.includes('Energía para todos') ||
-      skill.includes('Zumo de Baya') ||
-      skill.includes('Plegaria Lunar') ||
-      ['jigglypuff', 'wigglytuff', 'igglybuff', 'pawmi', 'pawmo', 'pawmot', 'ralts', 'kirlia', 'gardevoir', 'sylveon', 'cresselia', 'shuckle'].some(h => name.includes(h));
-  });
+  const healers = team.filter(p => isTeamHealer(p));
 
   if (healers.length === 0) {
     return { teamEnergyFactor: BASE_ENERGY_FACTOR, totalDailyHealedEnergy: 0, hasEffectiveHealer: false };
@@ -376,9 +389,7 @@ export function calculatePokemonProduction(
   const triggerMod = (1 + triggerSubskillBonus) * (pokemon.natureObj?.skillMod || 1.0);
 
   const skillTriggersPerDay = helpsPerDay * baseTriggerRate * triggerMod;
-  const isHealer = ['jigglypuff', 'wigglytuff', 'pawmi', 'pawmo', 'pawmot', 'ralts', 'kirlia', 'gardevoir', 'sylveon'].some(
-    h => pokemon.name.toLowerCase().includes(h)
-  );
+  const isHealer = isTeamHealer(pokemon);
 
   let dailySkillVigor = 0;
   if (!isHealer) {
@@ -640,8 +651,13 @@ export function evaluateTeam(team: Pokemon[], config: SnorlaxConfig): OptimizedT
   const highlights: string[] = [];
 
   // Check Special Pokémon Limit (Official Sleep rule: Max 1 Legendary/Mythical per team)
+  // Official Exception: Latias and Latios (the Eon duo) are allowed together!
   const specialPokemons = team.filter(p => isSpecialPokemon(p));
-  if (specialPokemons.length > 1) {
+  const isEonDuo = specialPokemons.length === 2 &&
+    specialPokemons.some(p => p.name.toLowerCase().includes('latias')) &&
+    specialPokemons.some(p => p.name.toLowerCase().includes('latios'));
+
+  if (specialPokemons.length > 1 && !isEonDuo) {
     const specialNames = specialPokemons.map(p => p.name).join(', ');
     highlights.unshift(`⚠️ Excede límite de Legendarios: ${specialNames} (${specialPokemons.length}/1 permitidos).`);
     optimizationScore -= 100000;
@@ -731,9 +747,7 @@ function getPokemonScore(pokemon: Pokemon, config: SnorlaxConfig, potCapacity: n
   }
 
   // 3. Healer / Skill bonus
-  const isHealer = ['jigglypuff', 'wigglytuff', 'pawmi', 'pawmo', 'pawmot', 'ralts', 'kirlia', 'gardevoir', 'sylveon'].some(
-    h => pokemon.name.toLowerCase().includes(h)
-  );
+  const isHealer = isTeamHealer(pokemon);
   const skillLvl = getPokemonSkillLevel(pokemon);
   if (isHealer) {
     score += skillLvl * 3000;
@@ -789,12 +803,7 @@ export function optimizeTeam(
   berryMons.slice(0, 12).forEach(x => addPokemon(x.pokemon));
 
   // Bucket 2: Top 4 Healers (E4E)
-  const healers = allPokemons.filter(p => {
-    const name = p.name.toLowerCase();
-    const skill = p.mainSkillName || getPokemonCanonicalSkill(p.name);
-    return skill.includes('Energía para todos') ||
-      ['jigglypuff', 'wigglytuff', 'igglybuff', 'pawmi', 'pawmo', 'pawmot', 'ralts', 'kirlia', 'gardevoir', 'sylveon'].some(h => name.includes(h));
-  }).sort((a, b) => b.level - a.level);
+  const healers = allPokemons.filter(p => isTeamHealer(p)).sort((a, b) => b.level - a.level);
   healers.slice(0, 4).forEach(addPokemon);
 
   // Bucket 3: Top 6 Skills / Support (Mew, Mewtwo, Pot Expander, Bonus Ayuda)
@@ -844,7 +853,16 @@ export function optimizeTeam(
         if (partialTeam.some(p => p.id === candidate.id)) continue;
 
         // OFFICIAL SLEEP RULE: At most 1 Special / Legendary / Mythical Pokémon per team!
-        if (hasSpecial && isSpecialPokemon(candidate)) continue;
+        // Exception: Latias and Latios (the Eon duo) can team up together!
+        if (isSpecialPokemon(candidate)) {
+          const specials = partialTeam.filter(p => isSpecialPokemon(p));
+          if (specials.length > 0) {
+            const isEonPair = specials.length === 1 &&
+              ((candidate.name.toLowerCase().includes('latias') && specials[0].name.toLowerCase().includes('latios')) ||
+               (candidate.name.toLowerCase().includes('latios') && specials[0].name.toLowerCase().includes('latias')));
+            if (!isEonPair) continue;
+          }
+        }
 
         const newTeam = [...partialTeam, candidate];
 
@@ -883,10 +901,15 @@ export function optimizeTeam(
         for (const candidate of selectedCandidates) {
           if (currentTeam.some(p => p.id === candidate.id)) continue;
 
-          // Official Sleep Rule: At most 1 Special / Legendary on swap
+          // Official Sleep Rule: At most 1 Special / Legendary on swap, except Latias + Latios
           if (isSpecialPokemon(candidate)) {
             const otherSpecials = currentTeam.filter((p, idx) => idx !== i && isSpecialPokemon(p));
-            if (otherSpecials.length > 0) continue;
+            if (otherSpecials.length > 0) {
+              const isEonPair = otherSpecials.length === 1 &&
+                ((candidate.name.toLowerCase().includes('latias') && otherSpecials[0].name.toLowerCase().includes('latios')) ||
+                 (candidate.name.toLowerCase().includes('latios') && otherSpecials[0].name.toLowerCase().includes('latias')));
+              if (!isEonPair) continue;
+            }
           }
 
           const testTeam = [...currentTeam];
