@@ -1,6 +1,7 @@
 import { Pokemon, Recipe, SnorlaxConfig, OptimizedTeamResult, MealPlan, DishType } from '../types/pokemon';
 import { INGREDIENTS, RECIPES, DISH_LEVEL_BONUS, getBerryVigor, POT_SIZES } from '../data/gameData';
 import { getPokemonCanonicalSkill, isSpecialPokemon } from './pokeApiService';
+import { getSpeciesMasterData } from '../data/speciesMaster';
 
 export const MIXED_DISHES: Record<DishType, Recipe> = {
   curry: {
@@ -106,11 +107,17 @@ export function getPokemonSkillLevel(pokemon: Pokemon): number {
   } else if (typeof pokemon.mainSkillLevel === 'number' && pokemon.mainSkillLevel >= 1) {
     baseLevel = pokemon.mainSkillLevel;
   } else {
-    const name = pokemon.name.toLowerCase();
-    if (['gengar', 'blastoise', 'charizard', 'venusaur', 'raichu', 'typhlosion', 'feraligatr', 'meganium', 'ampharos', 'tyranitar', 'walrein', 'gardevoir', 'gallade', 'magnezone', 'togekiss', 'sceptile', 'blaziken', 'swampert', 'empoleon', 'torterra', 'infernape', 'luxray', 'aggron', 'flygon', 'vikavolt', 'bewear', 'meowscarada', 'skeledirge', 'quaquaval'].some(s => name.includes(s))) {
-      baseLevel = 3;
-    } else if (['haunter', 'espeon', 'flareon', 'vaporeon', 'jolteon', 'umbreon', 'leafeon', 'glaceon', 'sylveon', 'flaaffy', 'quilava', 'croconaw', 'bayleef', 'ivysaur', 'wartortle', 'charmeleon', 'graveler', 'dugtrio', 'sealeo', 'kirlia', 'pupitar', 'togetic', 'grovyle', 'combusken', 'marshtomp', 'prinplup', 'grotle', 'monferno', 'luxio', 'lairon', 'vibrava', 'charjabug', 'floragato', 'crocalor', 'quaxwell'].some(s => name.includes(s))) {
-      baseLevel = 2;
+    // Si no está especificado, deducimos el nivel base por su evolución oficial de Pokémon Sleep (+1 nivel por evolución)
+    const master = getSpeciesMasterData(pokemon.name);
+    if (master && typeof master.evolutionCount === 'number') {
+      baseLevel = 1 + master.evolutionCount;
+    } else {
+      const name = pokemon.name.toLowerCase();
+      if (['gengar', 'blastoise', 'charizard', 'venusaur', 'raichu', 'typhlosion', 'feraligatr', 'meganium', 'ampharos', 'tyranitar', 'walrein', 'gardevoir', 'gallade', 'magnezone', 'togekiss', 'sceptile', 'blaziken', 'swampert', 'empoleon', 'torterra', 'infernape', 'luxray', 'aggron', 'flygon', 'vikavolt', 'bewear', 'meowscarada', 'skeledirge', 'quaquaval'].some(s => name.includes(s))) {
+        baseLevel = 3;
+      } else if (['haunter', 'espeon', 'flareon', 'vaporeon', 'jolteon', 'umbreon', 'leafeon', 'glaceon', 'sylveon', 'flaaffy', 'quilava', 'croconaw', 'bayleef', 'ivysaur', 'wartortle', 'charmeleon', 'graveler', 'dugtrio', 'sealeo', 'kirlia', 'pupitar', 'togetic', 'grovyle', 'combusken', 'marshtomp', 'prinplup', 'grotle', 'monferno', 'luxio', 'lairon', 'vibrava', 'charjabug', 'floragato', 'crocalor', 'quaxwell'].some(s => name.includes(s))) {
+        baseLevel = 2;
+      }
     }
   }
 
@@ -143,7 +150,10 @@ export function getSkillVigorPerTrigger(pokemon: Pokemon): number {
   }
 
   if (mainSkill.includes('Imán ingredientes S') || mainSkill.includes('Más (Imán') || mainSkill.includes('Presente')) {
-    return 0;
+    // Oficial Sleep: 6, 8, 11, 14, 17, 21, 25 ingredientes aleatorios inyectados
+    // Valorizados a ~115 de vigor base medio de ingrediente
+    const ingCounts = [0, 6, 8, 11, 14, 17, 21, 25];
+    return (ingCounts[skillLevel] || 8) * 115;
   }
 
   if (mainSkill.includes('Ingrediente aleatorio S') || mainSkill.includes('Afortunado') || mainSkill.includes('Corte Fuerte')) {
@@ -166,7 +176,14 @@ export function getSkillVigorPerTrigger(pokemon: Pokemon): number {
     return table[skillLevel] || 2700;
   }
 
-  if (mainSkill.includes('Superútil S') || mainSkill.includes('Impulso de ayuda S') || mainSkill.includes('Mejora de ayuda')) {
+  if (mainSkill.includes('Impulso de ayuda S') || mainSkill.includes('Mejora de ayuda')) {
+    // Bestias legendarias (Raikou, Entei, Suicune): activan ayudas instantáneas para TODO el equipo (5 miembros)
+    const helps = [0, 4, 5, 6, 7, 8, 9, 11];
+    return (helps[skillLevel] || 5) * 1250;
+  }
+
+  if (mainSkill.includes('Superútil S')) {
+    // Ayudante individual (Arcanine, Jolteon): 1 compañero aleatorio recibe ayudas
     const helps = [0, 4, 5, 6, 7, 8, 9, 10];
     return (helps[skillLevel] || 5) * 350;
   }
@@ -219,11 +236,14 @@ export function calculateTeamEnergyFactor(team: Pokemon[]): {
 
   for (const healer of healers) {
     const name = healer.name.toLowerCase();
-    let baseTriggerRate = 0.035;
-    if (name.includes('gardevoir') || name.includes('wigglytuff')) baseTriggerRate = 0.045;
-    else if (name.includes('sylveon')) baseTriggerRate = 0.040;
-    else if (name.includes('jigglypuff') || name.includes('kirlia') || name.includes('pawmo')) baseTriggerRate = 0.028;
-    else if (name.includes('igglybuff') || name.includes('pawmi') || name.includes('ralts')) baseTriggerRate = 0.018;
+    const master = getSpeciesMasterData(healer.name);
+    let baseTriggerRate = master ? (master.skillRate / 100) : 0.035;
+    if (!master) {
+      if (name.includes('gardevoir') || name.includes('wigglytuff')) baseTriggerRate = 0.045;
+      else if (name.includes('sylveon')) baseTriggerRate = 0.040;
+      else if (name.includes('jigglypuff') || name.includes('kirlia') || name.includes('pawmo')) baseTriggerRate = 0.028;
+      else if (name.includes('igglybuff') || name.includes('pawmi') || name.includes('ralts')) baseTriggerRate = 0.018;
+    }
 
     let triggerSubskillBonus = 0;
     for (const sub of healer.subskills) {
@@ -236,7 +256,10 @@ export function calculateTeamEnergyFactor(team: Pokemon[]): {
     const effectiveTriggerRate = baseTriggerRate * triggerMod;
 
     // Note: healer.frequencySeconds already includes individual level, nature, and individual subskills
-    const approxHelpsPerDay = Math.floor(86400 / (healer.frequencySeconds / BASE_ENERGY_FACTOR));
+    const healerFreq = (healer.frequencySeconds && healer.frequencySeconds > 0)
+      ? healer.frequencySeconds
+      : (master ? master.baseFrequency : 3000);
+    const approxHelpsPerDay = Math.floor(86400 / (healerFreq / BASE_ENERGY_FACTOR));
 
     const dailyTriggers = approxHelpsPerDay * effectiveTriggerRate;
 
@@ -275,7 +298,11 @@ export function calculatePokemonProduction(
   // In Pokémon Sleep, the frequency displayed on the in-game profile card (pokemon.frequencySeconds)
   // already incorporates the Pokémon's individual level, nature speed modifier, and active subskills (Velocidad S/M).
   // Only external team boosts (Helping Bonus from teammates) and Good Camp Ticket modify this interval.
-  let freq = pokemon.frequencySeconds;
+  const cleanName = pokemon.name.toLowerCase().trim();
+  const master = getSpeciesMasterData(pokemon.name);
+  let freq = (pokemon.frequencySeconds && pokemon.frequencySeconds > 0)
+    ? pokemon.frequencySeconds
+    : (master ? master.baseFrequency : 3600);
 
   // External teammate Helping Bonus (5% per teammate, max 25%)
   const teammateSpeedReduction = Math.min(0.25, teamBonusAyudaCount * 0.05);
@@ -289,8 +316,7 @@ export function calculatePokemonProduction(
   const helpsPerDay = Math.max(10, Math.floor(86400 / effectiveFrequency));
 
   // 5. Berry vs Ingredient probability with Day/Night cycle & Sneaky Snacking
-  const cleanName = pokemon.name.toLowerCase().trim();
-  let baseIngChance = SPECIES_BASE_ING_RATES[cleanName];
+  let baseIngChance = master ? (master.ingredientRate / 100) : SPECIES_BASE_ING_RATES[cleanName];
   if (!baseIngChance) {
     if (pokemon.specialty === 'Ingredientes' || pokemon.specialty === 'Todo') baseIngChance = 0.26;
     else if (pokemon.specialty === 'Bayas') baseIngChance = 0.15;
@@ -315,14 +341,15 @@ export function calculatePokemonProduction(
   if (hasBFS) berriesPerHelp += 1;
 
   // 7. Dynamic Inventory & Sneaky Snacking calculation
-  // Stage 1: ~12-14, Stage 2: ~16-18, Stage 3: ~20-24
-  let baseInventory = 13;
-  if (['gengar', 'blastoise', 'charizard', 'venusaur', 'raichu', 'typhlosion', 'feraligatr', 'meganium', 'ampharos', 'tyranitar', 'walrein', 'gardevoir', 'gallade', 'magnezone', 'togekiss', 'dragonite', 'mew', 'mewtwo', 'raikou', 'entei', 'suicune'].some(s => cleanName.includes(s))) {
-    baseInventory = 22;
-  } else if (['haunter', 'espeon', 'flareon', 'vaporeon', 'jolteon', 'umbreon', 'leafeon', 'glaceon', 'sylveon', 'flaaffy', 'quilava', 'croconaw', 'bayleef', 'ivysaur', 'wartortle', 'charmeleon', 'graveler', 'dugtrio', 'sealeo', 'kirlia', 'pupitar', 'togetic', 'dragonair'].some(s => cleanName.includes(s))) {
-    baseInventory = 16;
-  } else if (pokemon.specialty === 'Ingredientes') {
-    baseInventory = 15;
+  let baseInventory = master ? master.carryLimit : 15;
+  if (!master) {
+    if (['gengar', 'blastoise', 'charizard', 'venusaur', 'raichu', 'typhlosion', 'feraligatr', 'meganium', 'ampharos', 'tyranitar', 'walrein', 'gardevoir', 'gallade', 'magnezone', 'togekiss', 'dragonite', 'mew', 'mewtwo', 'raikou', 'entei', 'suicune'].some(s => cleanName.includes(s))) {
+      baseInventory = 22;
+    } else if (['haunter', 'espeon', 'flareon', 'vaporeon', 'jolteon', 'umbreon', 'leafeon', 'glaceon', 'sylveon', 'flaaffy', 'quilava', 'croconaw', 'bayleef', 'ivysaur', 'wartortle', 'charmeleon', 'graveler', 'dugtrio', 'sealeo', 'kirlia', 'pupitar', 'togetic', 'dragonair'].some(s => cleanName.includes(s))) {
+      baseInventory = 16;
+    } else if (pokemon.specialty === 'Ingredientes') {
+      baseInventory = 15;
+    }
   }
 
   let extraInventory = 0;
@@ -374,11 +401,13 @@ export function calculatePokemonProduction(
   }
 
   // 9. Skill production
-  let baseTriggerRate = 0.024;
-  if (pokemon.specialty === 'Habilidades') {
-    baseTriggerRate = 0.042;
-  } else if (pokemon.specialty === 'Todo') {
-    baseTriggerRate = 0.048; // Mythical Mew has exceptional skill frequency!
+  let baseTriggerRate = master ? (master.skillRate / 100) : 0.024;
+  if (!master) {
+    if (pokemon.specialty === 'Habilidades') {
+      baseTriggerRate = 0.042;
+    } else if (pokemon.specialty === 'Todo') {
+      baseTriggerRate = 0.048; // Mythical Mew has exceptional skill frequency!
+    }
   }
   let triggerSubskillBonus = 0;
   for (const sub of pokemon.subskills) {
@@ -709,14 +738,18 @@ function getPokemonScore(pokemon: Pokemon, config: SnorlaxConfig, potCapacity: n
   let score = 0;
   const isFavorite = config.favoriteBerries.includes(pokemon.berry);
   const berryVal = getBerryVigor(pokemon.berry, pokemon.level);
-  const freq = Math.max(1200, pokemon.frequencySeconds);
+  const master = getSpeciesMasterData(pokemon.name);
+  const freq = (pokemon.frequencySeconds && pokemon.frequencySeconds > 0)
+    ? Math.max(1200, pokemon.frequencySeconds)
+    : (master ? Math.max(1200, master.baseFrequency) : 3600);
 
   // 1. Berry Score
   // WikiDex: Especialidad "Todo" (Mew, Darkrai) obtiene una baya adicional (+1 = 2 base)
   let berries = (pokemon.specialty === 'Bayas' || pokemon.specialty === 'Todo') ? 2 : 1;
   if (pokemon.subskills.some(s => s.enabled && s.name === 'Busca bayas S')) berries += 1;
   const dailyHelps = 86400 / freq;
-  const berryDaily = dailyHelps * (isFavorite ? 2 : 1) * berryVal * berries * 0.75;
+  const ingRate = master ? (master.ingredientRate / 100) : (pokemon.specialty === 'Bayas' ? 0.15 : 0.25);
+  const berryDaily = dailyHelps * (isFavorite ? 2 : 1) * berryVal * berries * (1 - ingRate);
   score += berryDaily;
 
   // 2. Ingredient Score: check if ingredients match fitting recipes for this week's dish type
@@ -823,7 +856,10 @@ export function optimizeTeam(
       .filter(p => p.ingredients.some(s => s.enabled && s.name === ing))
       .map(p => {
         const slot = p.ingredients.find(s => s.enabled && s.name === ing)!;
-        const rate = (slot.count * 86400) / p.frequencySeconds;
+        const master = getSpeciesMasterData(p.name);
+        const ingRate = master ? (master.ingredientRate / 100) : (p.specialty === 'Ingredientes' ? 0.26 : 0.18);
+        const freq = (p.frequencySeconds && p.frequencySeconds > 0) ? p.frequencySeconds : (master ? master.baseFrequency : 3600);
+        const rate = (slot.count * 86400 * ingRate) / freq;
         return { pokemon: p, rate };
       })
       .sort((a, b) => b.rate - a.rate);

@@ -1,3 +1,5 @@
+import { getSpeciesMasterData } from '../data/speciesMaster';
+
 // PokeAPI integration service for Pokemon Sleep Master
 
 // Map Spanish/English species names to National Pokedex Number
@@ -10,6 +12,7 @@ export const POKEMON_DEX_MAP: Record<string, number> = {
   'rattata': 19, 'raticate': 20,
   'ekans': 23, 'arbok': 24,
   'pikachu': 25, 'raichu': 26,
+  'sandshrew': 27, 'sandslash': 28,
   'clefairy': 35, 'clefable': 36,
   'vulpix': 37, 'ninetales': 38,
   'jigglypuff': 39, 'wigglytuff': 40,
@@ -22,11 +25,13 @@ export const POKEMON_DEX_MAP: Record<string, number> = {
   'geodude': 74, 'graveler': 75, 'golem': 76,
   'slowpoke': 79, 'slowbro': 80, 'slowking': 199,
   'magnemite': 81, 'magneton': 82, 'magnezone': 462,
+  'farfetchd': 83, "farfetch'd": 83,
   'doduo': 84, 'dodrio': 85,
   'gastly': 92, 'haunter': 93, 'gengar': 94,
   'onix': 95, 'steelix': 208,
   'cubone': 104, 'marowak': 105,
   'kangaskhan': 115,
+  'mrmime': 122, 'mr. mime': 122, 'mr mime': 122, 'mr.mime': 122,
   'pinsir': 127,
   'magikarp': 129, 'gyarados': 130,
   'ditto': 132,
@@ -40,11 +45,16 @@ export const POKEMON_DEX_MAP: Record<string, number> = {
   'cyndaquil': 155, 'quilava': 156, 'typhlosion': 157,
   'totodile': 158, 'croconaw': 159, 'feraligatr': 160,
   'pichu': 172, 'cleffa': 173, 'igglybuff': 174, 'togepi': 175, 'togetic': 176, 'togekiss': 468,
+  'natu': 177, 'xatu': 178,
   'mareep': 179, 'flaaffy': 180, 'ampharos': 181,
   'sudowoodo': 185,
   'wooper': 194, 'quagsire': 195,
+  'murkrow': 198, 'honchkrow': 430,
+  'misdreavus': 200, 'mismagius': 429,
   'wobbuffet': 202,
+  'shuckle': 213,
   'heracross': 214,
+  'sneasel': 215, 'weavile': 461,
   'delibird': 225,
   'houndour': 228, 'houndoom': 229,
   'larvitar': 246, 'pupitar': 247, 'tyranitar': 248,
@@ -56,11 +66,18 @@ export const POKEMON_DEX_MAP: Record<string, number> = {
   'mudkip': 258, 'marshtomp': 259, 'swampert': 260,
   'slakoth': 287, 'vigoroth': 288, 'slaking': 289,
   'sableye': 302,
+  'mawile': 303,
+  'aron': 304, 'lairon': 305, 'aggron': 306,
+  'plusle': 311, 'minun': 312,
   'gulpin': 316, 'swalot': 317,
+  'trapinch': 328, 'vibrava': 329, 'flygon': 330,
   'swablu': 333, 'altaria': 334,
   'shuppet': 353, 'banette': 354,
   'absor': 359, 'absol': 359,
+  'wynaut': 360,
   'spheal': 363, 'sealeo': 364, 'walrein': 365,
+  'bagon': 371, 'shelgon': 372, 'salamence': 373,
+  'latias': 380, 'latios': 381,
   'gardevoir': 282, 'gallade': 475, 'ralts': 280, 'kirlia': 281,
 
   // Gen 4
@@ -68,20 +85,33 @@ export const POKEMON_DEX_MAP: Record<string, number> = {
   'chimchar': 390, 'monferno': 391, 'infernape': 392,
   'piplup': 393, 'prinplup': 394, 'empoleon': 395,
   'shinx': 403, 'luxio': 404, 'luxray': 405,
+  'drifloon': 425, 'drifblim': 426,
   'bonsly': 438, 'happiny': 440, 'chansey': 113, 'blissey': 242,
+  'mimejr': 439, 'mime jr': 439, 'mime jr.': 439, 'mime.jr': 439,
+  'spiritomb': 442,
   'riolu': 447, 'lucario': 448,
   'croagunk': 453, 'toxicroak': 454,
   'abomasnow': 460, 'snover': 459,
   'darkrai': 491, 'cresselia': 488,
 
   // Gen 5 & beyond
+  'munna': 517, 'musharna': 518,
+  'dwebble': 557, 'crustle': 558,
   'foongus': 590, 'amoonguss': 591,
   'rufflet': 627, 'braviary': 628,
+  'tyrunt': 696, 'tyrantrum': 697,
+  'hawlucha': 701, 'dedenne': 702,
+  'pumpkaboo': 710, 'gourgeist': 711,
+  'noibat': 714, 'noivern': 715,
+  'grubbin': 736, 'charjabug': 737, 'vikavolt': 738,
   'cutiefly': 742, 'ribombee': 743,
   'stufful': 759, 'bewear': 760,
-  'mimikyu': 778,
   'comfey': 764,
+  'togedemaru': 777,
+  'mimikyu': 778,
+  'drampa': 780,
   'cramorant': 845,
+  'toxel': 848, 'toxtricity': 849,
 
   // Gen 9 Paldea
   'sprigatito': 906, 'floragato': 907, 'meowscarada': 908,
@@ -89,30 +119,52 @@ export const POKEMON_DEX_MAP: Record<string, number> = {
   'quaxly': 912, 'quaxwell': 913, 'quaquaval': 914,
   'pawmi': 921, 'pawmo': 922, 'pawmot': 923,
   'tinkatink': 957, 'tinkatuff': 958, 'tinkaton': 959,
+  'cetoddle': 974, 'cetitan': 975,
   'clodsire': 980
 };
 
 export function getPokemonDexId(name: string): number | null {
+  if (!name) return null;
   const clean = name.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+
+  // 1. Authoritative check in speciesMaster (contains all 252 Pokémon Sleep species)
+  const master = getSpeciesMasterData(name);
+  if (master?.dexNumber) {
+    return master.dexNumber;
+  }
+
+  // 2. Direct static map
   if (POKEMON_DEX_MAP[clean]) {
     return POKEMON_DEX_MAP[clean];
   }
+
+  // 3. Substring / alias check in POKEMON_DEX_MAP
   for (const [key, id] of Object.entries(POKEMON_DEX_MAP)) {
     if (clean.includes(key) || key.includes(clean)) {
       return id;
     }
   }
+
   return null;
 }
 
-export type SpriteStyle = 'artwork' | 'showdown' | 'home' | 'pixel';
+export type SpriteStyle = 'showdown' | 'sleep' | 'artwork' | 'home' | 'pixel';
 
-// Official Pokemon Artwork & Sprites (Supports Shiny!)
+// Official Pokemon Artwork & Sprites (Supports Shiny and Sleep Avatar!)
 export function getPokemonArtworkUrl(
   nameOrId: string | number,
   style: SpriteStyle = 'showdown',
   isShiny: boolean = false
 ): string {
+  if (style === 'sleep') {
+    const cleanName = typeof nameOrId === 'string'
+      ? nameOrId.toLowerCase().replace(/[^a-z0-9]/g, '')
+      : '';
+    if (cleanName) {
+      return `/images/avatar/portrait/${cleanName}.png`;
+    }
+  }
+
   let dexId: number | null = null;
 
   if (typeof nameOrId === 'number') {
@@ -121,8 +173,16 @@ export function getPokemonArtworkUrl(
     dexId = getPokemonDexId(nameOrId);
   }
 
+  // If dexId is missing, NEVER default to Pikachu (#25)!
+  // Gracefully fallback to local Sleep avatar if available or empty string so onError triggers
   if (!dexId) {
-    return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${isShiny ? 'shiny/' : ''}25.gif`;
+    const cleanName = typeof nameOrId === 'string'
+      ? nameOrId.toLowerCase().replace(/[^a-z0-9]/g, '')
+      : '';
+    if (cleanName) {
+      return `/images/avatar/portrait/${cleanName}.png`;
+    }
+    return '';
   }
 
   switch (style) {
@@ -137,6 +197,15 @@ export function getPokemonArtworkUrl(
       return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${isShiny ? 'shiny/' : ''}${dexId}.png`;
   }
 }
+
+/**
+ * Returns local high-res Pokémon Sleep avatar portrait if available, with Showdown animated GIF as fallback
+ */
+export function getPokemonAvatarUrl(name: string, isShiny: boolean = false): string {
+  const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+  return `/images/avatar/portrait/${cleanName}.png`;
+}
+
 
 // Map Pokemon Sleep Berries to Official PokeAPI Item Sprites
 export const BERRY_ITEM_SPRITES: Record<string, string> = {
@@ -162,12 +231,165 @@ export const BERRY_ITEM_SPRITES: Record<string, string> = {
   'Baya Lum': 'lum-berry'
 };
 
+// Map Pokemon Sleep Berries to Local Official Sleep Assets (with PokeAPI fallback)
+export const BERRY_LOCAL_ASSETS: Record<string, string> = {
+  'caquic': 'persim', 'persim': 'persim', 'caqui': 'persim',
+  'zanama': 'leppa', 'leppa': 'leppa',
+  'aranja': 'oran', 'oran': 'oran',
+  'uvav': 'grepa', 'grepa': 'grepa',
+  'rudion': 'durin', 'durin': 'durin',
+  'safre': 'rawst', 'rawst': 'rawst',
+  'zreza': 'cheri', 'cheri': 'cheri',
+  'atania': 'chesto', 'chesto': 'chesto',
+  'higog': 'figy', 'figy': 'figy',
+  'plama': 'pamtre', 'pamtre': 'pamtre',
+  'ango': 'mago', 'mago': 'mago',
+  'zidra': 'sitrus', 'sitrus': 'sitrus',
+  'oram': 'bluk', 'bluk': 'bluk',
+  'wiki': 'wiki',
+  'andano': 'belue', 'belue': 'belue',
+  'meloc': 'pecha', 'pecha': 'pecha',
+  'drasi': 'yache', 'yache': 'yache',
+  'ziuela': 'lum', 'lum': 'lum'
+};
+
 export function getBerrySpriteUrl(berryName: string): string {
+  if (!berryName) return '/images/berries/oran.png';
+  const clean = berryName.toLowerCase().replace(/baya/g, '').trim();
+  
+  if (BERRY_LOCAL_ASSETS[clean]) {
+    return `/images/berries/${BERRY_LOCAL_ASSETS[clean]}.png`;
+  }
+  for (const [key, slug] of Object.entries(BERRY_LOCAL_ASSETS)) {
+    if (clean.includes(key) || key.includes(clean)) {
+      return `/images/berries/${slug}.png`;
+    }
+  }
   const itemSlug = BERRY_ITEM_SPRITES[berryName] || 'oran-berry';
   return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${itemSlug}.png`;
 }
 
-// Map Pokemon Sleep Ingredients to Official PokeAPI Item Sprites
+// Map Pokemon Sleep Ingredients to Local Official Sleep Assets (Comprehensive aliases in Spanish and English)
+export const INGREDIENT_LOCAL_ASSETS: Record<string, string> = {
+  // Aceite Puro (Pure Oil)
+  'aceite puro': 'oil',
+  'aceite': 'oil',
+  'pure oil': 'oil',
+  'oil': 'oil',
+  'aceite puro de oliva': 'oil',
+
+  // Leche Mu-mu (Moomoo Milk)
+  'leche mu-mu': 'milk',
+  'leche mu mu': 'milk',
+  'leche mumu': 'milk',
+  'leche': 'milk',
+  'moomoo milk': 'milk',
+  'milk': 'milk',
+
+  // Miel (Honey)
+  'miel': 'honey',
+  'honey': 'honey',
+
+  // Cola de Slowpoke (Slowpoke Tail)
+  'cola de slowpoke': 'tail',
+  'cola slowpoke': 'tail',
+  'cola': 'tail',
+  'slowpoke tail': 'tail',
+  'tail': 'tail',
+
+  // Seta Sabrosa (Tasty Mushroom)
+  'seta sabrosa': 'mushroom',
+  'seta': 'mushroom',
+  'tasty mushroom': 'mushroom',
+  'mushroom': 'mushroom',
+
+  // Huevo Selecto (Fancy Egg)
+  'huevo selecto': 'egg',
+  'huevo': 'egg',
+  'fancy egg': 'egg',
+  'egg': 'egg',
+
+  // Manzana Selecta (Fancy Apple)
+  'manzana selecta': 'apple',
+  'manzana': 'apple',
+  'fancy apple': 'apple',
+  'apple': 'apple',
+
+  // Hierba Picante (Fiery Herb)
+  'hierba picante': 'herb',
+  'hierba': 'herb',
+  'fiery herb': 'herb',
+  'herb': 'herb',
+
+  // Patata / Patata Suave (Soft Potato)
+  'patata': 'potato',
+  'patata suave': 'potato',
+  'papa': 'potato',
+  'soft potato': 'potato',
+  'potato': 'potato',
+
+  // Soja Verdegal (Greengrass Soybeans)
+  'soja verdegal': 'soybean',
+  'soja': 'soybean',
+  'soya': 'soybean',
+  'greengrass soybeans': 'soybean',
+  'soybeans': 'soybean',
+  'soybean': 'soybean',
+
+  // Fiambre Vegetariano (Bean Sausage)
+  'fiambre vegetariano': 'sausage',
+  'fiambre': 'sausage',
+  'salchicha': 'sausage',
+  'bean sausage': 'sausage',
+  'sausage': 'sausage',
+
+  // Cacao Relajante (Snoozy Cacao)
+  'cacao relajante': 'cacao',
+  'cacao': 'cacao',
+  'snoozy cacao': 'cacao',
+
+  // Café Estimulante (Rousing Coffee)
+  'café estimulante': 'coffee',
+  'cafe estimulante': 'coffee',
+  'café': 'coffee',
+  'cafe': 'coffee',
+  'rousing coffee': 'coffee',
+  'coffee': 'coffee',
+
+  // Maíz Verdegal (Greengrass Corn)
+  'maíz verdegal': 'corn',
+  'maiz verdegal': 'corn',
+  'maíz': 'corn',
+  'maiz': 'corn',
+  'greengrass corn': 'corn',
+  'corn': 'corn',
+
+  // Calabaza Suculenta (Pumpkin)
+  'calabaza suculenta': 'pumpkin',
+  'calabaza': 'pumpkin',
+  'pumpkin': 'pumpkin',
+
+  // Puerro Grueso (Large Leek)
+  'puerro grueso': 'leek',
+  'puerro': 'leek',
+  'large leek': 'leek',
+  'leek': 'leek',
+
+  // Jengibre / Jengibre Picante (Warming Ginger)
+  'jengibre': 'ginger',
+  'jengibre picante': 'ginger',
+  'warming ginger': 'ginger',
+  'ginger': 'ginger',
+
+  // Siestomate / Tomate Ronco (Snoozy Tomato)
+  'siestomate': 'tomato',
+  'tomate ronco': 'tomato',
+  'tomate': 'tomato',
+  'snoozy tomato': 'tomato',
+  'tomato': 'tomato'
+};
+
+// Map Pokemon Sleep Ingredients to Official PokeAPI Item Sprites (fallback)
 export const INGREDIENT_ITEM_SPRITES: Record<string, string> = {
   'Leche Mu-mu': 'moomoo-milk',
   'Miel': 'honey',
@@ -179,7 +401,7 @@ export const INGREDIENT_ITEM_SPRITES: Record<string, string> = {
   'Patata': 'tart-apple',
   'Soja Verdegal': 'miracle-seed',
   'Fiambre Vegetariano': 'leftovers',
-  'Aceite Puro': 'berry-juice',
+  'Aceite Puro': 'potion',
   'Cacao Relajante': 'rage-candy-bar',
   'Café Estimulante': 'soda-pop',
   'Maíz Verdegal': 'sweet-heart',
@@ -191,6 +413,22 @@ export const INGREDIENT_ITEM_SPRITES: Record<string, string> = {
 };
 
 export function getIngredientSpriteUrl(ingName: string): string {
+  if (!ingName) return '/images/ingredient/oil.png';
+  const clean = ingName.toLowerCase().trim();
+
+  // 1. Direct local assets alias map
+  if (INGREDIENT_LOCAL_ASSETS[clean]) {
+    return `/images/ingredient/${INGREDIENT_LOCAL_ASSETS[clean]}.png`;
+  }
+
+  // 2. Substring matching for flexible keyword detection
+  for (const [key, slug] of Object.entries(INGREDIENT_LOCAL_ASSETS)) {
+    if (clean.includes(key) || key.includes(clean)) {
+      return `/images/ingredient/${slug}.png`;
+    }
+  }
+
+  // 3. Fallback to PokeAPI item sprites if custom item
   const itemSlug = INGREDIENT_ITEM_SPRITES[ingName] || 'potion';
   return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${itemSlug}.png`;
 }
@@ -201,7 +439,29 @@ export interface MainSkillMeta {
   badgeBg: string;
   badgeText: string;
   iconSymbol: string;
+  iconUrl?: string;
   category: 'energy' | 'vigor' | 'ingredients' | 'pot' | 'special';
+}
+
+/**
+ * Returns the official high-res Pokemon Sleep main skill icon asset
+ */
+export function getMainSkillIconUrl(skillName: string): string {
+  if (!skillName) return '/images/mainskill/strength.png';
+  const clean = skillName.toLowerCase();
+  if (clean.includes('metr')) return '/images/mainskill/metronome.png';
+  if (clean.includes('vigor') || clean.includes('strength')) return '/images/mainskill/strength.png';
+  if (clean.includes('reserva') || clean.includes('stockpile') || clean.includes('escupir') || clean.includes('tragar')) return '/images/mainskill/stockpile_strength.png';
+  if (clean.includes('baya') || clean.includes('berry') || clean.includes('draco') || clean.includes('disfraz')) return '/images/mainskill/berries.png';
+  if (clean.includes('pot') || clean.includes('receta') || clean.includes('cocina') || clean.includes('cooking') || clean.includes('menos (receta')) return '/images/mainskill/pot.png';
+  if (clean.includes('chance') || clean.includes('cocinitas') || clean.includes('tasty')) return '/images/mainskill/chance.png';
+  if (clean.includes('ingrediente') || clean.includes('ingredient') || clean.includes('afortunado') || clean.includes('más (imán') || clean.includes('magnet') || clean.includes('draw')) return '/images/mainskill/ingredient_draw.png';
+  if (clean.includes('fragmento') || clean.includes('shard') || clean.includes('aura sphere')) return '/images/mainskill/shards.png';
+  if (clean.includes('copia') || clean.includes('mimic') || clean.includes('copy') || clean.includes('transform')) return '/images/mainskill/copy.png';
+  if (clean.includes('ayuda') || clean.includes('superútil') || clean.includes('help') || clean.includes('boost')) return '/images/mainskill/helps.png';
+  if (clean.includes('energ') || clean.includes('ánimo') || clean.includes('cheer') || clean.includes('cura') || clean.includes('lunar') || clean.includes('zumo') || clean.includes('moflete') || clean.includes('autocuraci')) return '/images/mainskill/energy.png';
+  if (clean.includes('onda') || clean.includes('sueño') || clean.includes('mind') || clean.includes('versat') || clean.includes('darkrai')) return '/images/mainskill/versatile.png';
+  return '/images/mainskill/strength.png';
 }
 
 export const MAIN_SKILLS_META: Record<string, MainSkillMeta> = {
@@ -544,11 +804,19 @@ export function getPokemonCanonicalSkill(name: string): string {
 }
 
 export function getMainSkillMeta(skillName: string): MainSkillMeta {
-  return MAIN_SKILLS_META[skillName] || {
+  const meta = MAIN_SKILLS_META[skillName];
+  if (meta) {
+    return {
+      ...meta,
+      iconUrl: meta.iconUrl || getMainSkillIconUrl(skillName)
+    };
+  }
+  return {
     name: skillName,
     badgeBg: 'bg-slate-800 border-slate-700',
     badgeText: 'text-slate-300',
     iconSymbol: '✨',
+    iconUrl: getMainSkillIconUrl(skillName),
     category: 'special'
   };
 }

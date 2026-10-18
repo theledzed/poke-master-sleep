@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Pokemon } from '../types/pokemon';
 import { BERRIES } from '../data/gameData';
 import {
@@ -9,16 +9,20 @@ import {
   getIngredientSpriteUrl,
   getPokemonCanonicalSkill,
   getMainSkillMeta,
-  isSpecialPokemon
+  isSpecialPokemon,
+  SpriteStyle
 } from '../services/pokeApiService';
 import { getPokemonSkillLevel } from '../services/optimizer';
 import { evaluateSinglePokemonGenetics } from '../services/pokedexEvaluator';
+import { canPokemonEvolve } from '../services/evolutionService';
+import { EvolutionModal } from './EvolutionModal';
 import {
   Lock,
   CheckCircle2,
   Zap,
   Clock,
   Sparkles,
+  Dna,
   Edit2,
   Star,
   Crown,
@@ -32,8 +36,9 @@ export interface PokemonCardProps {
   pokemon: Pokemon;
   isFavoriteBerry?: boolean;
   onEdit?: (pokemon: Pokemon) => void;
+  onEvolve?: (pokemon: Pokemon) => void;
   compact?: boolean;
-  spriteStyle?: 'artwork' | 'showdown';
+  spriteStyle?: SpriteStyle;
   slotIndex?: number;
 }
 
@@ -41,13 +46,20 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
   pokemon,
   isFavoriteBerry = false,
   onEdit,
+  onEvolve,
   compact = false,
   spriteStyle = 'showdown',
   slotIndex
 }) => {
   const [imageError, setImageError] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showEvolutionModal, setShowEvolutionModal] = useState(false);
   const [isExpanded, setIsExpanded] = useState(!compact);
+
+  // Reset image error state whenever pokemon or spriteStyle changes
+  useEffect(() => {
+    setImageError(false);
+  }, [pokemon.name, spriteStyle]);
 
   const berryMeta = BERRIES[pokemon.berry];
   const typeTheme = getTypeTheme(berryMeta?.type || 'Normal');
@@ -70,9 +82,11 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
     'Todo': { bg: 'bg-amber-500/15', text: 'text-amber-300', border: 'border-amber-500/30' }
   }[pokemon.specialty] || { bg: 'bg-slate-800', text: 'text-slate-300', border: 'border-slate-700' };
 
-  // Always use animated Showdown GIF first, fallback to artwork on error
-  const animatedGifUrl = getPokemonArtworkUrl(pokemon.name, 'showdown', isShiny);
-  const staticFallbackUrl = getPokemonArtworkUrl(pokemon.name, 'artwork', isShiny);
+  // Primary sprite URL according to user preference (showdown, sleep, artwork)
+  const primarySpriteUrl = useMemo(() => {
+    return getPokemonArtworkUrl(pokemon.name, spriteStyle, isShiny);
+  }, [pokemon.name, spriteStyle, isShiny]);
+  const fallbackSpriteUrl = getPokemonArtworkUrl(pokemon.name, 'artwork', isShiny);
 
   // Berry calculation (Base + Recuentobayas / Berry Finding S if present)
   // WikiDex: Los Pokémon con la especialidad "Todo" tienen los efectos de bayas (1 baya adicional = 2 base)
@@ -146,18 +160,19 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
               />
               {!imageError ? (
                 <img
-                  src={animatedGifUrl}
+                  src={primarySpriteUrl}
                   alt={pokemon.name}
                   loading="lazy"
                   onError={() => {
-                    // Fallback to static official artwork if showdown GIF fails
                     setImageError(true);
                   }}
-                  className="max-w-[54px] max-h-[54px] w-auto h-auto object-contain m-auto block filter drop-shadow-[0_4px_6px_rgba(0,0,0,0.55)] relative z-10"
+                  className={`max-w-[54px] max-h-[54px] w-auto h-auto object-contain m-auto block filter drop-shadow-[0_4px_6px_rgba(0,0,0,0.55)] relative z-10 ${
+                    spriteStyle === 'sleep' ? 'rounded-full scale-95' : ''
+                  }`}
                 />
               ) : (
                 <img
-                  src={staticFallbackUrl}
+                  src={fallbackSpriteUrl}
                   alt={pokemon.name}
                   loading="lazy"
                   className="max-w-[54px] max-h-[54px] w-auto h-auto object-contain m-auto block filter drop-shadow relative z-10"
@@ -220,8 +235,17 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
 
             {/* Slot 2: Habilidad Principal */}
             <div className="bg-[#08182c]/85 border border-sky-400/15 px-2 py-1 rounded-lg flex items-center justify-between text-[10px]">
-              <div className="flex items-center gap-1 truncate">
-                <span className="text-[10px]">{mainSkillMeta.iconSymbol}</span>
+              <div className="flex items-center gap-1.5 truncate">
+                {mainSkillMeta.iconUrl ? (
+                  <img
+                    src={mainSkillMeta.iconUrl}
+                    alt=""
+                    className="w-3.5 h-3.5 object-contain flex-shrink-0"
+                    onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                  />
+                ) : (
+                  <span className="text-[10px]">{mainSkillMeta.iconSymbol}</span>
+                )}
                 <span className="truncate font-semibold text-slate-200">{mainSkill}</span>
               </div>
               <span className={`text-[8px] font-black px-1.5 py-0.2 rounded flex-shrink-0 ${mainSkillMeta.badgeBg} ${mainSkillMeta.badgeText}`}>
@@ -307,9 +331,11 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
               <div className="flex items-center gap-3.5 mb-4">
                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-b from-sky-400/20 to-sky-400/5 border border-sky-400/30 p-1 flex items-center justify-center flex-shrink-0 shadow-inner">
                   <img
-                    src={animatedGifUrl}
+                    src={!imageError ? primarySpriteUrl : fallbackSpriteUrl}
                     alt={pokemon.name}
-                    className="w-full h-full object-contain filter drop-shadow"
+                    className={`w-full h-full object-contain filter drop-shadow ${
+                      spriteStyle === 'sleep' ? 'rounded-full scale-95' : ''
+                    }`}
                     onError={() => setImageError(true)}
                   />
                 </div>
@@ -367,8 +393,17 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
               <div className="bg-[#08182c]/90 border border-sky-400/20 p-2.5 rounded-xl mb-3">
                 <span className="text-[9px] uppercase font-black text-slate-400 block mb-1">Habilidad Principal</span>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-white">
-                    <span>{mainSkillMeta.iconSymbol}</span>
+                  <div className="flex items-center gap-2 text-xs font-bold text-white">
+                    {mainSkillMeta.iconUrl ? (
+                      <img
+                        src={mainSkillMeta.iconUrl}
+                        alt=""
+                        className="w-4 h-4 object-contain flex-shrink-0"
+                        onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                      />
+                    ) : (
+                      <span>{mainSkillMeta.iconSymbol}</span>
+                    )}
                     <span>{mainSkill}</span>
                   </div>
                   <span className={`text-[9px] font-black px-2 py-0.5 rounded ${mainSkillMeta.badgeBg} ${mainSkillMeta.badgeText}`}>
@@ -451,28 +486,57 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
               )}
 
               {/* Actions footer */}
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-sky-400/20">
-                {onEdit && (
+              <div className="flex items-center justify-between gap-2 pt-2 border-t border-sky-400/20">
+                {canPokemonEvolve(pokemon.name) && onEvolve && (
                   <button
                     onClick={() => {
-                      setShowDetailModal(false);
-                      onEdit(pokemon);
+                      setShowEvolutionModal(true);
                     }}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-white text-xs font-bold transition-all shadow-md shadow-sky-500/20"
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500/25 to-yellow-500/25 hover:from-amber-500/35 hover:to-yellow-500/35 border border-amber-400/40 text-amber-300 text-xs font-black transition-all shadow-md hover:scale-[1.02] active:scale-95"
+                    title={`Evolucionar a ${pokemon.name}`}
                   >
-                    <Edit2 className="w-3.5 h-3.5" />
-                    <span>Editar Pokémon</span>
+                    <Dna className="w-3.5 h-3.5 text-amber-300" />
+                    <span>Evolucionar</span>
                   </button>
                 )}
-                <button
-                  onClick={() => setShowDetailModal(false)}
-                  className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 text-xs font-bold transition-all"
-                >
-                  Cerrar
-                </button>
+
+                <div className="flex items-center gap-2 ml-auto">
+                  {onEdit && (
+                    <button
+                      onClick={() => {
+                        setShowDetailModal(false);
+                        onEdit(pokemon);
+                      }}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-white text-xs font-bold transition-all shadow-md shadow-sky-500/20"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                      <span>Editar Pokémon</span>
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setShowDetailModal(false)}
+                    className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 text-xs font-bold transition-all"
+                  >
+                    Cerrar
+                  </button>
+                </div>
               </div>
             </div>
           </div>
+        )}
+
+        {/* Evolution Modal */}
+        {showEvolutionModal && (
+          <EvolutionModal
+            isOpen={showEvolutionModal}
+            onClose={() => setShowEvolutionModal(false)}
+            pokemon={pokemon}
+            onConfirmEvolution={(evolved) => {
+              onEvolve?.(evolved);
+              setShowDetailModal(false);
+            }}
+            spriteStyle={spriteStyle}
+          />
         )}
       </>
     );
@@ -483,8 +547,9 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
   // Updated with Pokémon Sapphire Blue palette and animated Showdown GIF
   // -------------------------------------------------------------
   return (
-    <div
-      className={`pokeball-watermark bg-[#0c2444]/90 backdrop-blur-md border rounded-3xl transition-all duration-300 relative overflow-hidden group hover:-translate-y-1 hover:shadow-2xl flex flex-col justify-between ${
+    <>
+      <div
+        className={`pokeball-watermark bg-[#0c2444]/90 backdrop-blur-md border rounded-3xl transition-all duration-300 relative overflow-hidden group hover:-translate-y-1 hover:shadow-2xl flex flex-col justify-between ${
         isFavoriteBerry
           ? 'border-sky-400/40 bg-gradient-to-b from-[#0e2a4f]/95 via-[#0c2444]/95 to-[#08182d]/95 shadow-lg shadow-sky-950/40'
           : 'border-sky-400/20 hover:border-sky-400/35'
@@ -523,6 +588,16 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
             </span>
           )}
 
+          {canPokemonEvolve(pokemon.name) && onEvolve && (
+            <button
+              onClick={() => setShowEvolutionModal(true)}
+              className="opacity-0 group-hover:opacity-100 p-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500 border border-amber-400/30 text-amber-300 hover:text-slate-950 transition-all shadow"
+              title={`Evolucionar ${pokemon.name}`}
+            >
+              <Dna className="w-3 h-3" />
+            </button>
+          )}
+
           {onEdit && (
             <button
               onClick={() => onEdit(pokemon)}
@@ -546,15 +621,17 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
             />
             {!imageError ? (
               <img
-                src={animatedGifUrl}
+                src={primarySpriteUrl}
                 alt={pokemon.name}
                 loading="lazy"
                 onError={() => setImageError(true)}
-                className="max-w-[60px] max-h-[60px] w-auto h-auto object-contain m-auto block filter drop-shadow-[0_4px_6px_rgba(0,0,0,0.6)] relative z-10"
+                className={`max-w-[60px] max-h-[60px] w-auto h-auto object-contain m-auto block filter drop-shadow-[0_4px_6px_rgba(0,0,0,0.6)] relative z-10 ${
+                  spriteStyle === 'sleep' ? 'rounded-full scale-95' : ''
+                }`}
               />
             ) : (
               <img
-                src={staticFallbackUrl}
+                src={fallbackSpriteUrl}
                 alt={pokemon.name}
                 loading="lazy"
                 className="max-w-[60px] max-h-[60px] w-auto h-auto object-contain m-auto block filter drop-shadow relative z-10"
@@ -613,8 +690,17 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
         <div className="mb-2.5 flex items-center justify-between bg-sky-950/70 px-3 py-1.5 rounded-2xl border border-sky-400/15">
           <span className="text-[9px] uppercase tracking-wider text-slate-400 font-black">Habilidad</span>
           <div className="flex items-center gap-1.5">
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border flex items-center gap-1 shadow-sm ${mainSkillMeta.badgeBg} ${mainSkillMeta.badgeText}`}>
-              <span>{mainSkillMeta.iconSymbol}</span>
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border flex items-center gap-1.5 shadow-sm ${mainSkillMeta.badgeBg} ${mainSkillMeta.badgeText}`}>
+              {mainSkillMeta.iconUrl ? (
+                <img
+                  src={mainSkillMeta.iconUrl}
+                  alt=""
+                  className="w-3.5 h-3.5 object-contain flex-shrink-0"
+                  onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                />
+              ) : (
+                <span>{mainSkillMeta.iconSymbol}</span>
+              )}
               <span className="truncate max-w-[130px]">{mainSkill}</span>
             </span>
             <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md border ${mainSkillMeta.badgeBg} ${mainSkillMeta.badgeText}`}>
@@ -713,5 +799,19 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
         )}
       </div>
     </div>
+
+    {/* Evolution Modal */}
+    {showEvolutionModal && (
+      <EvolutionModal
+        isOpen={showEvolutionModal}
+        onClose={() => setShowEvolutionModal(false)}
+        pokemon={pokemon}
+        onConfirmEvolution={(evolved) => {
+          onEvolve?.(evolved);
+        }}
+        spriteStyle={spriteStyle}
+      />
+    )}
+  </>
   );
 };

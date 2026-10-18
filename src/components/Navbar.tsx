@@ -8,9 +8,11 @@ import {
   Swords,
   Sparkles
 } from 'lucide-react';
-import { WeatherPill, WeatherMode } from './WeatherBackground';
+import { WeatherMode } from './WeatherBackground';
 import { ProfileSelector } from './ProfileSelector';
+import { ViewSettingsDropdown, CardViewMode } from './ViewSettingsDropdown';
 import { ProfileId, SyncStatus } from '../services/supabase';
+import { SpriteStyle } from '../services/pokeApiService';
 
 export type ActiveTab = 'optimizer' | 'simulator' | 'pokedex' | 'recipes' | 'excel' | 'add';
 
@@ -23,6 +25,12 @@ interface NavbarProps {
   activeProfile: ProfileId;
   onSelectProfile: (id: ProfileId) => void;
   syncStatus: SyncStatus;
+  spriteStyle: SpriteStyle;
+  onSpriteStyleChange: (style: SpriteStyle) => void;
+  cardViewMode: CardViewMode;
+  onCardViewModeChange: (mode: CardViewMode) => void;
+  pokedexViewMode?: 'cards' | 'audit';
+  onPokedexViewModeChange?: (mode: 'cards' | 'audit') => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -33,7 +41,13 @@ export const Navbar: React.FC<NavbarProps> = ({
   onWeatherChange,
   activeProfile,
   onSelectProfile,
-  syncStatus
+  syncStatus,
+  spriteStyle,
+  onSpriteStyleChange,
+  cardViewMode,
+  onCardViewModeChange,
+  pokedexViewMode,
+  onPokedexViewModeChange
 }) => {
   const tabs = [
     { id: 'optimizer' as ActiveTab, label: 'Optimizador', shortLabel: 'Equipo', icon: Zap, badge: 'Snorlax' },
@@ -115,8 +129,18 @@ export const Navbar: React.FC<NavbarProps> = ({
                 syncStatus={syncStatus}
               />
 
-              {/* Weather Atmosphere Switcher */}
-              <WeatherPill currentWeather={currentWeather} onSelectWeather={onWeatherChange} />
+              {/* Unified Interface & Display Settings (Sprites, Cards & Weather Atmosphere) */}
+              <ViewSettingsDropdown
+                spriteStyle={spriteStyle}
+                onSelectSpriteStyle={onSpriteStyleChange}
+                cardViewMode={cardViewMode}
+                onSelectCardViewMode={onCardViewModeChange}
+                activeTab={activeTab}
+                pokedexViewMode={pokedexViewMode}
+                onSelectPokedexViewMode={onPokedexViewModeChange}
+                currentWeather={currentWeather}
+                onSelectWeather={onWeatherChange}
+              />
 
               {/* Mobile/Desktop Pokemon Count Pill */}
               <div className="hidden xs:flex items-center">

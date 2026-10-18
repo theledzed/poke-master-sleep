@@ -10,7 +10,8 @@ import {
   getMainSkillMeta,
   getPokemonCanonicalSkill,
   getTypeTheme,
-  isSpecialPokemon
+  isSpecialPokemon,
+  SpriteStyle
 } from '../services/pokeApiService';
 import { BERRIES, INGREDIENTS, DISH_LEVEL_BONUS } from '../data/gameData';
 import {
@@ -45,7 +46,7 @@ interface TeamSimulatorViewProps {
   pokemons: Pokemon[];
   config: SnorlaxConfig;
   recommendedResult?: OptimizedTeamResult;
-  spriteStyle?: 'artwork' | 'showdown';
+  spriteStyle?: SpriteStyle;
   onEditPokemon?: (pokemon: Pokemon) => void;
   onUpdateRecipeLevel?: (recipeName: string, level: number) => void;
   onUpdateAreaBonus?: (bonus: number) => void;
@@ -61,7 +62,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
   pokemons,
   config,
   recommendedResult,
-  spriteStyle = 'artwork',
+  spriteStyle = 'showdown',
   onEditPokemon,
   onUpdateRecipeLevel,
   onUpdateAreaBonus,
@@ -635,7 +636,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                   isFavoriteBerry={config.favoriteBerries.includes(poke.berry)}
                   onEdit={onEditPokemon}
                   compact={true}
-                  spriteStyle="showdown"
+                  spriteStyle={spriteStyle}
                 />
                 {/* Overlay Action Buttons: Swap & Remove */}
                 <div className="absolute top-2.5 right-2.5 flex items-center gap-1 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -985,9 +986,14 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                         style={{ backgroundColor: typeTheme.glow }}
                       />
                       <img
-                        src={getPokemonArtworkUrl(p.name, 'showdown', isShiny)}
+                        src={getPokemonArtworkUrl(p.name, spriteStyle, isShiny)}
                         alt={p.name}
-                        className="max-w-[44px] max-h-[44px] w-auto h-auto object-contain m-auto block filter drop-shadow relative z-10"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = getPokemonArtworkUrl(p.name, 'artwork', isShiny);
+                        }}
+                        className={`max-w-[44px] max-h-[44px] w-auto h-auto object-contain m-auto block filter drop-shadow relative z-10 ${
+                          spriteStyle === 'sleep' ? 'rounded-full scale-95' : ''
+                        }`}
                       />
                       {isShiny && (
                         <span className="absolute -top-1 -right-1 text-[8px] bg-amber-400 text-slate-950 px-1 rounded-full font-bold z-20">
@@ -1033,8 +1039,16 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                       </div>
 
                       <div className="flex items-center gap-1.5 mt-1">
-                        <span className={`text-[8px] px-2 py-0.2 rounded-full border truncate font-bold ${mainSkillMeta.badgeBg} ${mainSkillMeta.badgeText}`}>
-                          {mainSkill}
+                        <span className={`text-[8px] px-2 py-0.2 rounded-full border truncate font-bold flex items-center gap-1 ${mainSkillMeta.badgeBg} ${mainSkillMeta.badgeText}`}>
+                          {mainSkillMeta.iconUrl && (
+                            <img
+                              src={mainSkillMeta.iconUrl}
+                              alt=""
+                              className="w-3 h-3 object-contain flex-shrink-0"
+                              onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                            />
+                          )}
+                          <span>{mainSkill}</span>
                         </span>
                         {isAlreadyInTeam && (
                           <span className="text-[9px] text-sky-400 font-bold">

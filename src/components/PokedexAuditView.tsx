@@ -10,7 +10,8 @@ import {
   getBerrySpriteUrl,
   getIngredientSpriteUrl,
   getTypeTheme,
-  isSpecialPokemon
+  isSpecialPokemon,
+  SpriteStyle
 } from '../services/pokeApiService';
 import { BERRIES } from '../data/gameData';
 import {
@@ -39,7 +40,7 @@ interface PokedexAuditViewProps {
   pokemons: Pokemon[];
   onEditPokemon?: (pokemon: Pokemon) => void;
   onDeletePokemon?: (pokemonId: string) => void;
-  spriteStyle?: 'artwork' | 'showdown';
+  spriteStyle?: SpriteStyle;
 }
 
 type FilterCategory = 'ALL' | PokedexVerdict;
@@ -295,7 +296,9 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
                         <img
                           src={spriteUrl}
                           alt={pokemon.name}
-                          className="w-12 h-12 object-contain drop-shadow"
+                          className={`w-12 h-12 object-contain drop-shadow ${
+                            spriteStyle === 'sleep' ? 'rounded-full scale-95' : ''
+                          }`}
                           onError={(e) => {
                             (e.target as HTMLImageElement).src = getPokemonArtworkUrl(pokemon.name, 'artwork', isShiny);
                           }}

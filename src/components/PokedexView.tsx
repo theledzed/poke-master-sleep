@@ -5,6 +5,8 @@ import { PokedexAuditView } from './PokedexAuditView';
 import { BERRIES, INGREDIENTS, CANONICAL_BERRIES } from '../data/gameData';
 import { Search, Filter, ArrowUpDown, Plus, Sparkles, CheckCircle2, RotateCcw, SlidersHorizontal, FileSpreadsheet, Heart } from 'lucide-react';
 import { ProfileId } from '../services/supabase';
+import { SpriteStyle } from '../services/pokeApiService';
+import { CardViewMode } from './ViewSettingsDropdown';
 
 interface PokedexViewProps {
   pokemons: Pokemon[];
@@ -12,9 +14,15 @@ interface PokedexViewProps {
   onEditPokemon: (pokemon: Pokemon) => void;
   onDeletePokemon?: (pokemonId: string) => void;
   onAddNew: () => void;
-  spriteStyle?: 'artwork' | 'showdown';
+  onEvolvePokemon?: (pokemon: Pokemon) => void;
+  spriteStyle?: SpriteStyle;
+  onSpriteStyleChange?: (style: SpriteStyle) => void;
   activeProfile?: ProfileId;
   onGoToDatabase?: () => void;
+  cardViewMode?: CardViewMode;
+  onCardViewModeChange?: (mode: CardViewMode) => void;
+  viewMode?: 'cards' | 'audit';
+  onViewModeChange?: (mode: 'cards' | 'audit') => void;
 }
 
 export const PokedexView: React.FC<PokedexViewProps> = ({
@@ -23,11 +31,23 @@ export const PokedexView: React.FC<PokedexViewProps> = ({
   onEditPokemon,
   onDeletePokemon,
   onAddNew,
-  spriteStyle = 'artwork',
+  onEvolvePokemon,
+  spriteStyle = 'sleep',
+  onSpriteStyleChange,
   activeProfile = 'cris',
-  onGoToDatabase
+  onGoToDatabase,
+  cardViewMode = 'compact',
+  onCardViewModeChange,
+  viewMode,
+  onViewModeChange
 }) => {
-  const [viewMode, setViewMode] = useState<'cards' | 'audit'>('cards');
+  const [internalViewMode, setInternalViewMode] = useState<'cards' | 'audit'>('cards');
+  const activeViewMode = viewMode || internalViewMode;
+
+  const handleViewModeToggle = (mode: 'cards' | 'audit') => {
+    setInternalViewMode(mode);
+    onViewModeChange?.(mode);
+  };
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSpecialty, setSelectedSpecialty] = useState<string>('all');
   const [selectedBerry, setSelectedBerry] = useState<string>('all');
@@ -97,12 +117,80 @@ export const PokedexView: React.FC<PokedexViewProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
+          {/* Sprite style segmented toggle: Showdown / Sleep / Artwork */}
+          <div className="flex items-center gap-1 bg-[#091f3a] p-1 rounded-full border border-sky-400/20 shadow-inner">
+            <button
+              type="button"
+              onClick={() => onSpriteStyleChange?.('showdown')}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                spriteStyle === 'showdown'
+                  ? 'bg-sky-500 text-white shadow-sm shadow-sky-500/25'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+              title="Modelos 3D animados de Pokémon Showdown"
+            >
+              <span>🎬 Animado</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onSpriteStyleChange?.('sleep')}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                spriteStyle === 'sleep'
+                  ? 'bg-amber-400 text-slate-950 font-black shadow-sm shadow-amber-400/30'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+              title="Retratos oficiales de Pokémon Sleep"
+            >
+              <span>💤 Oficial Sleep</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onSpriteStyleChange?.('artwork')}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                spriteStyle === 'artwork'
+                  ? 'bg-indigo-500 text-white shadow-sm shadow-indigo-500/25'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+              title="Ilustración oficial Sugimori"
+            >
+              <span>🎨 Arte</span>
+            </button>
+          </div>
+
+          {/* Card size compact toggle */}
+          <div className="flex items-center gap-1 bg-[#091f3a] p-1 rounded-full border border-sky-400/20 shadow-inner">
+            <button
+              type="button"
+              onClick={() => onCardViewModeChange?.('compact')}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                cardViewMode === 'compact'
+                  ? 'bg-sky-500 text-white shadow-sm shadow-sky-500/25'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+              title="Fichas compactas para ver más Pokémon"
+            >
+              <span>🔲 Compactas</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onCardViewModeChange?.('detailed')}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                cardViewMode === 'detailed'
+                  ? 'bg-sky-500 text-white shadow-sm shadow-sky-500/25'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+              title="Fichas detalladas con todos los slots"
+            >
+              <span>🖼️ Completas</span>
+            </button>
+          </div>
+
           {/* View mode segmented toggle */}
           <div className="flex items-center gap-1 bg-[#091f3a] p-1 rounded-full border border-sky-400/20 shadow-inner">
             <button
-              onClick={() => setViewMode('cards')}
+              onClick={() => handleViewModeToggle('cards')}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
-                viewMode === 'cards'
+                activeViewMode === 'cards'
                   ? 'bg-sky-500 text-white shadow-sm shadow-sky-500/25'
                   : 'text-slate-400 hover:text-white'
               }`}
@@ -110,9 +198,9 @@ export const PokedexView: React.FC<PokedexViewProps> = ({
               <span>📋 Fichas</span>
             </button>
             <button
-              onClick={() => setViewMode('audit')}
+              onClick={() => handleViewModeToggle('audit')}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
-                viewMode === 'audit'
+                activeViewMode === 'audit'
                   ? 'bg-sky-500 text-white shadow-sm shadow-sky-500/25'
                   : 'text-slate-400 hover:text-white'
               }`}
@@ -132,7 +220,7 @@ export const PokedexView: React.FC<PokedexViewProps> = ({
         </div>
       </div>
 
-      {viewMode === 'audit' ? (
+      {activeViewMode === 'audit' ? (
         <PokedexAuditView
           pokemons={pokemons}
           onEditPokemon={onEditPokemon}
@@ -304,14 +392,20 @@ export const PokedexView: React.FC<PokedexViewProps> = ({
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className={`grid gap-3.5 ${
+          cardViewMode === 'compact'
+            ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5'
+            : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+        }`}>
           {filteredPokemons.map(pokemon => (
             <PokemonCard
               key={pokemon.id}
               pokemon={pokemon}
               isFavoriteBerry={favoriteBerries.includes(pokemon.berry)}
               onEdit={onEditPokemon}
+              onEvolve={onEvolvePokemon}
               spriteStyle={spriteStyle}
+              compact={cardViewMode === 'compact'}
             />
           ))}
         </div>

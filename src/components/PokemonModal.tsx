@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Pokemon, Specialty, IngredientSlot, Subskill } from '../types/pokemon';
 import { BERRIES, INGREDIENTS, NATURES, KNOWN_SUBSKILLS, parseNature, CANONICAL_BERRIES } from '../data/gameData';
 import { parseFrequency } from '../services/csvParser';
@@ -7,16 +7,67 @@ import {
   getBerrySpriteUrl,
   getIngredientSpriteUrl,
   getPokemonCanonicalSkill,
-  MAIN_SKILLS_META
+  getMainSkillIconUrl,
+  MAIN_SKILLS_META,
+  SpriteStyle
 } from '../services/pokeApiService';
 import { getPokemonSkillLevel } from '../services/optimizer';
 import {
-  POKEMON_SPECIES_CATALOG,
-  searchSpeciesCatalog,
-  findSpeciesCatalogEntry,
-  SpeciesCatalogEntry
-} from '../data/pokemonCatalog';
-import { X, Check, Plus, Trash2, Lock, CheckCircle2, Sparkles, Star, ChevronDown, Search } from 'lucide-react';
+  getSpeciesMasterData,
+  SPECIES_MASTER_DATA,
+  MasterSpecies
+} from '../data/speciesMaster';
+import { canPokemonEvolve } from '../services/evolutionService';
+import { EvolutionModal } from './EvolutionModal';
+import { X, Check, Plus, Trash2, Lock, CheckCircle2, Sparkles, Dna, Star, ChevronDown, Search, Wand2, RefreshCw } from 'lucide-react';
+
+function formatFrequencySeconds(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.round(seconds % 60);
+  if (h > 0) return s > 0 ? `${h}h ${m}min ${s}s` : `${h}h ${m}min`;
+  return s > 0 ? `${m} min ${s}s` : `${m} min`;
+}
+
+function calculateDynamicFrequency(baseFrequency: number, lvl: number, nature: string): string {
+  const nat = NATURES[nature];
+  let speedMod = 1.0;
+  if (nat?.upStat === 'Velocidad de ayuda') speedMod = 0.90;
+  if (nat?.downStat === 'Velocidad de ayuda') speedMod = 1.10;
+  const levelMod = Math.max(0.60, 1 - (lvl - 1) * 0.002);
+  const totalSeconds = Math.round(baseFrequency * levelMod * speedMod);
+  return formatFrequencySeconds(totalSeconds);
+}
+
+function searchMasterSpecies(query: string, limit = 8): MasterSpecies[] {
+  if (!query || !query.trim()) {
+    return SPECIES_MASTER_DATA.slice(0, limit);
+  }
+  const clean = query.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+  const isNumber = /^\d+$/.test(clean);
+  const numVal = isNumber ? parseInt(clean, 10) : null;
+
+  const exactMatches: MasterSpecies[] = [];
+  const startsWith: MasterSpecies[] = [];
+  const contains: MasterSpecies[] = [];
+
+  for (const sp of SPECIES_MASTER_DATA) {
+    if (numVal !== null && sp.dexNumber === numVal) {
+      exactMatches.push(sp);
+      continue;
+    }
+    const spClean = sp.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (spClean === clean) {
+      exactMatches.push(sp);
+    } else if (spClean.startsWith(clean)) {
+      startsWith.push(sp);
+    } else if (spClean.includes(clean)) {
+      contains.push(sp);
+    }
+    if (exactMatches.length + startsWith.length >= limit) break;
+  }
+  return [...exactMatches, ...startsWith, ...contains].slice(0, limit);
+}
 
 interface PokemonModalProps {
   isOpen: boolean;
@@ -24,6 +75,7 @@ interface PokemonModalProps {
   onSave: (pokemon: Pokemon) => void;
   onDelete?: (pokemonId: string) => void;
   pokemonToEdit?: Pokemon | null;
+  spriteStyle?: SpriteStyle;
 }
 
 export const PokemonModal: React.FC<PokemonModalProps> = ({
@@ -31,7 +83,8 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
   onClose,
   onSave,
   onDelete,
-  pokemonToEdit
+  pokemonToEdit,
+  spriteStyle = 'sleep'
 }) => {
   const isEditing = Boolean(pokemonToEdit);
 
@@ -68,9 +121,84 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
 
   // Autocomplete state
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [suggestions, setSuggestions] = useState<SpeciesCatalogEntry[]>([]);
+  const [suggestions, setSuggestions] = useState<MasterSpecies[]>([]);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
+
+  // Authoritative species match from datamined master
+  const matchedMaster = useMemo(() => getSpeciesMasterData(name), [name]);
+
+  // Evolution What-If modal state
+  const [isEvolutionModalOpen, setIsEvolutionModalOpen] = useState(false);
+
+  // Dynamic draft pokemon representing the current modal state for evolution calculations
+  const currentDraftPokemon: Pokemon = useMemo(() => {
+    const numLevel = typeof level === 'number' ? level : parseInt(String(level), 10) || 1;
+    const numRp = typeof rp === 'number' ? rp : parseInt(String(rp), 10) || 500;
+    const parsedFreq = parseFrequency(frequencyStr);
+    const natureObj = parseNature(natureName);
+
+    return {
+      id: pokemonToEdit ? pokemonToEdit.id : 'draft-evolution-poke',
+      name: name.trim() || 'Charmander',
+      frequencyStr,
+      frequencySeconds: parsedFreq > 0 ? parsedFreq : (matchedMaster?.baseFrequency || 3600),
+      level: numLevel,
+      rp: numRp,
+      specialty,
+      nature: natureName,
+      natureObj,
+      berry,
+      berryType: BERRIES[berry]?.type || 'Normal',
+      ingredients: [
+        { name: ing1Name, count: parseInt(String(ing1Count), 10) || 1, unlockLevel: 1, enabled: numLevel >= 1 },
+        { name: ing2Name, count: parseInt(String(ing2Count), 10) || 2, unlockLevel: 30, enabled: numLevel >= 30 },
+        { name: ing3Name, count: parseInt(String(ing3Count), 10) || 3, unlockLevel: 60, enabled: numLevel >= 60 }
+      ],
+      subskills: subskills.filter(s => s.trim().length > 0).map((subName, idx) => ({
+        name: subName,
+        tier: KNOWN_SUBSKILLS[subName]?.tier || 'white',
+        description: KNOWN_SUBSKILLS[subName]?.description || '',
+        unlockLevel: ([10, 25, 50, 75, 100][idx] || 100) as any,
+        enabled: numLevel >= ([10, 25, 50, 75, 100][idx] || 100)
+      })),
+      notes,
+      mainSkillName,
+      mainSkillLevel
+    };
+  }, [
+    pokemonToEdit,
+    name,
+    frequencyStr,
+    level,
+    rp,
+    specialty,
+    natureName,
+    berry,
+    ing1Name,
+    ing1Count,
+    ing2Name,
+    ing2Count,
+    ing3Name,
+    ing3Count,
+    subskills,
+    notes,
+    mainSkillName,
+    mainSkillLevel,
+    matchedMaster
+  ]);
+
+  const handleApplyEvolution = (evolved: Pokemon) => {
+    setName(evolved.name);
+    setSpecialty(evolved.specialty);
+    setBerry(evolved.berry);
+    setFrequencyStr(evolved.frequencyStr);
+    setMainSkillName(evolved.mainSkillName || '');
+    setMainSkillLevel(evolved.mainSkillLevel || 1);
+    setRp(evolved.rp);
+    if (evolved.notes) setNotes(evolved.notes);
+    setIsEvolutionModalOpen(false);
+  };
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -149,18 +277,38 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
     setShowSuggestions(false);
   }, [pokemonToEdit, isOpen]);
 
-  const handleSelectSpecies = (entry: SpeciesCatalogEntry) => {
+  const handleSelectSpecies = (entry: MasterSpecies) => {
     setName(entry.name);
     setSpecialty(entry.specialty);
     setBerry(entry.berry);
     setMainSkillName(entry.mainSkill);
-    if (entry.ingredients) {
-      if (entry.ingredients[0]) setIng1Name(entry.ingredients[0]);
-      if (entry.ingredients[1]) setIng2Name(entry.ingredients[1]);
-      if (entry.ingredients[2]) setIng3Name(entry.ingredients[2]);
-    }
-    if (!pokemonToEdit && entry.frequencyStr) {
-      setFrequencyStr(entry.frequencyStr);
+
+    const numLvl = typeof level === 'number' ? level : parseInt(String(level), 10) || 25;
+    const autoFreq = calculateDynamicFrequency(entry.baseFrequency, numLvl, natureName);
+    setFrequencyStr(autoFreq);
+
+    if (entry.ingredientSlots) {
+      if (entry.ingredientSlots.slot1) {
+        setIng1Name(entry.ingredientSlots.slot1.name);
+        setIng1Count(entry.ingredientSlots.slot1.c1);
+      }
+      if (entry.ingredientSlots.slot2 && entry.ingredientSlots.slot2.name !== 'unknown') {
+        setIng2Name(entry.ingredientSlots.slot2.name);
+        setIng2Count(entry.ingredientSlots.slot2.c2);
+      } else if (entry.ingredientSlots.slot1) {
+        setIng2Name(entry.ingredientSlots.slot1.name);
+        setIng2Count(entry.ingredientSlots.slot1.c2);
+      }
+      if (entry.ingredientSlots.slot3 && entry.ingredientSlots.slot3.name !== 'unknown') {
+        setIng3Name(entry.ingredientSlots.slot3.name);
+        setIng3Count(entry.ingredientSlots.slot3.c3);
+      } else if (entry.ingredientSlots.slot2 && entry.ingredientSlots.slot2.name !== 'unknown') {
+        setIng3Name(entry.ingredientSlots.slot2.name);
+        setIng3Count(entry.ingredientSlots.slot2.c3);
+      } else if (entry.ingredientSlots.slot1) {
+        setIng3Name(entry.ingredientSlots.slot1.name);
+        setIng3Count(entry.ingredientSlots.slot1.c3);
+      }
     }
     setShowSuggestions(false);
   };
@@ -168,23 +316,46 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
   const handleNameChange = (newName: string) => {
     setName(newName);
     if (!pokemonToEdit) {
-      const match = findSpeciesCatalogEntry(newName);
+      const match = getSpeciesMasterData(newName);
       if (match && match.name.toLowerCase() === newName.toLowerCase().trim()) {
         setSpecialty(match.specialty);
         setBerry(match.berry);
         setMainSkillName(match.mainSkill);
-        if (match.ingredients) {
-          setIng1Name(match.ingredients[0]);
-          setIng2Name(match.ingredients[1]);
-          setIng3Name(match.ingredients[2]);
-        }
-        if (match.frequencyStr) {
-          setFrequencyStr(match.frequencyStr);
+        const numLvl = typeof level === 'number' ? level : parseInt(String(level), 10) || 25;
+        setFrequencyStr(calculateDynamicFrequency(match.baseFrequency, numLvl, natureName));
+        if (match.ingredientSlots) {
+          if (match.ingredientSlots.slot1) {
+            setIng1Name(match.ingredientSlots.slot1.name);
+            setIng1Count(match.ingredientSlots.slot1.c1);
+          }
+          if (match.ingredientSlots.slot2 && match.ingredientSlots.slot2.name !== 'unknown') {
+            setIng2Name(match.ingredientSlots.slot2.name);
+            setIng2Count(match.ingredientSlots.slot2.c2);
+          } else if (match.ingredientSlots.slot1) {
+            setIng2Name(match.ingredientSlots.slot1.name);
+            setIng2Count(match.ingredientSlots.slot1.c2);
+          }
+          if (match.ingredientSlots.slot3 && match.ingredientSlots.slot3.name !== 'unknown') {
+            setIng3Name(match.ingredientSlots.slot3.name);
+            setIng3Count(match.ingredientSlots.slot3.c3);
+          } else if (match.ingredientSlots.slot2 && match.ingredientSlots.slot2.name !== 'unknown') {
+            setIng3Name(match.ingredientSlots.slot2.name);
+            setIng3Count(match.ingredientSlots.slot2.c3);
+          } else if (match.ingredientSlots.slot1) {
+            setIng3Name(match.ingredientSlots.slot1.name);
+            setIng3Count(match.ingredientSlots.slot1.c3);
+          }
         }
       }
     }
-    setSuggestions(searchSpeciesCatalog(newName, 8));
+    setSuggestions(searchMasterSpecies(newName, 8));
     setShowSuggestions(true);
+  };
+
+  const handleRecalculateFrequency = () => {
+    if (!matchedMaster) return;
+    const numLvl = typeof level === 'number' ? level : parseInt(String(level), 10) || 25;
+    setFrequencyStr(calculateDynamicFrequency(matchedMaster.baseFrequency, numLvl, natureName));
   };
 
   if (!isOpen) return null;
@@ -272,6 +443,11 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
   const allIngredients = Object.keys(INGREDIENTS);
   const allSubskillNames = Object.keys(KNOWN_SUBSKILLS);
 
+  const masterSlots = matchedMaster?.ingredientSlots;
+  const slot1Cand = masterSlots?.slot1;
+  const slot2Cand = masterSlots?.slot2;
+  const slot3Cand = masterSlots?.slot3;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
       <div className="poke-card pokeball-watermark rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl relative my-auto overflow-hidden">
@@ -302,9 +478,11 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
           <div className="flex items-center gap-3.5 p-3 bg-slate-950/80 rounded-2xl border border-slate-800">
             <div className="w-16 h-16 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center p-1 relative flex-shrink-0">
               <img
-                src={getPokemonArtworkUrl(name || 'Pikachu', 'artwork', isShiny)}
+                src={getPokemonArtworkUrl(name || 'Pikachu', spriteStyle, isShiny)}
                 alt={name || 'Pokemon'}
-                className="w-full h-full object-contain filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
+                className={`w-full h-full object-contain filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] ${
+                  spriteStyle === 'sleep' ? 'rounded-full scale-95' : ''
+                }`}
                 onError={(e) => { (e.target as HTMLElement).style.opacity = '0.4'; }}
               />
               {isShiny && (
@@ -343,6 +521,52 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
             </div>
           </div>
 
+          {/* Datamined Master Info Strip */}
+          {matchedMaster && (
+            <div className="p-3 bg-gradient-to-r from-sky-950/70 via-slate-900/80 to-indigo-950/70 border border-sky-400/25 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center text-sky-300 flex-shrink-0">
+                  <Wand2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="font-bold text-white flex items-center gap-2">
+                    <span>{matchedMaster.name}</span>
+                    <span className="text-[10px] text-slate-400 font-mono">#{String(matchedMaster.dexNumber).padStart(3, '0')}</span>
+                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-sky-500/20 text-sky-300 border border-sky-400/30 capitalize font-medium">
+                      {matchedMaster.type}
+                    </span>
+                  </div>
+                  <div className="text-[10px] text-slate-300 flex items-center gap-2 flex-wrap mt-0.5">
+                    <span>Inventario: <strong className="text-white font-mono">{matchedMaster.carryLimit}</strong></span>
+                    <span>•</span>
+                    <span>Ratio Ingr: <strong className="text-emerald-300 font-mono">{matchedMaster.ingredientRate}%</strong></span>
+                    <span>•</span>
+                    <span>Ratio Hab: <strong className="text-sky-300 font-mono">{matchedMaster.skillRate}%</strong></span>
+                    <span>•</span>
+                    <span>Frec. Base: <strong className="text-amber-300 font-mono">{matchedMaster.frequencyStr}</strong></span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 self-start sm:self-center flex-wrap">
+                {canPokemonEvolve(name) && (
+                  <button
+                    type="button"
+                    onClick={() => setIsEvolutionModalOpen(true)}
+                    className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/25 to-yellow-500/25 hover:from-amber-500/35 hover:to-yellow-500/35 border border-amber-400/40 text-amber-300 font-bold text-xs transition-all shadow-sm hover:scale-[1.02] active:scale-95"
+                    title="Simular o aplicar evolución"
+                  >
+                    <Dna className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+                    <span>Evolucionar (What-If)</span>
+                  </button>
+                )}
+                <div className="text-[10px] text-emerald-400 font-bold bg-emerald-950/60 px-2.5 py-1 rounded-full border border-emerald-500/30 flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Base Oficial Pokémon Sleep</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Fila 1: Nombre con Autocompletado, Nivel, PA */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="relative">
@@ -359,7 +583,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                   value={name}
                   onChange={(e) => handleNameChange(e.target.value)}
                   onFocus={() => {
-                    setSuggestions(searchSpeciesCatalog(name, 8));
+                    setSuggestions(searchMasterSpecies(name, 8));
                     setShowSuggestions(true);
                   }}
                   className="w-full pl-3 pr-8 py-2 bg-slate-950 border border-slate-800 focus:border-sky-500 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium"
@@ -367,7 +591,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                 <button
                   type="button"
                   onClick={() => {
-                    setSuggestions(searchSpeciesCatalog(name, 8));
+                    setSuggestions(searchMasterSpecies(name, 8));
                     setShowSuggestions(prev => !prev);
                   }}
                   className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1 rounded-md"
@@ -388,31 +612,46 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                     <span className="text-slate-400 font-normal text-[9px]">Click para autocompletar</span>
                   </div>
                   {suggestions.map((entry) => {
-                    const artworkUrl = getPokemonArtworkUrl(entry.name, 'artwork', false);
+                    const artworkUrl = getPokemonArtworkUrl(entry.name, spriteStyle, false);
+                    const berrySprite = getBerrySpriteUrl(entry.berry);
+                    const skillIcon = getMainSkillIconUrl(entry.mainSkill);
                     return (
                       <button
                         key={entry.name}
                         type="button"
                         onClick={() => handleSelectSpecies(entry)}
-                        className="w-full text-left px-3 py-2 hover:bg-sky-900/40 flex items-center justify-between gap-2 transition-colors group"
+                        className="w-full text-left px-3 py-2.5 hover:bg-sky-900/40 flex items-center justify-between gap-2 transition-colors group"
                       >
                         <div className="flex items-center gap-2.5 truncate">
-                          <div className="w-8 h-8 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-center p-0.5 flex-shrink-0 group-hover:border-sky-400/40">
+                          <div className="w-9 h-9 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-center p-0.5 flex-shrink-0 group-hover:border-sky-400/40">
                             <img
                               src={artworkUrl}
                               alt={entry.name}
-                              className="w-full h-full object-contain"
+                              className={`w-full h-full object-contain ${
+                                spriteStyle === 'sleep' ? 'rounded-full scale-95' : ''
+                              }`}
                               onError={(e) => { (e.target as HTMLElement).style.opacity = '0.3'; }}
                             />
                           </div>
                           <div className="truncate">
-                            <div className="font-bold text-xs text-white group-hover:text-sky-300 truncate">
-                              {entry.name}
+                            <div className="flex items-center gap-1.5 truncate">
+                              <span className="font-mono text-[10px] text-slate-400">
+                                #{String(entry.dexNumber).padStart(3, '0')}
+                              </span>
+                              <span className="font-bold text-xs text-white group-hover:text-sky-300 truncate">
+                                {entry.name}
+                              </span>
                             </div>
-                            <div className="text-[10px] text-slate-400 flex items-center gap-1.5 truncate">
-                              <span className="text-amber-400">{entry.berry}</span>
-                              <span>•</span>
-                              <span className="truncate text-slate-300">{entry.mainSkill}</span>
+                            <div className="text-[10px] text-slate-400 flex items-center gap-2 truncate mt-0.5">
+                              <span className="flex items-center gap-1 text-amber-300">
+                                <img src={berrySprite} alt="" className="w-3 h-3 object-contain" />
+                                <span>{entry.berry}</span>
+                              </span>
+                              <span className="text-slate-600">•</span>
+                              <span className="flex items-center gap-1 text-slate-300 truncate">
+                                <img src={skillIcon} alt="" className="w-3 h-3 object-contain" />
+                                <span className="truncate">{entry.mainSkill}</span>
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -452,7 +691,11 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                     setLevel('');
                   } else {
                     const parsed = parseInt(val, 10);
-                    setLevel(isNaN(parsed) ? '' : Math.max(1, Math.min(100, parsed)));
+                    const clamped = isNaN(parsed) ? '' : Math.max(1, Math.min(100, parsed));
+                    setLevel(clamped);
+                    if (!isEditing && matchedMaster && typeof clamped === 'number') {
+                      setFrequencyStr(calculateDynamicFrequency(matchedMaster.baseFrequency, clamped, natureName));
+                    }
                   }
                 }}
                 onBlur={() => {
@@ -526,13 +769,25 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
               </div>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Frecuencia</label>
+              <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center justify-between">
+                <span>Frecuencia</span>
+                {matchedMaster && (
+                  <button
+                    type="button"
+                    onClick={handleRecalculateFrequency}
+                    className="text-[10px] text-sky-400 hover:text-sky-300 flex items-center gap-1 font-semibold hover:underline"
+                    title="Recalcular automáticamente frecuencia según nivel y naturaleza"
+                  >
+                    <RefreshCw className="w-3 h-3" /> Auto-calc
+                  </button>
+                )}
+              </label>
               <input
                 type="text"
                 placeholder="ej. 35 min 12s o 1h 5min"
                 value={frequencyStr}
                 onChange={(e) => setFrequencyStr(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
               />
             </div>
           </div>
@@ -543,7 +798,14 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
               <label className="block text-xs font-semibold text-slate-300 mb-1">Naturaleza</label>
               <select
                 value={natureName}
-                onChange={(e) => setNatureName(e.target.value)}
+                onChange={(e) => {
+                  const newNat = e.target.value;
+                  setNatureName(newNat);
+                  if (!isEditing && matchedMaster) {
+                    const numLvl = typeof level === 'number' ? level : parseInt(String(level), 10) || 25;
+                    setFrequencyStr(calculateDynamicFrequency(matchedMaster.baseFrequency, numLvl, newNat));
+                  }
+                }}
                 className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium"
               >
                 {Object.keys(NATURES).map(natKey => {
@@ -561,17 +823,27 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
             </div>
             <div className="sm:col-span-5">
               <label className="block text-xs font-semibold text-slate-300 mb-1">Habilidad Principal</label>
-              <select
-                value={mainSkillName}
-                onChange={(e) => setMainSkillName(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium truncate"
-              >
-                {Object.keys(MAIN_SKILLS_META).map(sk => (
-                  <option key={sk} value={sk}>
-                    {MAIN_SKILLS_META[sk].iconSymbol} {sk}
-                  </option>
-                ))}
-              </select>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-center p-1 flex-shrink-0">
+                  <img
+                    src={getMainSkillIconUrl(mainSkillName)}
+                    alt=""
+                    className="w-full h-full object-contain"
+                    onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                  />
+                </div>
+                <select
+                  value={mainSkillName}
+                  onChange={(e) => setMainSkillName(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium truncate"
+                >
+                  {Object.keys(MAIN_SKILLS_META).map(sk => (
+                    <option key={sk} value={sk}>
+                      {sk}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
             <div className="sm:col-span-2">
               <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center justify-between">
@@ -593,164 +865,336 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
             </div>
           </div>
 
-          {/* Sección Ingredientes: 3 Slots con indicador activo según nivel */}
-          <div className="bg-slate-950/70 p-3 rounded-xl border border-slate-800">
-            <div className="text-xs font-bold text-white mb-2 flex items-center justify-between">
-              <span>Ingredientes (Slots 1, 2 y 3)</span>
-              <span className="text-[10px] text-slate-400 font-normal">
+          {/* Sección Ingredientes: 3 Slots con indicador activo según nivel y botones de selección rápida oficial */}
+          <div className="bg-slate-950/70 p-3 rounded-2xl border border-slate-800 space-y-3">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-bold text-white flex items-center gap-1.5">
+                <span>Ingredientes (Slots 1, 2 y 3)</span>
+                {matchedMaster && (
+                  <span className="text-[10px] text-emerald-400 font-normal bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                    Opciones oficiales disponibles
+                  </span>
+                )}
+              </span>
+              <span className="text-[10px] text-slate-400 font-mono">
                 Nivel actual: {level}
               </span>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {/* Slot 1: Nv 1 */}
-              <div className="flex items-center gap-2 text-xs">
-                <span className="w-16 flex items-center gap-1 font-semibold text-emerald-400">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Nv. 1:
-                </span>
-                <div className="w-7 h-7 rounded-lg bg-slate-900 border border-slate-700 flex items-center justify-center p-0.5 flex-shrink-0">
-                  <img
-                    src={getIngredientSpriteUrl(ing1Name)}
-                    alt={ing1Name}
-                    className="w-full h-full object-contain"
-                    onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
-                  />
+              <div className="p-2.5 bg-slate-900/60 rounded-xl border border-slate-800 space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="flex items-center gap-1.5 font-bold text-emerald-400">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Slot 1 (Nv. 1)</span>
+                  </span>
+                  <span className="text-[10px] text-emerald-400/80 font-mono">Activo</span>
                 </div>
-                <select
-                  value={ing1Name}
-                  onChange={(e) => setIng1Name(e.target.value)}
-                  className="flex-1 px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-200"
-                >
-                  {allIngredients.map(ing => (
-                    <option key={ing} value={ing}>{ing}</option>
-                  ))}
-                </select>
-                <div className="flex items-center gap-1 w-20">
-                  <span className="text-slate-400 font-bold">×</span>
-                  <input
-                    type="number"
-                    min="1"
-                    max="15"
-                    value={ing1Count}
-                    onFocus={(e) => e.target.select()}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === '') {
-                        setIng1Count('');
-                      } else {
-                        const parsed = parseInt(val, 10);
-                        setIng1Count(isNaN(parsed) ? '' : Math.max(1, Math.min(15, parsed)));
-                      }
-                    }}
-                    onBlur={() => {
-                      if (ing1Count === '' || Number(ing1Count) < 1) setIng1Count(1);
-                    }}
-                    className="w-full px-2 py-1 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white font-mono text-center"
-                  />
+
+                {slot1Cand && slot1Cand.name && slot1Cand.name !== 'unknown' && (
+                  <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                    <span className="text-[10px] text-slate-400">Oficial:</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIng1Name(slot1Cand.name);
+                        setIng1Count(slot1Cand.c1);
+                      }}
+                      className={`px-2.5 py-1 rounded-lg text-xs flex items-center gap-1.5 border transition-all ${
+                        ing1Name === slot1Cand.name && Number(ing1Count) === slot1Cand.c1
+                          ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 font-bold shadow-sm'
+                          : 'bg-slate-950 border-slate-700/80 text-slate-300 hover:border-slate-500'
+                      }`}
+                    >
+                      <img src={getIngredientSpriteUrl(slot1Cand.name)} alt="" className="w-4 h-4 object-contain" />
+                      <span>{slot1Cand.name}</span>
+                      <span className="font-mono font-black text-amber-300">×{slot1Cand.c1}</span>
+                      {ing1Name === slot1Cand.name && Number(ing1Count) === slot1Cand.c1 && (
+                        <Check className="w-3 h-3 text-emerald-400 stroke-[3]" />
+                      )}
+                    </button>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2 text-xs">
+                  <div className="w-7 h-7 rounded-lg bg-slate-950 border border-slate-700 flex items-center justify-center p-0.5 flex-shrink-0">
+                    <img
+                      src={getIngredientSpriteUrl(ing1Name)}
+                      alt={ing1Name}
+                      className="w-full h-full object-contain"
+                      onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                    />
+                  </div>
+                  <select
+                    value={ing1Name}
+                    onChange={(e) => setIng1Name(e.target.value)}
+                    className="flex-1 px-2.5 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs text-slate-200"
+                  >
+                    {allIngredients.map(ing => (
+                      <option key={ing} value={ing}>{ing}</option>
+                    ))}
+                  </select>
+                  <div className="flex items-center gap-1 w-20">
+                    <span className="text-slate-400 font-bold">×</span>
+                    <input
+                      type="number"
+                      min="1"
+                      max="15"
+                      value={ing1Count}
+                      onFocus={(e) => e.target.select()}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '') {
+                          setIng1Count('');
+                        } else {
+                          const parsed = parseInt(val, 10);
+                          setIng1Count(isNaN(parsed) ? '' : Math.max(1, Math.min(15, parsed)));
+                        }
+                      }}
+                      onBlur={() => {
+                        if (ing1Count === '' || Number(ing1Count) < 1) setIng1Count(1);
+                      }}
+                      className="w-full px-2 py-1 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white font-mono text-center"
+                    />
+                  </div>
                 </div>
               </div>
 
               {/* Slot 2: Nv 30 */}
-              <div className={`flex items-center gap-2 text-xs ${level !== '' && Number(level) >= 30 ? '' : 'opacity-70'}`}>
-                <span className="w-16 flex items-center gap-1 font-semibold text-slate-300">
-                  {level !== '' && Number(level) >= 30 ? (
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                  ) : (
-                    <Lock className="w-3.5 h-3.5 text-amber-500" />
-                  )}
-                  Nv. 30:
-                </span>
-                <div className="w-7 h-7 rounded-lg bg-slate-900 border border-slate-700 flex items-center justify-center p-0.5 flex-shrink-0">
-                  <img
-                    src={getIngredientSpriteUrl(ing2Name)}
-                    alt={ing2Name}
-                    className="w-full h-full object-contain"
-                    onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
-                  />
+              <div className={`p-2.5 bg-slate-900/60 rounded-xl border border-slate-800 space-y-1.5 ${level !== '' && Number(level) >= 30 ? '' : 'opacity-85'}`}>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="flex items-center gap-1.5 font-bold text-slate-200">
+                    {level !== '' && Number(level) >= 30 ? (
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                    ) : (
+                      <Lock className="w-3.5 h-3.5 text-amber-500" />
+                    )}
+                    <span>Slot 2 (Nv. 30)</span>
+                  </span>
+                  <span className={`text-[10px] font-mono ${level !== '' && Number(level) >= 30 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                    {level !== '' && Number(level) >= 30 ? 'Desbloqueado' : 'Bloqueado (Nv. 30)'}
+                  </span>
                 </div>
-                <select
-                  value={ing2Name}
-                  onChange={(e) => setIng2Name(e.target.value)}
-                  className="flex-1 px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-200"
-                >
-                  {allIngredients.map(ing => (
-                    <option key={ing} value={ing}>{ing}</option>
-                  ))}
-                </select>
-                <div className="flex items-center gap-1 w-20">
-                  <span className="text-slate-400 font-bold">×</span>
-                  <input
-                    type="number"
-                    min="1"
-                    max="15"
-                    value={ing2Count}
-                    onFocus={(e) => e.target.select()}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === '') {
-                        setIng2Count('');
-                      } else {
-                        const parsed = parseInt(val, 10);
-                        setIng2Count(isNaN(parsed) ? '' : Math.max(1, Math.min(15, parsed)));
-                      }
-                    }}
-                    onBlur={() => {
-                      if (ing2Count === '' || Number(ing2Count) < 1) setIng2Count(2);
-                    }}
-                    className="w-full px-2 py-1 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white font-mono text-center"
-                  />
+
+                {masterSlots && (
+                  <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                    <span className="text-[10px] text-slate-400">Opciones Oficiales:</span>
+                    {slot1Cand && slot1Cand.name && slot1Cand.name !== 'unknown' && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIng2Name(slot1Cand.name);
+                          setIng2Count(slot1Cand.c2);
+                        }}
+                        className={`px-2.5 py-1 rounded-lg text-xs flex items-center gap-1.5 border transition-all ${
+                          ing2Name === slot1Cand.name && Number(ing2Count) === slot1Cand.c2
+                            ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 font-bold shadow-sm'
+                            : 'bg-slate-950 border-slate-700/80 text-slate-300 hover:border-slate-500'
+                        }`}
+                      >
+                        <img src={getIngredientSpriteUrl(slot1Cand.name)} alt="" className="w-4 h-4 object-contain" />
+                        <span>{slot1Cand.name}</span>
+                        <span className="font-mono font-black text-amber-300">×{slot1Cand.c2}</span>
+                        {ing2Name === slot1Cand.name && Number(ing2Count) === slot1Cand.c2 && (
+                          <Check className="w-3 h-3 text-emerald-400 stroke-[3]" />
+                        )}
+                      </button>
+                    )}
+                    {slot2Cand && slot2Cand.name && slot2Cand.name !== 'unknown' && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIng2Name(slot2Cand.name);
+                          setIng2Count(slot2Cand.c2);
+                        }}
+                        className={`px-2.5 py-1 rounded-lg text-xs flex items-center gap-1.5 border transition-all ${
+                          ing2Name === slot2Cand.name && Number(ing2Count) === slot2Cand.c2
+                            ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 font-bold shadow-sm'
+                            : 'bg-slate-950 border-slate-700/80 text-slate-300 hover:border-slate-500'
+                        }`}
+                      >
+                        <img src={getIngredientSpriteUrl(slot2Cand.name)} alt="" className="w-4 h-4 object-contain" />
+                        <span>{slot2Cand.name}</span>
+                        <span className="font-mono font-black text-amber-300">×{slot2Cand.c2}</span>
+                        {ing2Name === slot2Cand.name && Number(ing2Count) === slot2Cand.c2 && (
+                          <Check className="w-3 h-3 text-emerald-400 stroke-[3]" />
+                        )}
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2 text-xs">
+                  <div className="w-7 h-7 rounded-lg bg-slate-950 border border-slate-700 flex items-center justify-center p-0.5 flex-shrink-0">
+                    <img
+                      src={getIngredientSpriteUrl(ing2Name)}
+                      alt={ing2Name}
+                      className="w-full h-full object-contain"
+                      onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                    />
+                  </div>
+                  <select
+                    value={ing2Name}
+                    onChange={(e) => setIng2Name(e.target.value)}
+                    className="flex-1 px-2.5 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs text-slate-200"
+                  >
+                    {allIngredients.map(ing => (
+                      <option key={ing} value={ing}>{ing}</option>
+                    ))}
+                  </select>
+                  <div className="flex items-center gap-1 w-20">
+                    <span className="text-slate-400 font-bold">×</span>
+                    <input
+                      type="number"
+                      min="1"
+                      max="15"
+                      value={ing2Count}
+                      onFocus={(e) => e.target.select()}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '') {
+                          setIng2Count('');
+                        } else {
+                          const parsed = parseInt(val, 10);
+                          setIng2Count(isNaN(parsed) ? '' : Math.max(1, Math.min(15, parsed)));
+                        }
+                      }}
+                      onBlur={() => {
+                        if (ing2Count === '' || Number(ing2Count) < 1) setIng2Count(2);
+                      }}
+                      className="w-full px-2 py-1 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white font-mono text-center"
+                    />
+                  </div>
                 </div>
               </div>
 
               {/* Slot 3: Nv 60 */}
-              <div className={`flex items-center gap-2 text-xs ${level !== '' && Number(level) >= 60 ? '' : 'opacity-70'}`}>
-                <span className="w-16 flex items-center gap-1 font-semibold text-slate-300">
-                  {level !== '' && Number(level) >= 60 ? (
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                  ) : (
-                    <Lock className="w-3.5 h-3.5 text-amber-500" />
-                  )}
-                  Nv. 60:
-                </span>
-                <div className="w-7 h-7 rounded-lg bg-slate-900 border border-slate-700 flex items-center justify-center p-0.5 flex-shrink-0">
-                  <img
-                    src={getIngredientSpriteUrl(ing3Name)}
-                    alt={ing3Name}
-                    className="w-full h-full object-contain"
-                    onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
-                  />
+              <div className={`p-2.5 bg-slate-900/60 rounded-xl border border-slate-800 space-y-1.5 ${level !== '' && Number(level) >= 60 ? '' : 'opacity-85'}`}>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="flex items-center gap-1.5 font-bold text-slate-200">
+                    {level !== '' && Number(level) >= 60 ? (
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                    ) : (
+                      <Lock className="w-3.5 h-3.5 text-amber-500" />
+                    )}
+                    <span>Slot 3 (Nv. 60)</span>
+                  </span>
+                  <span className={`text-[10px] font-mono ${level !== '' && Number(level) >= 60 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                    {level !== '' && Number(level) >= 60 ? 'Desbloqueado' : 'Bloqueado (Nv. 60)'}
+                  </span>
                 </div>
-                <select
-                  value={ing3Name}
-                  onChange={(e) => setIng3Name(e.target.value)}
-                  className="flex-1 px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-200"
-                >
-                  {allIngredients.map(ing => (
-                    <option key={ing} value={ing}>{ing}</option>
-                  ))}
-                </select>
-                <div className="flex items-center gap-1 w-20">
-                  <span className="text-slate-400 font-bold">×</span>
-                  <input
-                    type="number"
-                    min="1"
-                    max="15"
-                    value={ing3Count}
-                    onFocus={(e) => e.target.select()}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === '') {
-                        setIng3Count('');
-                      } else {
-                        const parsed = parseInt(val, 10);
-                        setIng3Count(isNaN(parsed) ? '' : Math.max(1, Math.min(15, parsed)));
-                      }
-                    }}
-                    onBlur={() => {
-                      if (ing3Count === '' || Number(ing3Count) < 1) setIng3Count(3);
-                    }}
-                    className="w-full px-2 py-1 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white font-mono text-center"
-                  />
+
+                {masterSlots && (
+                  <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                    <span className="text-[10px] text-slate-400">Opciones Oficiales:</span>
+                    {slot1Cand && slot1Cand.name && slot1Cand.name !== 'unknown' && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIng3Name(slot1Cand.name);
+                          setIng3Count(slot1Cand.c3);
+                        }}
+                        className={`px-2.5 py-1 rounded-lg text-xs flex items-center gap-1.5 border transition-all ${
+                          ing3Name === slot1Cand.name && Number(ing3Count) === slot1Cand.c3
+                            ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 font-bold shadow-sm'
+                            : 'bg-slate-950 border-slate-700/80 text-slate-300 hover:border-slate-500'
+                        }`}
+                      >
+                        <img src={getIngredientSpriteUrl(slot1Cand.name)} alt="" className="w-4 h-4 object-contain" />
+                        <span>{slot1Cand.name}</span>
+                        <span className="font-mono font-black text-amber-300">×{slot1Cand.c3}</span>
+                        {ing3Name === slot1Cand.name && Number(ing3Count) === slot1Cand.c3 && (
+                          <Check className="w-3 h-3 text-emerald-400 stroke-[3]" />
+                        )}
+                      </button>
+                    )}
+                    {slot2Cand && slot2Cand.name && slot2Cand.name !== 'unknown' && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIng3Name(slot2Cand.name);
+                          setIng3Count(slot2Cand.c3);
+                        }}
+                        className={`px-2.5 py-1 rounded-lg text-xs flex items-center gap-1.5 border transition-all ${
+                          ing3Name === slot2Cand.name && Number(ing3Count) === slot2Cand.c3
+                            ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 font-bold shadow-sm'
+                            : 'bg-slate-950 border-slate-700/80 text-slate-300 hover:border-slate-500'
+                        }`}
+                      >
+                        <img src={getIngredientSpriteUrl(slot2Cand.name)} alt="" className="w-4 h-4 object-contain" />
+                        <span>{slot2Cand.name}</span>
+                        <span className="font-mono font-black text-amber-300">×{slot2Cand.c3}</span>
+                        {ing3Name === slot2Cand.name && Number(ing3Count) === slot2Cand.c3 && (
+                          <Check className="w-3 h-3 text-emerald-400 stroke-[3]" />
+                        )}
+                      </button>
+                    )}
+                    {slot3Cand && slot3Cand.name && slot3Cand.name !== 'unknown' && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIng3Name(slot3Cand.name);
+                          setIng3Count(slot3Cand.c3);
+                        }}
+                        className={`px-2.5 py-1 rounded-lg text-xs flex items-center gap-1.5 border transition-all ${
+                          ing3Name === slot3Cand.name && Number(ing3Count) === slot3Cand.c3
+                            ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 font-bold shadow-sm'
+                            : 'bg-slate-950 border-slate-700/80 text-slate-300 hover:border-slate-500'
+                        }`}
+                      >
+                        <img src={getIngredientSpriteUrl(slot3Cand.name)} alt="" className="w-4 h-4 object-contain" />
+                        <span>{slot3Cand.name}</span>
+                        <span className="font-mono font-black text-amber-300">×{slot3Cand.c3}</span>
+                        {ing3Name === slot3Cand.name && Number(ing3Count) === slot3Cand.c3 && (
+                          <Check className="w-3 h-3 text-emerald-400 stroke-[3]" />
+                        )}
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2 text-xs">
+                  <div className="w-7 h-7 rounded-lg bg-slate-950 border border-slate-700 flex items-center justify-center p-0.5 flex-shrink-0">
+                    <img
+                      src={getIngredientSpriteUrl(ing3Name)}
+                      alt={ing3Name}
+                      className="w-full h-full object-contain"
+                      onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                    />
+                  </div>
+                  <select
+                    value={ing3Name}
+                    onChange={(e) => setIng3Name(e.target.value)}
+                    className="flex-1 px-2.5 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs text-slate-200"
+                  >
+                    {allIngredients.map(ing => (
+                      <option key={ing} value={ing}>{ing}</option>
+                    ))}
+                  </select>
+                  <div className="flex items-center gap-1 w-20">
+                    <span className="text-slate-400 font-bold">×</span>
+                    <input
+                      type="number"
+                      min="1"
+                      max="15"
+                      value={ing3Count}
+                      onFocus={(e) => e.target.select()}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '') {
+                          setIng3Count('');
+                        } else {
+                          const parsed = parseInt(val, 10);
+                          setIng3Count(isNaN(parsed) ? '' : Math.max(1, Math.min(15, parsed)));
+                        }
+                      }}
+                      onBlur={() => {
+                        if (ing3Count === '' || Number(ing3Count) < 1) setIng3Count(3);
+                      }}
+                      className="w-full px-2 py-1 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white font-mono text-center"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -834,6 +1278,17 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
           </div>
         </form>
       </div>
+
+      {/* Evolution What-If Modal */}
+      {isEvolutionModalOpen && (
+        <EvolutionModal
+          isOpen={isEvolutionModalOpen}
+          onClose={() => setIsEvolutionModalOpen(false)}
+          pokemon={currentDraftPokemon}
+          onConfirmEvolution={handleApplyEvolution}
+          spriteStyle={spriteStyle}
+        />
+      )}
     </div>
   );
 };

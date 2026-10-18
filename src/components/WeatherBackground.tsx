@@ -8,8 +8,8 @@ interface WeatherBackgroundProps {
   onWeatherChange?: (mode: WeatherMode) => void;
 }
 
-const STORAGE_KEY_WEATHER = 'sleep_master_weather_v1';
-const STORAGE_KEY_AUTO = 'sleep_master_weather_auto_v1';
+export const STORAGE_KEY_WEATHER = 'sleep_master_weather_v1';
+export const STORAGE_KEY_AUTO = 'sleep_master_weather_auto_v1';
 
 /**
  * Determine atmospheric weather based on current local time

@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Pokemon, OptimizedTeamResult, SnorlaxConfig, MidWeekProgress } from '../types/pokemon';
 import { getEffectivePotCapacity, evaluateTeam } from '../services/optimizer';
 import { PokemonCard } from './PokemonCard';
-import { getIngredientSpriteUrl, getDishImageUrl, getRankPokeballUrl } from '../services/pokeApiService';
+import { getIngredientSpriteUrl, getDishImageUrl, getRankPokeballUrl, SpriteStyle } from '../services/pokeApiService';
 import { Zap, Trophy, Utensils, Sparkles, Flame, ShieldAlert, ArrowRight, CheckCircle2, Swords, Star, LayoutGrid, Smartphone, Check } from 'lucide-react';
 import { WeeklyRankProjectionView } from './WeeklyRankProjectionView';
 import { proyectarSemanaEquipo } from '../services/weeklyProjector';
@@ -16,7 +16,9 @@ interface TeamOptimizerViewProps {
   onResetMidWeekProgress?: () => void;
   onEditPokemon?: (pokemon: any) => void;
   onOpenSimulator?: () => void;
-  spriteStyle?: 'artwork' | 'showdown';
+  spriteStyle?: SpriteStyle;
+  cardViewMode?: 'compact' | 'detailed';
+  onCardViewModeChange?: (mode: 'compact' | 'detailed') => void;
 }
 
 export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
@@ -28,10 +30,13 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
   onResetMidWeekProgress,
   onEditPokemon,
   onOpenSimulator,
-  spriteStyle = 'artwork'
+  spriteStyle = 'sleep',
+  cardViewMode,
+  onCardViewModeChange
 }) => {
   const [selectedRank, setSelectedRank] = useState<number>(0);
   const [teamViewMode, setTeamViewMode] = useState<'compact' | 'detailed'>('compact');
+  const effectiveViewMode = cardViewMode || teamViewMode;
   const [saveTeamStatus, setSaveTeamStatus] = useState<string | null>(null);
 
   // Helper to check if two teams have identical pokemon IDs
@@ -296,9 +301,12 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
           {/* View mode toggle */}
           <div className="flex items-center gap-1 bg-[#091f3a] p-1 rounded-xl border border-sky-400/20 self-start sm:self-auto shadow-inner">
             <button
-              onClick={() => setTeamViewMode('compact')}
+              onClick={() => {
+                setTeamViewMode('compact');
+                onCardViewModeChange?.('compact');
+              }}
               className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                teamViewMode === 'compact'
+                effectiveViewMode === 'compact'
                   ? 'bg-sky-500 text-white shadow-sm shadow-sky-500/20'
                   : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
@@ -307,9 +315,12 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
               <span>Vista Rápida</span>
             </button>
             <button
-              onClick={() => setTeamViewMode('detailed')}
+              onClick={() => {
+                setTeamViewMode('detailed');
+                onCardViewModeChange?.('detailed');
+              }}
               className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                teamViewMode === 'detailed'
+                effectiveViewMode === 'detailed'
                   ? 'bg-sky-500 text-white shadow-sm shadow-sky-500/20'
                   : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
@@ -321,7 +332,7 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
         </div>
 
         {/* Pokemon Cards Display */}
-        {teamViewMode === 'compact' ? (
+        {effectiveViewMode === 'compact' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2.5">
             {currentResult.team.map((poke, idx) => (
               <PokemonCard
@@ -331,7 +342,7 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
                 isFavoriteBerry={config.favoriteBerries.includes(poke.berry)}
                 onEdit={onEditPokemon}
                 compact={true}
-                spriteStyle="showdown"
+                spriteStyle={spriteStyle}
               />
             ))}
           </div>
@@ -345,7 +356,7 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
                 isFavoriteBerry={config.favoriteBerries.includes(poke.berry)}
                 onEdit={onEditPokemon}
                 compact={false}
-                spriteStyle="showdown"
+                spriteStyle={spriteStyle}
               />
             ))}
           </div>

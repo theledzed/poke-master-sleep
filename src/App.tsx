@@ -24,6 +24,8 @@ import {
 } from './services/supabase';
 import { PwaUpdatePrompt } from './components/PwaUpdatePrompt';
 import { PwaInstallPrompt } from './components/PwaInstallPrompt';
+import { SpriteStyle } from './services/pokeApiService';
+import { CardViewMode } from './components/ViewSettingsDropdown';
 
 const STORAGE_KEY_WEATHER = 'sleep_master_weather_v1';
 
@@ -72,7 +74,41 @@ export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('optimizer');
   const [optimizedResults, setOptimizedResults] = useState<OptimizedTeamResult[]>([]);
   const [isCalculating, setIsCalculating] = useState(false);
-  const [spriteStyle, setSpriteStyle] = useState<'artwork' | 'showdown'>('artwork');
+  const [spriteStyle, setSpriteStyle] = useState<SpriteStyle>(() => {
+    try {
+      const saved = localStorage.getItem('pokesleep_sprite_style');
+      if (saved === 'showdown' || saved === 'sleep' || saved === 'artwork') {
+        return saved as SpriteStyle;
+      }
+    } catch (e) {}
+    return 'sleep';
+  });
+
+  const handleSpriteStyleChange = useCallback((newStyle: SpriteStyle) => {
+    setSpriteStyle(newStyle);
+    try {
+      localStorage.setItem('pokesleep_sprite_style', newStyle);
+    } catch (e) {}
+  }, []);
+
+  const [cardViewMode, setCardViewMode] = useState<CardViewMode>(() => {
+    try {
+      const saved = localStorage.getItem('pokesleep_card_view_mode');
+      if (saved === 'compact' || saved === 'detailed') {
+        return saved as CardViewMode;
+      }
+    } catch (e) {}
+    return 'compact';
+  });
+
+  const handleCardViewModeChange = useCallback((mode: CardViewMode) => {
+    setCardViewMode(mode);
+    try {
+      localStorage.setItem('pokesleep_card_view_mode', mode);
+    } catch (e) {}
+  }, []);
+
+  const [pokedexViewMode, setPokedexViewMode] = useState<'cards' | 'audit'>('cards');
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -308,6 +344,12 @@ export const App: React.FC = () => {
         activeProfile={activeProfile}
         onSelectProfile={handleSelectProfile}
         syncStatus={syncStatus}
+        spriteStyle={spriteStyle}
+        onSpriteStyleChange={handleSpriteStyleChange}
+        cardViewMode={cardViewMode}
+        onCardViewModeChange={handleCardViewModeChange}
+        pokedexViewMode={pokedexViewMode}
+        onPokedexViewModeChange={setPokedexViewMode}
       />
 
       {/* Main Container */}
@@ -332,6 +374,8 @@ export const App: React.FC = () => {
               onEditPokemon={handleEditPokemon}
               onOpenSimulator={() => setActiveTab('simulator')}
               spriteStyle={spriteStyle}
+              cardViewMode={cardViewMode}
+              onCardViewModeChange={handleCardViewModeChange}
             />
           </div>
         )}
@@ -361,9 +405,15 @@ export const App: React.FC = () => {
             onEditPokemon={handleEditPokemon}
             onDeletePokemon={handleDeletePokemon}
             onAddNew={handleAddNewPokemon}
+            onEvolvePokemon={handleSavePokemon}
             spriteStyle={spriteStyle}
+            onSpriteStyleChange={handleSpriteStyleChange}
             activeProfile={activeProfile}
             onGoToDatabase={() => setActiveTab('excel')}
+            cardViewMode={cardViewMode}
+            onCardViewModeChange={handleCardViewModeChange}
+            viewMode={pokedexViewMode}
+            onViewModeChange={setPokedexViewMode}
           />
         )}
 
@@ -395,6 +445,7 @@ export const App: React.FC = () => {
         onSave={handleSavePokemon}
         onDelete={handleDeletePokemon}
         pokemonToEdit={pokemonToEdit}
+        spriteStyle={spriteStyle}
       />
     </div>
   );
