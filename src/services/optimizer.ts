@@ -116,35 +116,63 @@ export function getSkillVigorPerTrigger(pokemon: Pokemon): number {
     return table[skillLevel] || 1726;
   }
 
-  if (mainSkill.includes('Carga vigor S')) {
+  if (mainSkill.includes('Carga vigor S') || mainSkill.includes('Reserva')) {
     const table = [0, 400, 569, 785, 1083, 1496, 2066, 3002];
     return table[skillLevel] || 785;
   }
 
-  if (mainSkill.includes('Imán ingredientes S')) {
+  if (mainSkill.includes('Imán ingredientes S') || mainSkill.includes('Más (Imán ingredientes')) {
     // Ingredient Magnet grants ingredients consumed via Cooking pot. Direct vigor is 0 to avoid double-counting.
     return 0;
   }
 
+  if (mainSkill.includes('Ingrediente aleatorio S') || mainSkill.includes('Afortunado')) {
+    // Draws 6 to 21 random ingredients per trigger (approx 110 vigor eq value per ingredient)
+    const ingCounts = [0, 6, 8, 11, 14, 17, 21, 25];
+    return (ingCounts[skillLevel] || 8) * 110;
+  }
+
+  if (mainSkill.includes('Receta sustanciosa') || mainSkill.includes('Menos (Receta')) {
+    // Pot expansion (+7 to +31 ingredients for next meal)
+    const potBoost = [0, 7, 10, 14, 18, 22, 27, 31];
+    return (potBoost[skillLevel] || 10) * 85;
+  }
+
+  if (mainSkill.includes('Cocinitas S')) {
+    // Extra-tasty crit chance bonus
+    const critBonus = [0, 4, 5, 6, 7, 8, 10, 12];
+    return (critBonus[skillLevel] || 5) * 220;
+  }
+
   if (mainSkill.includes('Metrónomo')) {
-    // Metronome triggers any main skill at the current skill level (Charge Strength M, Ingredient Magnet S, Extra Helpful S, E4E, etc.)
-    // Expected average equivalent vigor value across all possible skill outcomes:
+    // Metronome triggers any main skill at the current skill level
     const table = [0, 850, 1300, 1900, 2700, 3800, 5300, 7000];
     return table[skillLevel] || 2700;
   }
 
-  if (mainSkill.includes('Superútil S') || mainSkill.includes('Impulso de ayuda S')) {
+  if (mainSkill.includes('Superútil S') || mainSkill.includes('Impulso de ayuda S') || mainSkill.includes('Mejora de ayuda')) {
     const helps = [0, 4, 5, 6, 7, 8, 9, 10];
     return (helps[skillLevel] || 5) * 350;
   }
 
-  if (mainSkill.includes('Bayamanía')) {
+  if (mainSkill.includes('Bayamanía') || mainSkill.includes('Cometa Draco') || mainSkill.includes('Disfraz')) {
     const table = [0, 800, 1200, 1800, 2500, 3400, 4500, 5800];
     return table[skillLevel] || 1800;
   }
 
+  if (mainSkill.includes('Ánimo enérgico') || mainSkill.includes('Pulso Cura') || mainSkill.includes('Moflete Estático')) {
+    // Energy cheer to a random teammate
+    const energy = [0, 14, 19, 24, 31, 39, 48, 55];
+    return (energy[skillLevel] || 19) * 35;
+  }
+
+  if (mainSkill.includes('Energía para todos') || mainSkill.includes('Zumo de Baya') || mainSkill.includes('Plegaria Lunar')) {
+    const table = [0, 350, 500, 700, 950, 1250, 1600, 2000];
+    return table[skillLevel] || 500;
+  }
+
   if (mainSkill.includes('Onda Mental') || mainSkill.includes('Mal Sueño')) {
-    // Legendary psychic / dark burst damage (aligned with standard Carga Vigor M scaling)
+    // Legendary psychic / dark burst damage
     const table = [0, 900, 1300, 1800, 2500, 3500, 4800, 6400];
     return table[skillLevel] || 1800;
   }
@@ -165,7 +193,9 @@ export function calculateTeamEnergyFactor(team: Pokemon[]): {
     const name = p.name.toLowerCase();
     const skill = p.mainSkillName || getPokemonCanonicalSkill(p.name);
     return skill.includes('Energía para todos') ||
-      ['jigglypuff', 'wigglytuff', 'igglybuff', 'pawmi', 'pawmo', 'pawmot', 'ralts', 'kirlia', 'gardevoir', 'sylveon'].some(h => name.includes(h));
+      skill.includes('Zumo de Baya') ||
+      skill.includes('Plegaria Lunar') ||
+      ['jigglypuff', 'wigglytuff', 'igglybuff', 'pawmi', 'pawmo', 'pawmot', 'ralts', 'kirlia', 'gardevoir', 'sylveon', 'cresselia', 'shuckle'].some(h => name.includes(h));
   });
 
   if (healers.length === 0) {

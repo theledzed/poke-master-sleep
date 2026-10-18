@@ -240,6 +240,13 @@ export const MAIN_SKILLS_META: Record<string, MainSkillMeta> = {
     iconSymbol: '🌿',
     category: 'energy'
   },
+  'Ánimo enérgico S': {
+    name: 'Ánimo enérgico S',
+    badgeBg: 'bg-teal-500/20 border-teal-400/40',
+    badgeText: 'text-teal-300',
+    iconSymbol: '📣',
+    category: 'energy'
+  },
   'Autocuración S': {
     name: 'Autocuración S',
     badgeBg: 'bg-purple-500/20 border-purple-500/40',
@@ -254,11 +261,25 @@ export const MAIN_SKILLS_META: Record<string, MainSkillMeta> = {
     iconSymbol: '🧲',
     category: 'ingredients'
   },
+  'Ingrediente aleatorio S': {
+    name: 'Ingrediente aleatorio S',
+    badgeBg: 'bg-emerald-500/20 border-emerald-400/40',
+    badgeText: 'text-emerald-300',
+    iconSymbol: '🎲',
+    category: 'ingredients'
+  },
   'Receta sustanciosa S': {
     name: 'Receta sustanciosa S',
     badgeBg: 'bg-orange-500/20 border-orange-500/40',
     badgeText: 'text-orange-300',
     iconSymbol: '🍲',
+    category: 'pot'
+  },
+  'Cocinitas S': {
+    name: 'Cocinitas S',
+    badgeBg: 'bg-amber-500/20 border-amber-400/40',
+    badgeText: 'text-amber-300',
+    iconSymbol: '🍳',
     category: 'pot'
   },
   'Metrónomo': {
@@ -294,6 +315,104 @@ export const MAIN_SKILLS_META: Record<string, MainSkillMeta> = {
     badgeBg: 'bg-violet-500/20 border-violet-500/40',
     badgeText: 'text-violet-300',
     iconSymbol: '🚀',
+    category: 'special'
+  },
+  'Mejora de ayuda (Eléctrico)': {
+    name: 'Mejora de ayuda (Eléctrico)',
+    badgeBg: 'bg-yellow-500/20 border-yellow-400/40',
+    badgeText: 'text-yellow-300',
+    iconSymbol: '⚡',
+    category: 'special'
+  },
+  'Mejora de ayuda (Fuego)': {
+    name: 'Mejora de ayuda (Fuego)',
+    badgeBg: 'bg-red-500/20 border-red-400/40',
+    badgeText: 'text-red-300',
+    iconSymbol: '🔥',
+    category: 'special'
+  },
+  'Mejora de ayuda (Agua)': {
+    name: 'Mejora de ayuda (Agua)',
+    badgeBg: 'bg-blue-500/20 border-blue-400/40',
+    badgeText: 'text-blue-300',
+    iconSymbol: '💧',
+    category: 'special'
+  },
+  'Luz Lunar (Carga energía S)': {
+    name: 'Luz Lunar (Carga energía S)',
+    badgeBg: 'bg-indigo-500/20 border-indigo-400/40',
+    badgeText: 'text-indigo-300',
+    iconSymbol: '🌙',
+    category: 'energy'
+  },
+  'Afortunado (Ingrediente aleatorio S)': {
+    name: 'Afortunado (Ingrediente aleatorio S)',
+    badgeBg: 'bg-purple-500/20 border-purple-400/40',
+    badgeText: 'text-purple-300',
+    iconSymbol: '🎰',
+    category: 'ingredients'
+  },
+  'Zumo de Baya (Energía para todos S)': {
+    name: 'Zumo de Baya (Energía para todos S)',
+    badgeBg: 'bg-rose-500/20 border-rose-400/40',
+    badgeText: 'text-rose-300',
+    iconSymbol: '🍹',
+    category: 'energy'
+  },
+  'Más (Imán ingredientes S)': {
+    name: 'Más (Imán ingredientes S)',
+    badgeBg: 'bg-cyan-500/20 border-cyan-400/40',
+    badgeText: 'text-cyan-300',
+    iconSymbol: '➕',
+    category: 'ingredients'
+  },
+  'Menos (Receta sustanciosa S)': {
+    name: 'Menos (Receta sustanciosa S)',
+    badgeBg: 'bg-orange-500/20 border-orange-400/40',
+    badgeText: 'text-orange-300',
+    iconSymbol: '➖',
+    category: 'pot'
+  },
+  'Pulso Cura (Ánimo enérgico S)': {
+    name: 'Pulso Cura (Ánimo enérgico S)',
+    badgeBg: 'bg-pink-500/20 border-pink-400/40',
+    badgeText: 'text-pink-300',
+    iconSymbol: '💓',
+    category: 'energy'
+  },
+  'Cometa Draco (Bayamanía)': {
+    name: 'Cometa Draco (Bayamanía)',
+    badgeBg: 'bg-violet-500/20 border-violet-400/40',
+    badgeText: 'text-violet-300',
+    iconSymbol: '☄️',
+    category: 'special'
+  },
+  'Reserva (Carga vigor S)': {
+    name: 'Reserva (Carga vigor S)',
+    badgeBg: 'bg-sky-500/20 border-sky-400/40',
+    badgeText: 'text-sky-300',
+    iconSymbol: '📦',
+    category: 'vigor'
+  },
+  'Plegaria Lunar (Energía para todos S)': {
+    name: 'Plegaria Lunar (Energía para todos S)',
+    badgeBg: 'bg-purple-500/20 border-purple-400/40',
+    badgeText: 'text-purple-300',
+    iconSymbol: '✨',
+    category: 'energy'
+  },
+  'Moflete Estático (Ánimo enérgico S)': {
+    name: 'Moflete Estático (Ánimo enérgico S)',
+    badgeBg: 'bg-amber-500/20 border-amber-400/40',
+    badgeText: 'text-amber-300',
+    iconSymbol: '🐹',
+    category: 'energy'
+  },
+  'Disfraz (Bayamanía)': {
+    name: 'Disfraz (Bayamanía)',
+    badgeBg: 'bg-zinc-700/40 border-zinc-500/40',
+    badgeText: 'text-zinc-200',
+    iconSymbol: '🎭',
     category: 'special'
   },
   'Onda Mental': {
@@ -385,9 +504,23 @@ export const SPECIES_MAIN_SKILL_MAP: Record<string, string> = {
   rufflet: 'Bayamanía', braviary: 'Bayamanía',
   cutiefly: 'Imán ingredientes S', ribombee: 'Imán ingredientes S',
   stufful: 'Carga vigor S', bewear: 'Carga vigor S',
-  mimikyu: 'Disfraz alegre',
+  mimikyu: 'Disfraz (Bayamanía)',
+  dwebble: 'Ingrediente aleatorio S', crustle: 'Ingrediente aleatorio S',
+  sandshrew: 'Ingrediente aleatorio S', sandslash: 'Ingrediente aleatorio S',
+  hawlucha: 'Ingrediente aleatorio S',
+  murkrow: 'Afortunado (Ingrediente aleatorio S)', honchkrow: 'Afortunado (Ingrediente aleatorio S)',
+  shuckle: 'Zumo de Baya (Energía para todos S)',
+  plusle: 'Más (Imán ingredientes S)', minun: 'Menos (Receta sustanciosa S)',
+  latias: 'Pulso Cura (Ánimo enérgico S)', latios: 'Cometa Draco (Bayamanía)',
+  drifloon: 'Reserva (Carga vigor S)', drifblim: 'Reserva (Carga vigor S)',
+  cresselia: 'Plegaria Lunar (Energía para todos S)',
+  dedenne: 'Cocinitas S',
+  togedemaru: 'Moflete Estático (Ánimo enérgico S)',
+  raikou: 'Mejora de ayuda (Eléctrico)', entei: 'Mejora de ayuda (Fuego)', suicune: 'Mejora de ayuda (Agua)',
+  farfetchd: 'Imán ingredientes S', 'farfetch’d': 'Imán ingredientes S',
+  'mr. mime': 'Carga vigor S', 'mime jr.': 'Carga vigor S',
   comfey: 'Energía para todos S',
-  cramorant: 'Carga vigor S',
+  cramorant: 'Afortunado (Ingrediente aleatorio S)',
   sprigatito: 'Imán ingredientes S', floragato: 'Imán ingredientes S', meowscarada: 'Imán ingredientes S',
   fuecoco: 'Carga energía S', crocalor: 'Carga energía S', skeledirge: 'Carga energía S',
   quaxly: 'Carga vigor S', quaxwell: 'Carga vigor S', quaquaval: 'Carga vigor S',

@@ -1773,6 +1773,118 @@ export const POKEMON_SPECIES_CATALOG: SpeciesCatalogEntry[] = [
     mainSkill: 'Onda Mental',
     ingredients: ['Soja Verdegal', 'Maíz Verdegal', 'Aceite Puro'],
     frequencyStr: '36 min 11s'
+  },
+  {
+    name: 'Dwebble',
+    specialty: 'Habilidades',
+    berry: 'Baya Ziuela',
+    mainSkill: 'Ingrediente aleatorio S',
+    ingredients: ['Aceite Puro', 'Patata Suave', 'Tomate Ronco'],
+    frequencyStr: '1h 05min 0s'
+  },
+  {
+    name: 'Crustle',
+    specialty: 'Habilidades',
+    berry: 'Baya Ziuela',
+    mainSkill: 'Ingrediente aleatorio S',
+    ingredients: ['Aceite Puro', 'Patata Suave', 'Tomate Ronco'],
+    frequencyStr: '50 min 0s'
+  },
+  {
+    name: 'Hawlucha',
+    specialty: 'Habilidades',
+    berry: 'Baya Zreza',
+    mainSkill: 'Ingrediente aleatorio S',
+    ingredients: ['Huevo Selecto', 'Manzana Selecta', 'Hierba Picante'],
+    frequencyStr: '45 min 0s'
+  },
+  {
+    name: 'Murkrow',
+    specialty: 'Habilidades',
+    berry: 'Baya Wiki',
+    mainSkill: 'Afortunado (Ingrediente aleatorio S)',
+    ingredients: ['Huevo Selecto', 'Hierba Picante', 'Puerro Grueso'],
+    frequencyStr: '1h 08min 20s'
+  },
+  {
+    name: 'Honchkrow',
+    specialty: 'Habilidades',
+    berry: 'Baya Wiki',
+    mainSkill: 'Afortunado (Ingrediente aleatorio S)',
+    ingredients: ['Huevo Selecto', 'Hierba Picante', 'Puerro Grueso'],
+    frequencyStr: '46 min 40s'
+  },
+  {
+    name: 'Shuckle',
+    specialty: 'Habilidades',
+    berry: 'Baya Ziuela',
+    mainSkill: 'Zumo de Baya (Energía para todos S)',
+    ingredients: ['Miel Dulce', 'Manzana Selecta', 'Seta Sabrosa'],
+    frequencyStr: '1h 23min 20s'
+  },
+  {
+    name: 'Plusle',
+    specialty: 'Habilidades',
+    berry: 'Baya Uvav',
+    mainSkill: 'Más (Imán ingredientes S)',
+    ingredients: ['Manzana Selecta', 'Soja Verdegal', 'Leche Mu-mu'],
+    frequencyStr: '51 min 40s'
+  },
+  {
+    name: 'Minun',
+    specialty: 'Habilidades',
+    berry: 'Baya Uvav',
+    mainSkill: 'Menos (Receta sustanciosa S)',
+    ingredients: ['Manzana Selecta', 'Soja Verdegal', 'Leche Mu-mu'],
+    frequencyStr: '51 min 40s'
+  },
+  {
+    name: 'Latias',
+    specialty: 'Habilidades',
+    berry: 'Baya Drasi',
+    mainSkill: 'Pulso Cura (Ánimo enérgico S)',
+    ingredients: ['Miel Dulce', 'Cacao Relajante', 'Huevo Selecto'],
+    frequencyStr: '36 min 40s'
+  },
+  {
+    name: 'Latios',
+    specialty: 'Habilidades',
+    berry: 'Baya Drasi',
+    mainSkill: 'Cometa Draco (Bayamanía)',
+    ingredients: ['Hierba Picante', 'Maíz Verdegal', 'Seta Sabrosa'],
+    frequencyStr: '36 min 40s'
+  },
+  {
+    name: 'Togedemaru',
+    specialty: 'Habilidades',
+    berry: 'Baya Uvav',
+    mainSkill: 'Moflete Estático (Ánimo enérgico S)',
+    ingredients: ['Manzana Selecta', 'Jengibre Picante', 'Aceite Puro'],
+    frequencyStr: '48 min 20s'
+  },
+  {
+    name: "Farfetch'd",
+    specialty: 'Ingredientes',
+    berry: 'Baya Plama',
+    mainSkill: 'Imán ingredientes S',
+    ingredients: ['Puerro Grueso', 'Salchicha Gruesa', 'Jengibre Picante'],
+    frequencyStr: '46 min 40s'
+  },
+  {
+    name: 'Mr. Mime',
+    specialty: 'Ingredientes',
+    berry: 'Baya Ango',
+    mainSkill: 'Carga vigor S',
+    ingredients: ['Tomate Ronco', 'Patata Suave', 'Puerro Grueso'],
+    frequencyStr: '46 min 40s'
+  },
+  {
+    name: 'Mime Jr.',
+    specialty: 'Ingredientes',
+    berry: 'Baya Ango',
+    mainSkill: 'Carga vigor S',
+    ingredients: ['Tomate Ronco', 'Patata Suave', 'Puerro Grueso'],
+    frequencyStr: '1h 11min 40s'
   }
 ];
 
