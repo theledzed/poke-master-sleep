@@ -137,7 +137,16 @@ export function getPokemonSkillLevel(pokemon: Pokemon): number {
 // Calculate realistic vigor per trigger according to official Sleep tables
 export function getSkillVigorPerTrigger(pokemon: Pokemon): number {
   const skillLevel = getPokemonSkillLevel(pokemon);
-  const mainSkill = pokemon.mainSkillName || getPokemonCanonicalSkill(pokemon.name);
+  const canonical = getPokemonCanonicalSkill(pokemon.name);
+  let mainSkill = pokemon.mainSkillName || canonical;
+  const isLegendaryBeast = ['raikou', 'entei', 'suicune'].some(b => pokemon.name.toLowerCase().includes(b));
+
+  // Guardrail: Eevee in Pokémon Sleep exclusively possesses 'Imán ingredientes S'
+  if (pokemon.name.toLowerCase().trim() === 'eevee' && mainSkill !== 'Imán ingredientes S') {
+    mainSkill = 'Imán ingredientes S';
+  } else if (mainSkill.includes('Impulso de ayuda') && !isLegendaryBeast) {
+    mainSkill = canonical;
+  }
 
   if (mainSkill.includes('Carga vigor M')) {
     const table = [0, 880, 1251, 1726, 2383, 3290, 4546, 6400];
@@ -176,7 +185,7 @@ export function getSkillVigorPerTrigger(pokemon: Pokemon): number {
     return table[skillLevel] || 2700;
   }
 
-  if (mainSkill.includes('Impulso de ayuda S') || mainSkill.includes('Mejora de ayuda')) {
+  if (mainSkill.includes('Mejora de ayuda') || (mainSkill.includes('Impulso de ayuda') && isLegendaryBeast)) {
     // Bestias legendarias (Raikou, Entei, Suicune): activan ayudas instantáneas para TODO el equipo (5 miembros)
     const helps = [0, 4, 5, 6, 7, 8, 9, 11];
     return (helps[skillLevel] || 5) * 1250;

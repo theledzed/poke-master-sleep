@@ -67,7 +67,14 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
 
   const isShiny = pokemon.notes?.toLowerCase().includes('shiny') || pokemon.notes?.toLowerCase().includes('variocolor');
   const isSpecial = isSpecialPokemon(pokemon);
-  const mainSkill = pokemon.mainSkillName || getPokemonCanonicalSkill(pokemon.name);
+  const canonicalSkill = getPokemonCanonicalSkill(pokemon.name);
+  let mainSkill = pokemon.mainSkillName || canonicalSkill;
+  const isLegendaryBeast = ['raikou', 'entei', 'suicune'].some(b => pokemon.name.toLowerCase().includes(b));
+  if (pokemon.name.toLowerCase().trim() === 'eevee' && mainSkill !== 'Imán ingredientes S') {
+    mainSkill = 'Imán ingredientes S';
+  } else if (mainSkill.includes('Impulso de ayuda') && !isLegendaryBeast) {
+    mainSkill = canonicalSkill;
+  }
   const mainSkillMeta = getMainSkillMeta(mainSkill);
   const skillLevel = getPokemonSkillLevel(pokemon);
 

@@ -2,6 +2,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Pokemon, SnorlaxConfig } from '../types/pokemon';
 import { DEFAULT_CSV_DATA } from '../data/defaultPokedex';
 import { parseCsvText } from './csvParser';
+import { getPokemonCanonicalSkill } from './pokeApiService';
 
 export type ProfileId = 'cris' | 'ady';
 export type SyncStatus = 'local' | 'syncing' | 'synced' | 'error';
@@ -80,6 +81,35 @@ export function getLocalStorageKeys(profileId: ProfileId) {
 }
 
 /**
+ * Sanitizes legacy or corrupted skill names stored in local/cloud databases.
+ * E.g. fixes Eevee having 'Impulso de ayuda S' instead of its official 'Imán ingredientes S'.
+ */
+export function sanitizePokemonSkills(pokemons: Pokemon[]): { pokemons: Pokemon[]; changed: boolean } {
+  let changed = false;
+  const sanitized = pokemons.map(p => {
+    const canonical = getPokemonCanonicalSkill(p.name);
+    let skill = p.mainSkillName;
+    const isLegendaryBeast = ['raikou', 'entei', 'suicune'].some(b => p.name.toLowerCase().includes(b));
+
+    if (p.name.toLowerCase().trim() === 'eevee' && skill !== 'Imán ingredientes S') {
+      skill = 'Imán ingredientes S';
+    } else if (skill === 'Impulso de ayuda S' && !isLegendaryBeast) {
+      skill = canonical;
+    } else if (!skill) {
+      skill = canonical;
+    }
+
+    if (skill !== p.mainSkillName) {
+      changed = true;
+      return { ...p, mainSkillName: skill };
+    }
+    return p;
+  });
+
+  return { pokemons: sanitized, changed };
+}
+
+/**
  * Synchronous local reader for instantaneous UI render (0ms response)
  */
 export function getProfileFromLocal(profileId: ProfileId): {
@@ -130,7 +160,19 @@ export function getProfileFromLocal(profileId: ProfileId): {
     config = { ...DEFAULT_SNORLAX_CONFIG };
   }
 
-  return { pokemons, config };
+  // Sanitize any legacy corrupted skill names (e.g. Eevee with Impulso de ayuda)
+  const { pokemons: sanitizedPokemons, changed } = sanitizePokemonSkills(pokemons);
+  if (changed) {
+    try {
+      const pokemonsStr = JSON.stringify(sanitizedPokemons);
+      localStorage.setItem(boxKey, pokemonsStr);
+      localStorage.setItem(legacyBoxKey, pokemonsStr);
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  return { pokemons: sanitizedPokemons, config };
 }
 
 /**
@@ -201,20 +243,26 @@ export async function loadProfileData(profileId: ProfileId): Promise<{
         };
       }
 
+      // Sanitize cloud pokemons against legacy corrupted skills
+      const { pokemons: sanitizedCloud, changed: cloudChanged } = sanitizePokemonSkills(cloudPokemons);
+      if (cloudChanged) {
+        saveProfileData(profileId, sanitizedCloud, cloudConfig);
+      }
+
       // Safeguard against data loss: If local storage has Pokémon not present in cloud (e.g. newly created helpers before sync completed),
       // merge them instead of blindly overwriting!
-      const cloudIds = new Set(cloudPokemons.map(p => p.id));
+      const cloudIds = new Set(sanitizedCloud.map(p => p.id));
       const localOnlyPokemons = localData.pokemons.filter(p => !cloudIds.has(p.id));
 
-      let finalPokemons = cloudPokemons;
+      let finalPokemons = sanitizedCloud;
       if (localOnlyPokemons.length > 0) {
         console.info(`[Supabase] Preserving ${localOnlyPokemons.length} local Pokemon not yet in cloud for ${profileId}`);
-        finalPokemons = [...localOnlyPokemons, ...cloudPokemons];
+        finalPokemons = [...localOnlyPokemons, ...sanitizedCloud];
         // Persist merged dataset to cloud immediately
         saveProfileData(profileId, finalPokemons, cloudConfig);
       } else {
         // Update local storage with fresh cloud data
-        saveProfileToLocal(profileId, cloudPokemons, cloudConfig);
+        saveProfileToLocal(profileId, sanitizedCloud, cloudConfig);
       }
 
       return {

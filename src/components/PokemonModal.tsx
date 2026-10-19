@@ -224,8 +224,14 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
       setFrequencyStr(pokemonToEdit.frequencyStr);
       setSpecialty(pokemonToEdit.specialty);
       setBerry(pokemonToEdit.berry);
-      setNatureName(pokemonToEdit.natureObj?.name || 'Dócil');
-      setMainSkillName(pokemonToEdit.mainSkillName || getPokemonCanonicalSkill(pokemonToEdit.name));
+      const canonicalSkill = getPokemonCanonicalSkill(pokemonToEdit.name);
+      let initialSkill = pokemonToEdit.mainSkillName || canonicalSkill;
+      if (pokemonToEdit.name.toLowerCase().trim() === 'eevee' && initialSkill !== 'Imán ingredientes S') {
+        initialSkill = 'Imán ingredientes S';
+      } else if (initialSkill === 'Impulso de ayuda S' && !['raikou', 'entei', 'suicune'].some(b => pokemonToEdit.name.toLowerCase().includes(b))) {
+        initialSkill = canonicalSkill;
+      }
+      setMainSkillName(initialSkill);
       setMainSkillLevel(pokemonToEdit.mainSkillLevel || getPokemonSkillLevel(pokemonToEdit) || 1);
       setNotes(pokemonToEdit.notes || '');
 
