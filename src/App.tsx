@@ -26,6 +26,7 @@ import { PwaUpdatePrompt } from './components/PwaUpdatePrompt';
 import { PwaInstallPrompt } from './components/PwaInstallPrompt';
 import { SpriteStyle } from './services/pokeApiService';
 import { CardViewMode } from './components/ViewSettingsDropdown';
+import { PreFilledPokemonData } from './services/ocrService';
 
 const STORAGE_KEY_WEATHER = 'sleep_master_weather_v1';
 
@@ -118,6 +119,7 @@ export const App: React.FC = () => {
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pokemonToEdit, setPokemonToEdit] = useState<Pokemon | null>(null);
+  const [preFillPokemonData, setPreFillPokemonData] = useState<PreFilledPokemonData | null>(null);
 
   // Background cloud fetch on initial mount
   useEffect(() => {
@@ -230,13 +232,21 @@ export const App: React.FC = () => {
 
   const handleEditPokemon = (pokemon: Pokemon) => {
     setPokemonToEdit(pokemon);
+    setPreFillPokemonData(null);
     setIsModalOpen(true);
   };
 
   const handleAddNewPokemon = () => {
     setPokemonToEdit(null);
+    setPreFillPokemonData(null);
     setIsModalOpen(true);
   };
+
+  const handleScanPokemonSuccess = useCallback((prefill: PreFilledPokemonData) => {
+    setPokemonToEdit(null);
+    setPreFillPokemonData(prefill);
+    setIsModalOpen(true);
+  }, []);
 
   // Update recipe level handler
   const handleUpdateRecipeLevel = useCallback((recipeName: string, level: number) => {
@@ -407,6 +417,7 @@ export const App: React.FC = () => {
               onEditPokemon={handleEditPokemon}
               onDeletePokemon={handleDeletePokemon}
               onAddNew={handleAddNewPokemon}
+              onScanSuccess={handleScanPokemonSuccess}
               onEvolvePokemon={handleSavePokemon}
               spriteStyle={spriteStyle}
               onSpriteStyleChange={handleSpriteStyleChange}
@@ -451,11 +462,15 @@ export const App: React.FC = () => {
       {/* Add / Edit Pokemon Modal */}
       <PokemonModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setPreFillPokemonData(null);
+        }}
         onSave={handleSavePokemon}
         onDelete={handleDeletePokemon}
         pokemonToEdit={pokemonToEdit}
         spriteStyle={spriteStyle}
+        preFillData={preFillPokemonData}
       />
     </div>
   );

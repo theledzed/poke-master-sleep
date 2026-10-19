@@ -19,7 +19,9 @@ import {
 } from '../data/speciesMaster';
 import { canPokemonEvolve } from '../services/evolutionService';
 import { EvolutionModal } from './EvolutionModal';
-import { X, Check, Plus, Trash2, Lock, CheckCircle2, Sparkles, Dna, Star, ChevronDown, Search, Wand2, RefreshCw } from 'lucide-react';
+import { PreFilledPokemonData } from '../services/ocrService';
+import { ScanPokemonModal } from './ScanPokemonModal';
+import { X, Check, Plus, Trash2, Lock, CheckCircle2, Sparkles, Dna, Star, ChevronDown, Search, Wand2, RefreshCw, Camera } from 'lucide-react';
 
 function formatFrequencySeconds(seconds: number): string {
   const h = Math.floor(seconds / 3600);
@@ -76,6 +78,7 @@ interface PokemonModalProps {
   onDelete?: (pokemonId: string) => void;
   pokemonToEdit?: Pokemon | null;
   spriteStyle?: SpriteStyle;
+  preFillData?: PreFilledPokemonData | null;
 }
 
 export const PokemonModal: React.FC<PokemonModalProps> = ({
@@ -84,9 +87,12 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
   onSave,
   onDelete,
   pokemonToEdit,
-  spriteStyle = 'sleep'
+  spriteStyle = 'sleep',
+  preFillData
 }) => {
   const isEditing = Boolean(pokemonToEdit);
+  const [isScanModalOpen, setIsScanModalOpen] = useState(false);
+  const [wasAutoFilled, setWasAutoFilled] = useState(false);
 
   const [name, setName] = useState('');
   const [isShiny, setIsShiny] = useState(false);
@@ -215,6 +221,28 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const applyPreFill = (data: PreFilledPokemonData) => {
+    setName(data.name);
+    setIsShiny(data.isShiny);
+    setLevel(data.level);
+    setRp(data.rp);
+    setFrequencyStr(data.frequencyStr);
+    setSpecialty(data.specialty);
+    setBerry(data.berry);
+    setNatureName(data.natureName);
+    setMainSkillName(data.mainSkillName);
+    setMainSkillLevel(data.mainSkillLevel);
+    setNotes(data.notes);
+    setIng1Name(data.ing1Name);
+    setIng1Count(data.ing1Count);
+    setIng2Name(data.ing2Name);
+    setIng2Count(data.ing2Count);
+    setIng3Name(data.ing3Name);
+    setIng3Count(data.ing3Count);
+    setSubskills(data.subskills);
+    setWasAutoFilled(true);
+  };
+
   useEffect(() => {
     if (pokemonToEdit) {
       setName(pokemonToEdit.name);
@@ -259,6 +287,9 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
         existingSubs[3] || '',
         existingSubs[4] || ''
       ]);
+      setWasAutoFilled(false);
+    } else if (preFillData) {
+      applyPreFill(preFillData);
     } else {
       // Defaults for new Pokemon
       setName('');
@@ -279,9 +310,10 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
       setIng3Name('Manzana Selecta');
       setIng3Count(3);
       setSubskills(['', '', '', '', '']);
+      setWasAutoFilled(false);
     }
     setShowSuggestions(false);
-  }, [pokemonToEdit, isOpen]);
+  }, [pokemonToEdit, preFillData, isOpen]);
 
   const handleSelectSpecies = (entry: MasterSpecies) => {
     setName(entry.name);
@@ -470,13 +502,44 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
               </p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white border border-white/10 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {!isEditing && (
+              <button
+                type="button"
+                onClick={() => setIsScanModalOpen(true)}
+                className="btn-dreamy-pearl px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 text-indigo-950 shadow-md hover:scale-[1.02] active:scale-95"
+                title="Escanear captura de pantalla de Pokémon Sleep"
+              >
+                <Camera className="w-3.5 h-3.5 text-indigo-950" />
+                <span className="hidden sm:inline">Escanear Captura</span>
+                <span className="sm:hidden">Captura</span>
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white border border-white/10 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
+
+        {/* Autofilled Success Banner */}
+        {wasAutoFilled && (
+          <div className="mx-5 mt-4 p-3 rounded-2xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-between text-xs text-emerald-200 animate-fade-in relative z-10 shadow-sm">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+              <span>¡Ficha autollenada con éxito desde tu captura con IA! Revisa los datos y guarda.</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setWasAutoFilled(false)}
+              className="text-emerald-400 hover:text-white ml-2 p-1 rounded-full hover:bg-white/10"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-5 space-y-4 overflow-y-auto">
@@ -1298,6 +1361,15 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
           pokemon={currentDraftPokemon}
           onConfirmEvolution={handleApplyEvolution}
           spriteStyle={spriteStyle}
+        />
+      )}
+
+      {/* Screenshot OCR Scanner Modal */}
+      {isScanModalOpen && (
+        <ScanPokemonModal
+          isOpen={isScanModalOpen}
+          onClose={() => setIsScanModalOpen(false)}
+          onScanSuccess={applyPreFill}
         />
       )}
     </div>

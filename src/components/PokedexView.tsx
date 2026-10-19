@@ -3,10 +3,12 @@ import { Pokemon, Specialty } from '../types/pokemon';
 import { PokemonCard } from './PokemonCard';
 import { PokedexAuditView } from './PokedexAuditView';
 import { BERRIES, INGREDIENTS, CANONICAL_BERRIES } from '../data/gameData';
-import { Search, Filter, ArrowUpDown, Plus, Sparkles, CheckCircle2, RotateCcw, SlidersHorizontal, FileSpreadsheet, Heart } from 'lucide-react';
+import { Search, Filter, ArrowUpDown, Plus, Sparkles, CheckCircle2, RotateCcw, SlidersHorizontal, FileSpreadsheet, Heart, Camera } from 'lucide-react';
 import { ProfileId } from '../services/supabase';
 import { SpriteStyle } from '../services/pokeApiService';
 import { CardViewMode } from './ViewSettingsDropdown';
+import { PreFilledPokemonData } from '../services/ocrService';
+import { ScanPokemonModal } from './ScanPokemonModal';
 
 interface PokedexViewProps {
   pokemons: Pokemon[];
@@ -14,6 +16,7 @@ interface PokedexViewProps {
   onEditPokemon: (pokemon: Pokemon) => void;
   onDeletePokemon?: (pokemonId: string) => void;
   onAddNew: () => void;
+  onScanSuccess?: (data: PreFilledPokemonData) => void;
   onEvolvePokemon?: (pokemon: Pokemon) => void;
   spriteStyle?: SpriteStyle;
   onSpriteStyleChange?: (style: SpriteStyle) => void;
@@ -39,10 +42,12 @@ export const PokedexView: React.FC<PokedexViewProps> = ({
   cardViewMode = 'compact',
   onCardViewModeChange,
   viewMode,
-  onViewModeChange
+  onViewModeChange,
+  onScanSuccess
 }) => {
   const [internalViewMode, setInternalViewMode] = useState<'cards' | 'audit'>('cards');
   const activeViewMode = viewMode || internalViewMode;
+  const [isScanModalOpen, setIsScanModalOpen] = useState(false);
 
   const handleViewModeToggle = (mode: 'cards' | 'audit') => {
     setInternalViewMode(mode);
@@ -163,6 +168,16 @@ export const PokedexView: React.FC<PokedexViewProps> = ({
               <span className="hidden sm:inline">Excel / CSV</span>
             </button>
           )}
+
+          {/* AI Screenshot Scanner Button */}
+          <button
+            onClick={() => setIsScanModalOpen(true)}
+            className="btn-dreamy-pearl px-4 py-2 text-xs flex items-center justify-center gap-2 shadow-lg hover:scale-[1.02] active:scale-95"
+            title="Escanear captura de pantalla de Pokémon Sleep con IA"
+          >
+            <Camera className="w-4 h-4 text-indigo-950" />
+            <span className="font-bold text-indigo-950">Escanear Captura</span>
+          </button>
 
           {/* Primary Add Pokemon Button */}
           <button
@@ -366,6 +381,19 @@ export const PokedexView: React.FC<PokedexViewProps> = ({
         </div>
       )}
         </>
+      )}
+
+      {/* Screenshot OCR Scanner Modal */}
+      {isScanModalOpen && (
+        <ScanPokemonModal
+          isOpen={isScanModalOpen}
+          onClose={() => setIsScanModalOpen(false)}
+          onScanSuccess={(scanned) => {
+            if (onScanSuccess) {
+              onScanSuccess(scanned);
+            }
+          }}
+        />
       )}
     </div>
   );

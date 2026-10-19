@@ -2,10 +2,130 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
+function ocrServerMiddleware() {
+  return {
+    name: 'ocr-server-middleware',
+    configureServer(server: any) {
+      server.middlewares.use(async (req: any, res: any, next: any) => {
+        if (req.url?.startsWith('/api/scan-pokemon') && req.method === 'POST') {
+          let body = '';
+          req.on('data', (chunk: any) => {
+            body += chunk;
+          });
+          req.on('end', async () => {
+            try {
+              const parsed = JSON.parse(body || '{}');
+              const { imageBase64, mimeType = 'image/jpeg', apiKey: userApiKey } = parsed;
+
+              const apiKey =
+                userApiKey ||
+                process.env.GEMINI_API_KEY ||
+                process.env.VITE_GEMINI_API_KEY ||
+                process.env.GOOGLE_API_KEY;
+
+              if (!apiKey) {
+                res.statusCode = 401;
+                res.setHeader('Content-Type', 'application/json');
+                res.end(
+                  JSON.stringify({
+                    error: 'MISSING_API_KEY',
+                    message:
+                      'Se requiere una API Key de Google AI Studio (Gemini Flash). Configúrala en .env.local o en la app.'
+                  })
+                );
+                return;
+              }
+
+              const cleanBase64 = (imageBase64 || '').replace(/^data:image\/[a-zA-Z]+;base64,/, '');
+
+              const systemPrompt = `You are an expert OCR vision AI specialized in extracting data from "Pokémon Sleep" mobile screenshots.
+Analyze the provided screenshot of a Pokémon summary screen and extract all fields into strict JSON format with no markdown wrappers or codeblocks.
+
+Expected JSON Schema:
+{
+  "name": string,
+  "isShiny": boolean,
+  "level": number,
+  "rp": number,
+  "nature": string,
+  "mainSkillName": string,
+  "mainSkillLevel": number,
+  "ingredients": [
+    { "slot": 1, "unlockLevel": 1, "name": string, "count": number },
+    { "slot": 2, "unlockLevel": 30, "name": string, "count": number },
+    { "slot": 3, "unlockLevel": 60, "name": string, "count": number }
+  ],
+  "subskills": [
+    { "slot": 1, "unlockLevel": 10, "name": string },
+    { "slot": 2, "unlockLevel": 25, "name": string },
+    { "slot": 3, "unlockLevel": 50, "name": string },
+    { "slot": 4, "unlockLevel": 75, "name": string },
+    { "slot": 5, "unlockLevel": 100, "name": string }
+  ]
+}
+Output strictly valid JSON.`;
+
+              const geminiRes = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+                {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    contents: [
+                      {
+                        parts: [
+                          { text: systemPrompt },
+                          {
+                            inline_data: {
+                              mime_type: mimeType,
+                              data: cleanBase64
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    generationConfig: {
+                      temperature: 0.1,
+                      responseMimeType: 'application/json'
+                    }
+                  })
+                }
+              );
+
+              if (!geminiRes.ok) {
+                const err = await geminiRes.json().catch(() => ({}));
+                res.statusCode = geminiRes.status;
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ error: err.error?.message || 'Error de Google AI Studio' }));
+                return;
+              }
+
+              const data = await geminiRes.json();
+              const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+              const resultJson = JSON.parse(text || '{}');
+
+              res.statusCode = 200;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ success: true, data: resultJson }));
+            } catch (e: any) {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: e.message || 'Error del servidor local' }));
+            }
+          });
+          return;
+        }
+        next();
+      });
+    }
+  };
+}
+
 export default defineConfig({
   envPrefix: ['VITE_', 'SUPABASE_'],
   plugins: [
     react(),
+    ocrServerMiddleware(),
     VitePWA({
       registerType: 'prompt',
       includeAssets: ['favicon.ico', 'favicon.svg', 'apple-touch-icon.png'],
