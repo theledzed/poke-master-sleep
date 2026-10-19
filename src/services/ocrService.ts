@@ -362,42 +362,93 @@ Expected JSON Schema:
 Ensure accurate reading of ingredient counts (e.g. x1, x2, x4) and subskill tier names.
 Output strictly valid JSON.`;
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [
-        {
-          parts: [
-            { text: systemPrompt },
-            {
-              inline_data: {
-                mime_type: 'image/jpeg',
-                data: cleanBase64
-              }
-            }
-          ]
+  async function getAvailableModels(key: string): Promise<string[]> {
+    try {
+      const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+      if (listRes.ok) {
+        const listData = await listRes.json();
+        if (Array.isArray(listData.models)) {
+          const supported = listData.models
+            .filter((m: any) => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
+            .map((m: any) => m.name.replace(/^models\//, ''));
+
+          const score = (name: string) => {
+            const lower = name.toLowerCase();
+            if (lower.includes('2.5-flash')) return 100;
+            if (lower.includes('2.0-flash')) return 90;
+            if (lower.includes('1.5-flash')) return 80;
+            if (lower.includes('flash')) return 70;
+            if (lower.includes('2.5-pro')) return 60;
+            if (lower.includes('2.0-pro')) return 50;
+            if (lower.includes('1.5-pro')) return 40;
+            return 10;
+          };
+
+          const sorted = supported.sort((a: string, b: string) => score(b) - score(a));
+          if (sorted.length > 0) return sorted;
         }
-      ],
-      generationConfig: {
-        temperature: 0.1,
-        responseMimeType: 'application/json'
       }
-    })
-  });
+    } catch (e) {}
 
-  if (!response.ok) {
-    const errData = await response.json().catch(() => ({}));
-    throw new Error(errData.error?.message || `Error de Google AI Studio: HTTP ${response.status}`);
+    return [
+      'gemini-2.5-flash',
+      'gemini-2.0-flash',
+      'gemini-2.0-flash-exp',
+      'gemini-1.5-flash-latest',
+      'gemini-1.5-flash',
+      'gemini-1.5-pro'
+    ];
   }
 
-  const data = await response.json();
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) {
-    throw new Error('La IA no devolvió ningún resultado para la imagen.');
+  const candidateModels = await getAvailableModels(apiKey);
+  let lastError: any = null;
+
+  for (const model of candidateModels) {
+    const cleanModel = model.replace(/^models\//, '');
+    for (const apiVer of ['v1beta', 'v1']) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/${apiVer}/models/${cleanModel}:generateContent?key=${apiKey}`;
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  { text: systemPrompt },
+                  {
+                    inline_data: {
+                      mime_type: 'image/jpeg',
+                      data: cleanBase64
+                    }
+                  }
+                ]
+              }
+            ],
+            generationConfig: {
+              temperature: 0.1,
+              responseMimeType: 'application/json'
+            }
+          })
+        });
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.error?.message || `HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) {
+          const cleanText = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+          const parsed = JSON.parse(cleanText);
+          return normalizeOcrPokemonData(parsed);
+        }
+      } catch (err: any) {
+        lastError = err;
+      }
+    }
   }
 
-  const parsed = JSON.parse(text);
-  return normalizeOcrPokemonData(parsed);
+  throw new Error(`Error de Google AI Studio: ${lastError?.message || 'No se pudo generar respuesta'}`);
 }

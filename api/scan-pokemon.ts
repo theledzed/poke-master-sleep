@@ -73,52 +73,117 @@ Expected JSON Schema:
 Ensure accurate reading of ingredient counts (e.g. x1, x2, x4) and subskill tier names.
 Output strictly valid JSON.`;
 
-    // Try Gemini 2.0 Flash first, fallback to Gemini 1.5 Flash
-    const models = ['gemini-2.0-flash', 'gemini-1.5-flash'];
+    // Helper to query available models for this specific API key
+    async function getAvailableModels(key: string): Promise<string[]> {
+      try {
+        const listRes = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models?key=${key}`
+        );
+        if (listRes.ok) {
+          const listData = await listRes.json();
+          if (Array.isArray(listData.models)) {
+            const supported = listData.models
+              .filter(
+                (m: any) =>
+                  Array.isArray(m.supportedGenerationMethods) &&
+                  m.supportedGenerationMethods.includes('generateContent')
+              )
+              .map((m: any) => m.name.replace(/^models\//, ''));
+
+            const score = (name: string) => {
+              const lower = name.toLowerCase();
+              if (lower.includes('2.5-flash')) return 100;
+              if (lower.includes('2.0-flash')) return 90;
+              if (lower.includes('1.5-flash')) return 80;
+              if (lower.includes('flash')) return 70;
+              if (lower.includes('2.5-pro')) return 60;
+              if (lower.includes('2.0-pro')) return 50;
+              if (lower.includes('1.5-pro')) return 40;
+              if (lower.includes('pro')) return 30;
+              return 10;
+            };
+
+            const sorted = supported.sort((a: string, b: string) => score(b) - score(a));
+            if (sorted.length > 0) return sorted;
+          }
+        }
+      } catch (e: any) {
+        console.warn('Failed to query ListModels, falling back to static list:', e.message);
+      }
+
+      return [
+        'gemini-2.5-flash',
+        'gemini-2.0-flash',
+        'gemini-2.0-flash-exp',
+        'gemini-1.5-flash-latest',
+        'gemini-1.5-flash',
+        'gemini-1.5-pro'
+      ];
+    }
+
+    const candidateModels = await getAvailableModels(apiKey);
+    console.log('Available models for OCR:', candidateModels.slice(0, 5));
+
     let lastError: any = null;
     let resultJson = null;
 
-    for (const model of models) {
-      try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  { text: systemPrompt },
-                  {
-                    inline_data: {
-                      mime_type: mimeType,
-                      data: cleanBase64
+    // Try candidate models across v1beta and v1
+    for (const model of candidateModels) {
+      const cleanModel = model.replace(/^models\//, '');
+      let modelSucceeded = false;
+
+      for (const apiVer of ['v1beta', 'v1']) {
+        try {
+          const url = `https://generativelanguage.googleapis.com/${apiVer}/models/${cleanModel}:generateContent?key=${apiKey}`;
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [
+                    { text: systemPrompt },
+                    {
+                      inline_data: {
+                        mime_type: mimeType,
+                        data: cleanBase64
+                      }
                     }
-                  }
-                ]
+                  ]
+                }
+              ],
+              generationConfig: {
+                temperature: 0.1,
+                responseMimeType: 'application/json'
               }
-            ],
-            generationConfig: {
-              temperature: 0.1,
-              responseMimeType: 'application/json'
-            }
-          })
-        });
+            })
+          });
 
-        if (!response.ok) {
-          const errData = await response.json().catch(() => ({}));
-          throw new Error(errData.error?.message || `HTTP ${response.status}`);
-        }
+          if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.error?.message || `HTTP ${response.status}`);
+          }
 
-        const data = await response.json();
-        const candidate = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (candidate) {
-          resultJson = JSON.parse(candidate);
-          break;
+          const data = await response.json();
+          const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (candidateText) {
+            // Strip any code fences if present
+            const cleanText = candidateText
+              .replace(/```json/gi, '')
+              .replace(/```/g, '')
+              .trim();
+            resultJson = JSON.parse(cleanText);
+            modelSucceeded = true;
+            break;
+          }
+        } catch (err: any) {
+          lastError = err;
+          // Continue to next api version or model
         }
-      } catch (err: any) {
-        lastError = err;
-        console.warn(`Model ${model} failed, trying next...`, err.message);
+      }
+
+      if (modelSucceeded) {
+        break;
       }
     }
 
