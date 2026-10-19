@@ -118,18 +118,19 @@ export const PokedexView: React.FC<PokedexViewProps> = ({
 
         <div className="flex flex-wrap items-center gap-2.5">
           {/* View mode segmented toggle: Fichas vs Auditoria */}
-          <div className="relative flex items-center bg-white/[0.08] p-1 rounded-full border border-white/10 shadow-inner">
+          <div className="relative inline-flex items-center bg-white/[0.08] p-1 rounded-full border border-white/10 shadow-inner">
             {/* Sliding Pill Indicator */}
             <div
-              className="absolute top-1 bottom-1 rounded-full btn-dreamy-pearl shadow-md pointer-events-none sliding-pill-spring"
+              className="absolute top-1 bottom-1 rounded-full bg-white shadow-md shadow-white/20 pointer-events-none sliding-pill-spring"
               style={{
                 width: 'calc(50% - 4px)',
                 left: activeViewMode === 'cards' ? '4px' : 'calc(50%)',
               }}
             />
             <button
+              type="button"
               onClick={() => handleViewModeToggle('cards')}
-              className={`relative z-10 px-3.5 py-1.5 rounded-full text-xs font-display font-bold transition-colors duration-200 flex items-center gap-1.5 select-none ${
+              className={`relative z-10 flex-1 px-3.5 py-1.5 rounded-full text-xs font-display font-bold whitespace-nowrap transition-colors duration-200 flex items-center justify-center gap-1.5 select-none outline-none focus:outline-none ${
                 activeViewMode === 'cards'
                   ? 'text-indigo-950 font-black'
                   : 'text-slate-300 hover:text-white'
@@ -138,8 +139,9 @@ export const PokedexView: React.FC<PokedexViewProps> = ({
               <span>📋 Fichas</span>
             </button>
             <button
+              type="button"
               onClick={() => handleViewModeToggle('audit')}
-              className={`relative z-10 px-3.5 py-1.5 rounded-full text-xs font-display font-bold transition-colors duration-200 flex items-center gap-1.5 select-none ${
+              className={`relative z-10 flex-1 px-3.5 py-1.5 rounded-full text-xs font-display font-bold whitespace-nowrap transition-colors duration-200 flex items-center justify-center gap-1.5 select-none outline-none focus:outline-none ${
                 activeViewMode === 'audit'
                   ? 'text-indigo-950 font-black'
                   : 'text-slate-300 hover:text-white'

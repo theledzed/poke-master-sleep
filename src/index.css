@@ -97,6 +97,19 @@
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
+
+  button {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button:focus {
+    outline: none;
+  }
+
+  button:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.4);
+    outline-offset: 2px;
+  }
 }
 
 /* ==========================================================================
@@ -356,6 +369,8 @@
 }
 
 .sliding-pill-spring {
+  position: absolute !important;
+  pointer-events: none;
   transition: transform 320ms cubic-bezier(0.34, 1.4, 0.64, 1),
               width 320ms cubic-bezier(0.34, 1.4, 0.64, 1),
               left 320ms cubic-bezier(0.34, 1.4, 0.64, 1);

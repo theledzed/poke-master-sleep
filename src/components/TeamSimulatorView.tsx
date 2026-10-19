@@ -367,18 +367,19 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
 
         {/* Team Tabs & Action Buttons */}
         <div className="mt-5 pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
-          <div className="relative flex items-center bg-white/[0.08] backdrop-blur-2xl p-1 rounded-full border border-white/10 shadow-inner">
+          <div className="relative inline-flex items-center bg-white/[0.08] backdrop-blur-2xl p-1 rounded-full border border-white/10 shadow-inner">
             {/* Sliding Pill Indicator */}
             <div
-              className="absolute top-1 bottom-1 rounded-full btn-dreamy-pearl shadow-md pointer-events-none sliding-pill-spring"
+              className="absolute top-1 bottom-1 rounded-full bg-white shadow-md shadow-white/20 pointer-events-none sliding-pill-spring"
               style={{
                 width: 'calc(50% - 4px)',
                 left: activeCustomTeamIndex === 0 ? '4px' : 'calc(50%)',
               }}
             />
             <button
+              type="button"
               onClick={() => setActiveCustomTeamIndex(0)}
-              className={`relative z-10 px-4 py-1.5 rounded-full text-xs font-bold transition-colors duration-200 flex items-center gap-2 select-none ${
+              className={`relative z-10 flex-1 px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors duration-200 flex items-center justify-center gap-2 select-none outline-none focus:outline-none ${
                 activeCustomTeamIndex === 0
                   ? 'text-indigo-950 font-black'
                   : 'text-slate-300 hover:text-white'
@@ -392,8 +393,9 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
               </span>
             </button>
             <button
+              type="button"
               onClick={() => setActiveCustomTeamIndex(1)}
-              className={`relative z-10 px-4 py-1.5 rounded-full text-xs font-bold transition-colors duration-200 flex items-center gap-2 select-none ${
+              className={`relative z-10 flex-1 px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors duration-200 flex items-center justify-center gap-2 select-none outline-none focus:outline-none ${
                 activeCustomTeamIndex === 1
                   ? 'text-indigo-950 font-black'
                   : 'text-slate-300 hover:text-white'

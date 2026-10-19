@@ -127,7 +127,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <nav className="hidden lg:flex items-center gap-1.5 bg-white/[0.06] backdrop-blur-2xl p-1.5 rounded-full border border-white/10 shadow-inner relative">
               {desktopPillStyle.ready && (
                 <div
-                  className="absolute top-1.5 bottom-1.5 rounded-full btn-dreamy-pearl shadow-lg pointer-events-none sliding-pill-spring"
+                  className="absolute top-1.5 bottom-1.5 rounded-full bg-white shadow-lg shadow-white/20 pointer-events-none sliding-pill-spring"
                   style={{
                     left: `${desktopPillStyle.left}px`,
                     width: `${desktopPillStyle.width}px`,
@@ -142,7 +142,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     key={tab.id}
                     ref={(el) => { desktopTabsRef.current[idx] = el; }}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`relative z-10 flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-display font-bold transition-colors duration-200 ${
+                    className={`relative z-10 flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-display font-bold whitespace-nowrap select-none outline-none focus:outline-none transition-colors duration-200 ${
                       isActive
                         ? 'text-indigo-950 font-black'
                         : 'text-slate-300 hover:text-white hover:bg-white/5'
