@@ -110,8 +110,11 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
   const [level, setLevel] = useState<number | string>(25);
   const [rp, setRp] = useState<number | string>(1000);
   const [frequencyStr, setFrequencyStr] = useState('45 min 0s');
+  const [carryLimit, setCarryLimit] = useState<number | string>('');
   const [specialty, setSpecialty] = useState<Specialty>('Bayas');
   const [berry, setBerry] = useState<string>('Baya Caquic');
+  const [isBerryDropdownOpen, setIsBerryDropdownOpen] = useState(false);
+  const berryDropdownRef = useRef<HTMLDivElement>(null);
   const [natureName, setNatureName] = useState<string>('Dócil');
   const [mainSkillName, setMainSkillName] = useState<string>('Carga vigor S');
   const [mainSkillLevel, setMainSkillLevel] = useState<number>(1);
@@ -162,6 +165,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
       frequencySeconds: parsedFreq > 0 ? parsedFreq : (matchedMaster?.baseFrequency || 3600),
       level: numLevel,
       rp: numRp,
+      carryLimit: typeof carryLimit === 'number' ? carryLimit : parseInt(String(carryLimit), 10) || matchedMaster?.carryLimit || 16,
       specialty,
       nature: natureName,
       natureObj,
@@ -187,6 +191,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
     pokemonToEdit,
     name,
     frequencyStr,
+    carryLimit,
     level,
     rp,
     specialty,
@@ -213,6 +218,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
     setMainSkillName(evolved.mainSkillName || '');
     setMainSkillLevel(evolved.mainSkillLevel || 1);
     setRp(evolved.rp);
+    if (evolved.carryLimit) setCarryLimit(evolved.carryLimit);
     if (evolved.notes) setNotes(evolved.notes);
     setIsEvolutionModalOpen(false);
   };
@@ -227,6 +233,12 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
       ) {
         setShowSuggestions(false);
       }
+      if (
+        berryDropdownRef.current &&
+        !berryDropdownRef.current.contains(e.target as Node)
+      ) {
+        setIsBerryDropdownOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -238,6 +250,9 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
     setLevel(data.level);
     setRp(data.rp);
     setFrequencyStr(data.frequencyStr);
+    if (data.carryLimit !== undefined && data.carryLimit > 0) {
+      setCarryLimit(data.carryLimit);
+    }
     setSpecialty(data.specialty);
     setBerry(data.berry);
     setNatureName(data.natureName);
@@ -261,6 +276,8 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
       setLevel(pokemonToEdit.level);
       setRp(pokemonToEdit.rp);
       setFrequencyStr(pokemonToEdit.frequencyStr);
+      const masterInfo = getSpeciesMasterData(pokemonToEdit.name);
+      setCarryLimit(pokemonToEdit.carryLimit !== undefined ? pokemonToEdit.carryLimit : (masterInfo?.carryLimit ?? ''));
       setSpecialty(pokemonToEdit.specialty);
       setBerry(pokemonToEdit.berry);
       const canonicalSkill = getPokemonCanonicalSkill(pokemonToEdit.name);
@@ -308,6 +325,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
       setLevel(15);
       setRp(750);
       setFrequencyStr('45 min 0s');
+      setCarryLimit('');
       setSpecialty('Bayas');
       setBerry('Baya Caquic');
       setNatureName('Dócil');
@@ -331,6 +349,9 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
     setSpecialty(entry.specialty);
     setBerry(entry.berry);
     setMainSkillName(entry.mainSkill);
+    if (entry.carryLimit) {
+      setCarryLimit(entry.carryLimit);
+    }
 
     const numLvl = typeof level === 'number' ? level : parseInt(String(level), 10) || 25;
     const autoFreq = calculateDynamicFrequency(entry.baseFrequency, numLvl, natureName);
@@ -370,6 +391,9 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
         setSpecialty(match.specialty);
         setBerry(match.berry);
         setMainSkillName(match.mainSkill);
+        if (match.carryLimit) {
+          setCarryLimit(match.carryLimit);
+        }
         const numLvl = typeof level === 'number' ? level : parseInt(String(level), 10) || 25;
         setFrequencyStr(calculateDynamicFrequency(match.baseFrequency, numLvl, natureName));
         if (match.ingredientSlots) {
@@ -418,6 +442,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
 
     const finalLevel = typeof level === 'number' ? level : parseInt(String(level), 10) || 1;
     const finalRp = typeof rp === 'number' ? rp : parseInt(String(rp), 10) || 0;
+    const finalCarryLimit = typeof carryLimit === 'number' ? carryLimit : (parseInt(String(carryLimit), 10) || undefined);
     const finalIng1Count = typeof ing1Count === 'number' ? ing1Count : parseInt(String(ing1Count), 10) || 1;
     const finalIng2Count = typeof ing2Count === 'number' ? ing2Count : parseInt(String(ing2Count), 10) || 2;
     const finalIng3Count = typeof ing3Count === 'number' ? ing3Count : parseInt(String(ing3Count), 10) || 3;
@@ -472,6 +497,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
       frequencySeconds,
       level: finalLevel,
       rp: finalRp,
+      carryLimit: finalCarryLimit,
       specialty,
       nature: natureName,
       natureObj,
@@ -498,14 +524,14 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
   const slot3Cand = masterSlots?.slot3;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xl overflow-y-auto">
-      <div className="glass-dreamy rounded-[32px] border border-white/15 w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl relative my-auto overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-white/10 bg-white/[0.04] backdrop-blur-md relative z-10">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-xl overflow-y-auto">
+      <div className="glass-dreamy rounded-[32px] border border-white/15 w-full max-w-2xl max-h-[92vh] flex flex-col shadow-2xl relative my-auto overflow-hidden animate-fade-in">
+        {/* Header - Pinned */}
+        <div className="flex-shrink-0 flex items-center justify-between p-4 sm:p-5 border-b border-white/10 bg-white/[0.04] backdrop-blur-md relative z-10">
           <div className="flex items-center gap-2.5">
             <span className="text-2xl">{isEditing ? '✏️' : '✨'}</span>
             <div>
-              <h3 className="text-lg font-display font-bold text-white tracking-tight">
+              <h3 className="text-base sm:text-lg font-display font-bold text-white tracking-tight">
                 {isEditing ? `Editar a ${pokemonToEdit?.name}` : 'Dar de Alta Nuevo Pokémon'}
               </h3>
               <p className="text-xs text-slate-300">
@@ -535,25 +561,26 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
           </div>
         </div>
 
-        {/* Autofilled Success Banner */}
-        {wasAutoFilled && (
-          <div className="mx-5 mt-4 p-3 rounded-2xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-between text-xs text-emerald-200 animate-fade-in relative z-10 shadow-sm">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-              <span>¡Ficha autollenada con éxito desde tu captura con IA! Revisa los datos y guarda.</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setWasAutoFilled(false)}
-              className="text-emerald-400 hover:text-white ml-2 p-1 rounded-full hover:bg-white/10"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        )}
-
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-5 space-y-4 overflow-y-auto">
+        {/* Form Container - Flex column holding scrollable body + pinned footer */}
+        <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+          {/* Scrollable Form Body */}
+          <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-4 custom-scrollbar">
+            {/* Autofilled Success Banner */}
+            {wasAutoFilled && (
+              <div className="p-3 rounded-2xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-between text-xs text-emerald-200 animate-fade-in relative z-10 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  <span>¡Ficha autollenada con éxito desde tu captura con IA! Revisa los datos y guarda.</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setWasAutoFilled(false)}
+                  className="text-emerald-400 hover:text-white ml-2 p-1 rounded-full hover:bg-white/10"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
           {/* Live Pokemon Preview & Shiny Switch */}
           <div className="flex items-center gap-3.5 p-3.5 bg-white/[0.05] rounded-2xl border border-white/10 shadow-inner">
             <div className={`w-16 h-16 rounded-2xl p-1 flex items-center justify-center relative flex-shrink-0 shadow-inner overflow-hidden transition-all ${
@@ -813,8 +840,8 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
             </div>
           </div>
 
-          {/* Fila 2: Especialidad, Baya, Frecuencia */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Fila 2: Especialidad, Baya, Frecuencia, Capacidad de la Bolsa */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1">Especialidad</label>
               <select
@@ -828,30 +855,80 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                 <option value="Todo" className="bg-slate-900 text-white">Todo (Bayas + Ingr + Habilidades)</option>
               </select>
             </div>
-            <div>
+
+            {/* Custom Interactive Berry Picker with Real PNG Sprites */}
+            <div className="relative" ref={berryDropdownRef}>
               <label className="block text-xs font-semibold text-slate-300 mb-1">Baya</label>
-              <div className="flex items-center gap-1.5">
-                <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center p-1 flex-shrink-0">
-                  <img
-                    src={getBerrySpriteUrl(berry)}
-                    alt={berry}
-                    className="w-full h-full object-contain"
-                    onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
-                  />
+              <button
+                type="button"
+                onClick={() => setIsBerryDropdownOpen(prev => !prev)}
+                className="w-full px-2.5 py-1.5 bg-white/[0.06] hover:bg-white/[0.10] border border-white/10 focus:border-white/30 rounded-xl text-xs text-slate-100 flex items-center justify-between gap-1.5 transition-all group"
+                title="Elegir baya oficial con sprite"
+              >
+                <div className="flex items-center gap-2 truncate">
+                  <div className="w-7 h-7 rounded-lg bg-black/20 border border-white/10 flex items-center justify-center p-0.5 flex-shrink-0">
+                    <img
+                      src={getBerrySpriteUrl(berry)}
+                      alt={berry}
+                      className="w-5 h-5 object-contain filter drop-shadow-sm"
+                    />
+                  </div>
+                  <div className="text-left truncate">
+                    <span className="font-bold text-white text-xs block truncate leading-tight">{berry.replace('Baya ', '')}</span>
+                    <span className="text-[10px] text-slate-400 font-medium">{BERRIES[berry]?.type || 'Normal'}</span>
+                  </div>
                 </div>
-                <select
-                  value={berry}
-                  onChange={(e) => setBerry(e.target.value)}
-                  className="w-full px-3 py-2 bg-white/[0.06] hover:bg-white/[0.09] focus:bg-white/[0.12] border border-white/10 focus:border-white/30 rounded-xl text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-white/30 font-medium transition-all"
-                >
-                  {CANONICAL_BERRIES.map(b => (
-                    <option key={b} value={b} className="bg-slate-900 text-white">
-                      {BERRIES[b]?.icon || '🍒'} {b} ({BERRIES[b]?.type})
-                    </option>
-                  ))}
-                </select>
-              </div>
+                <ChevronDown className={`w-3.5 h-3.5 text-slate-400 group-hover:text-white transition-transform flex-shrink-0 ${isBerryDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isBerryDropdownOpen && (
+                <div className="absolute left-0 right-0 sm:w-72 top-full mt-1.5 bg-[#0e1628]/98 border border-white/20 rounded-2xl shadow-2xl z-50 p-2 max-h-64 overflow-y-auto overscroll-contain divide-y divide-white/5 backdrop-blur-2xl animate-fade-in custom-scrollbar">
+                  <div className="p-1.5 text-[10px] font-bold uppercase tracking-wider text-purple-300 flex items-center justify-between">
+                    <span>18 Bayas Oficiales</span>
+                    <span className="text-[9px] text-slate-400 font-normal">Click para elegir</span>
+                  </div>
+                  <div className="pt-1 space-y-1">
+                    {CANONICAL_BERRIES.map(b => {
+                      const meta = BERRIES[b];
+                      const isSelected = berry === b;
+                      return (
+                        <button
+                          key={b}
+                          type="button"
+                          onClick={() => {
+                            setBerry(b);
+                            setIsBerryDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-2 py-1.5 rounded-xl flex items-center justify-between gap-2 transition-all ${
+                            isSelected
+                              ? 'bg-purple-500/25 border border-purple-400/40 text-white font-bold'
+                              : 'hover:bg-white/10 text-slate-200'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 truncate">
+                            <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center p-0.5 flex-shrink-0">
+                              <img
+                                src={getBerrySpriteUrl(b)}
+                                alt={b}
+                                className="w-5 h-5 object-contain"
+                              />
+                            </div>
+                            <div className="truncate">
+                              <span className="text-xs font-bold block truncate">{b}</span>
+                              <span className="text-[10px] text-slate-400 font-medium">Tipo {meta?.type || 'Normal'}</span>
+                            </div>
+                          </div>
+                          <span className="text-[10px] tabular-nums font-bold text-slate-400 bg-white/5 px-2 py-0.5 rounded-full flex-shrink-0">
+                            {meta?.baseVigor || 25} pts
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
+
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center justify-between">
                 <span>Frecuencia</span>
@@ -862,17 +939,57 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                     className="text-[10px] text-purple-300 hover:text-purple-200 flex items-center gap-1 font-semibold hover:underline"
                     title="Recalcular automáticamente frecuencia según nivel y naturaleza"
                   >
-                    <RefreshCw className="w-3 h-3" /> Auto-calc
+                    <RefreshCw className="w-3 h-3" /> Auto
                   </button>
                 )}
               </label>
               <input
                 type="text"
-                placeholder="ej. 35 min 12s o 1h 5min"
+                placeholder="ej. 35 min 12s"
                 value={frequencyStr}
                 onChange={(e) => setFrequencyStr(e.target.value)}
                 className="w-full px-3 py-2 bg-white/[0.06] hover:bg-white/[0.09] focus:bg-white/[0.12] border border-white/10 focus:border-white/30 rounded-xl text-xs text-white focus:outline-none focus:ring-1 focus:ring-white/30 tabular-nums font-bold transition-all"
               />
+            </div>
+
+            {/* Capacidad de la Bolsa (carryLimit) */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center justify-between">
+                <span>Capacidad Bolsa</span>
+                {matchedMaster && (
+                  <button
+                    type="button"
+                    onClick={() => setCarryLimit(matchedMaster.carryLimit)}
+                    className="text-[10px] text-sky-300 hover:text-sky-200 font-semibold hover:underline"
+                    title={`Restablecer a base oficial (${matchedMaster.carryLimit})`}
+                  >
+                    Base: {matchedMaster.carryLimit}
+                  </button>
+                )}
+              </label>
+              <div className="relative">
+                <input
+                  type="number"
+                  min="1"
+                  max="99"
+                  placeholder={matchedMaster ? String(matchedMaster.carryLimit) : 'ej. 24'}
+                  value={carryLimit}
+                  onFocus={(e) => e.target.select()}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '') {
+                      setCarryLimit('');
+                    } else {
+                      const parsed = parseInt(val, 10);
+                      setCarryLimit(isNaN(parsed) ? '' : Math.max(1, Math.min(99, parsed)));
+                    }
+                  }}
+                  className="w-full pl-3 pr-11 py-2 bg-white/[0.06] hover:bg-white/[0.09] focus:bg-white/[0.12] border border-white/10 focus:border-white/30 rounded-xl text-xs text-white focus:outline-none focus:ring-1 focus:ring-white/30 tabular-nums font-bold transition-all"
+                />
+                <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 pointer-events-none">
+                  slots
+                </span>
+              </div>
             </div>
           </div>
 
@@ -1325,8 +1442,10 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
             />
           </div>
 
-          {/* Buttons (Pokemon GO Action Pills) */}
-          <div className="flex items-center justify-between pt-4 border-t border-white/10">
+          </div>
+
+          {/* Sticky/Pinned Action Buttons Footer */}
+          <div className="flex-shrink-0 flex items-center justify-between p-4 border-t border-white/10 bg-[#0d1326]/95 backdrop-blur-xl relative z-20">
             {isEditing && onDelete && pokemonToEdit ? (
               <button
                 type="button"

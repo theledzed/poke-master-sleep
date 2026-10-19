@@ -17,9 +17,34 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Synchronous zero-latency atmospheric theme initializer (0ms before first paint) -->
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem('sleep_master_weather_v1');
+          var isAuto = localStorage.getItem('sleep_master_weather_auto_v1') !== 'false';
+          var theme = saved;
+          if (!theme || isAuto) {
+            var h = new Date().getHours();
+            theme = (h >= 6 && h < 12) ? 'morning' : (h >= 12 && h < 19) ? 'afternoon' : 'night';
+          }
+          document.documentElement.setAttribute('data-theme-weather', theme);
+          var bgColors = {
+            morning: '#0F3A5D',
+            afternoon: '#1B1032',
+            night: '#0A0D1E',
+            rain: '#0A0D1E'
+          };
+          var metaTheme = document.querySelector('meta[name="theme-color"]');
+          if (metaTheme && bgColors[theme]) {
+            metaTheme.setAttribute('content', bgColors[theme]);
+          }
+        } catch (e) {}
+      })();
+    </script>
     <title>Pokémon Sleep Master - Optimizador de Equipos</title>
   </head>
-  <body class="bg-sleep-bg text-slate-100 min-h-screen antialiased selection:bg-indigo-500 selection:text-white">
+  <body class="text-slate-100 min-h-screen antialiased selection:bg-indigo-500 selection:text-white" style="background-color: var(--bg-app-top);">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

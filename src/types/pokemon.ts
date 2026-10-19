@@ -47,6 +47,7 @@ export interface Pokemon {
   notes?: string;
   mainSkillName?: string;
   mainSkillLevel?: number;
+  carryLimit?: number;
 }
 
 export interface Recipe {

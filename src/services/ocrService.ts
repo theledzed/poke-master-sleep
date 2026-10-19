@@ -11,6 +11,7 @@ export interface RawOcrData {
   nature?: string;
   mainSkillName?: string;
   mainSkillLevel?: number;
+  carryLimit?: number;
   ingredients?: Array<{
     slot: number;
     unlockLevel?: number;
@@ -34,6 +35,7 @@ export interface PreFilledPokemonData {
   natureName: string;
   mainSkillName: string;
   mainSkillLevel: number;
+  carryLimit?: number;
   frequencyStr: string;
   ing1Name: string;
   ing1Count: number;
@@ -199,7 +201,27 @@ export function normalizeOcrPokemonData(raw: RawOcrData): PreFilledPokemonData {
   const baseFreq = matchedMaster ? matchedMaster.baseFrequency : 3600;
   const frequencyStr = calculateDynamicFrequency(baseFreq, level, natureName);
 
-  // 7. Ingredients
+  // 7. Candado Canónico de Ingredientes contra alucinaciones visuales de iconos OCR
+  const legalIngredients = matchedMaster?.ingredients || [];
+
+  function snapToLegalIngredient(candidate: string, slotIdx: 1 | 2 | 3): string {
+    if (legalIngredients.length === 0) return candidate || 'Manzana Selecta';
+    if (legalIngredients.includes(candidate)) return candidate;
+
+    // Fuzzy substring match against species' official 3 legal ingredients
+    const cleanCand = candidate.toLowerCase();
+    for (const legal of legalIngredients) {
+      if (cleanCand.includes(legal.toLowerCase()) || legal.toLowerCase().includes(cleanCand)) {
+        return legal;
+      }
+    }
+
+    // Default to species slot canonical ingredient if OCR misidentified icon
+    if (slotIdx === 1) return matchedMaster?.ingredientSlots?.slot1?.name || legalIngredients[0];
+    if (slotIdx === 2) return matchedMaster?.ingredientSlots?.slot2?.name || legalIngredients[1] || legalIngredients[0];
+    return matchedMaster?.ingredientSlots?.slot3?.name || legalIngredients[2] || legalIngredients[0];
+  }
+
   let ing1Name = matchedMaster?.ingredientSlots?.slot1?.name || 'Manzana Selecta';
   let ing1Count = matchedMaster?.ingredientSlots?.slot1?.c1 || 1;
 
@@ -213,17 +235,22 @@ export function normalizeOcrPokemonData(raw: RawOcrData): PreFilledPokemonData {
     for (const item of raw.ingredients) {
       const canonicalIng = normalizeIngredientName(item.name || '');
       if (item.slot === 1 || item.unlockLevel === 1) {
-        if (canonicalIng) ing1Name = canonicalIng;
+        if (canonicalIng) ing1Name = snapToLegalIngredient(canonicalIng, 1);
         if (item.count > 0) ing1Count = item.count;
       } else if (item.slot === 2 || item.unlockLevel === 30) {
-        if (canonicalIng) ing2Name = canonicalIng;
+        if (canonicalIng) ing2Name = snapToLegalIngredient(canonicalIng, 2);
         if (item.count > 0) ing2Count = item.count;
       } else if (item.slot === 3 || item.unlockLevel === 60) {
-        if (canonicalIng) ing3Name = canonicalIng;
+        if (canonicalIng) ing3Name = snapToLegalIngredient(canonicalIng, 3);
         if (item.count > 0) ing3Count = item.count;
       }
     }
   }
+
+  // Double check all 3 ingredients are legal for this species
+  ing1Name = snapToLegalIngredient(ing1Name, 1);
+  ing2Name = snapToLegalIngredient(ing2Name, 2);
+  ing3Name = snapToLegalIngredient(ing3Name, 3);
 
   // 8. Subskills (5 slots)
   const subskillsList: string[] = ['', '', '', '', ''];
@@ -242,6 +269,19 @@ export function normalizeOcrPokemonData(raw: RawOcrData): PreFilledPokemonData {
     });
   }
 
+  // 9. Capacidad de la bolsa (Inventario)
+  let carryLimit = typeof raw.carryLimit === 'number' && raw.carryLimit > 0 ? raw.carryLimit : 0;
+  if (!carryLimit) {
+    const baseCarry = matchedMaster ? matchedMaster.carryLimit : 15;
+    let extraCarry = 0;
+    subskillsList.forEach((sub) => {
+      if (sub === 'Inventario S') extraCarry += 6;
+      if (sub === 'Inventario M') extraCarry += 12;
+      if (sub === 'Inventario L') extraCarry += 18;
+    });
+    carryLimit = baseCarry + extraCarry;
+  }
+
   return {
     name: canonicalName,
     isShiny: Boolean(raw.isShiny),
@@ -252,6 +292,7 @@ export function normalizeOcrPokemonData(raw: RawOcrData): PreFilledPokemonData {
     natureName,
     mainSkillName,
     mainSkillLevel,
+    carryLimit,
     frequencyStr,
     ing1Name,
     ing1Count,
@@ -343,6 +384,9 @@ async function callGeminiDirectly(base64Input: string | string[], apiKey: string
   const systemPrompt = `You are an expert OCR vision AI specialized in extracting data from "Pokémon Sleep" mobile screenshots.
 You may be provided with 1 or 2 screenshots of the same Pokémon (e.g. top section with Level/RP/Nature and a second scrolled section showing all 5 Subskills and 3 Ingredient slots).
 Combine and synthesize all visible information across all provided screenshots to create a single complete JSON representation of the Pokémon.
+IMPORTANT RULES:
+- SCROLLED SCREENSHOTS: If the top header or Pokémon species name is scrolled off-screen or cut off, look lower down at the candy text (e.g. "Caramelos Gastly", "Caramelos Pikachu", "Pikachu Candy") to accurately determine the species name!
+- INGREDIENT ICONS: In Pokémon Sleep, ingredient slots show icons with quantities (e.g. x1, x2, x4). Carefully inspect the shapes and colors of the ingredient icons.
 
 Expected JSON Schema:
 {
@@ -353,6 +397,7 @@ Expected JSON Schema:
   "nature": string,            // nature name (e.g. "Audaz", "Huraña", "Firme", "Alegre", "Adamant", "Modest", etc.)
   "mainSkillName": string,     // main skill name if visible (e.g. "Afortunado", "Imán ingredientes S", "Carga vigor S")
   "mainSkillLevel": number,    // main skill level (integer 1-7, default 1)
+  "carryLimit": number,        // bag / inventory capacity if visible (integer, e.g. 19, 24, 30)
   "ingredients": [             // up to 3 ingredient slots:
     { "slot": 1, "unlockLevel": 1, "name": string, "count": number },
     { "slot": 2, "unlockLevel": 30, "name": string, "count": number },

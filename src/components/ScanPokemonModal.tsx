@@ -254,7 +254,7 @@ export const ScanPokemonModal: React.FC<ScanPokemonModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div className="py-4 space-y-4 overflow-y-auto flex-1 relative z-10 pr-0.5">
+        <div className="py-4 space-y-4 overflow-y-auto overscroll-contain flex-1 relative z-10 pr-0.5 custom-scrollbar">
           {/* Hidden native inputs */}
           <input
             ref={fileInputRef}

@@ -108,7 +108,7 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
         <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-purple-500/15 via-transparent to-transparent pointer-events-none" />
 
         {/* Modal Header */}
-        <div className="p-4 sm:p-5 border-b border-[var(--surface-border)] flex items-center justify-between relative z-10">
+        <div className="flex-shrink-0 p-4 sm:p-5 border-b border-[var(--surface-border)] flex items-center justify-between relative z-10">
           <div className="flex items-center gap-2.5">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-500 to-indigo-400 p-0.5 shadow-lg shadow-purple-500/25 flex items-center justify-center">
               <div className="w-full h-full bg-[var(--surface-inner)] rounded-[14px] flex items-center justify-center">
@@ -140,7 +140,7 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div className="p-4 sm:p-5 overflow-y-auto space-y-4 flex-1 relative z-10 custom-scrollbar">
+        <div className="p-4 sm:p-5 overflow-y-auto overscroll-contain space-y-4 flex-1 relative z-10 custom-scrollbar">
           {/* Branching Evolutions Selector (e.g. Eevee, Kirlia, Slowpoke) */}
           {availableEvolutions.length > 1 && (
             <div>
@@ -334,7 +334,7 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 sm:p-5 border-t border-[var(--surface-border)] bg-[var(--surface-inner)] flex items-center justify-between gap-3 relative z-10">
+        <div className="flex-shrink-0 p-4 sm:p-5 border-t border-[var(--surface-border)] bg-[var(--surface-inner)] flex items-center justify-between gap-3 relative z-10">
           <button
             type="button"
             onClick={onClose}

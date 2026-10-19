@@ -350,26 +350,32 @@ export function calculatePokemonProduction(
   if (hasBFS) berriesPerHelp += 1;
 
   // 7. Dynamic Inventory & Sneaky Snacking calculation
-  let baseInventory = master ? master.carryLimit : 15;
-  if (!master) {
-    if (['gengar', 'blastoise', 'charizard', 'venusaur', 'raichu', 'typhlosion', 'feraligatr', 'meganium', 'ampharos', 'tyranitar', 'walrein', 'gardevoir', 'gallade', 'magnezone', 'togekiss', 'dragonite', 'mew', 'mewtwo', 'raikou', 'entei', 'suicune'].some(s => cleanName.includes(s))) {
-      baseInventory = 22;
-    } else if (['haunter', 'espeon', 'flareon', 'vaporeon', 'jolteon', 'umbreon', 'leafeon', 'glaceon', 'sylveon', 'flaaffy', 'quilava', 'croconaw', 'bayleef', 'ivysaur', 'wartortle', 'charmeleon', 'graveler', 'dugtrio', 'sealeo', 'kirlia', 'pupitar', 'togetic', 'dragonair'].some(s => cleanName.includes(s))) {
-      baseInventory = 16;
-    } else if (pokemon.specialty === 'Ingredientes') {
-      baseInventory = 15;
+  let totalInventory: number;
+  if (typeof pokemon.carryLimit === 'number' && pokemon.carryLimit > 0) {
+    totalInventory = pokemon.carryLimit;
+  } else {
+    let baseInventory = master ? master.carryLimit : 15;
+    if (!master) {
+      if (['gengar', 'blastoise', 'charizard', 'venusaur', 'raichu', 'typhlosion', 'feraligatr', 'meganium', 'ampharos', 'tyranitar', 'walrein', 'gardevoir', 'gallade', 'magnezone', 'togekiss', 'dragonite', 'mew', 'mewtwo', 'raikou', 'entei', 'suicune'].some(s => cleanName.includes(s))) {
+        baseInventory = 22;
+      } else if (['haunter', 'espeon', 'flareon', 'vaporeon', 'jolteon', 'umbreon', 'leafeon', 'glaceon', 'sylveon', 'flaaffy', 'quilava', 'croconaw', 'bayleef', 'ivysaur', 'wartortle', 'charmeleon', 'graveler', 'dugtrio', 'sealeo', 'kirlia', 'pupitar', 'togetic', 'dragonair'].some(s => cleanName.includes(s))) {
+        baseInventory = 16;
+      } else if (pokemon.specialty === 'Ingredientes') {
+        baseInventory = 15;
+      }
     }
+
+    let extraInventory = 0;
+    for (const sub of pokemon.subskills) {
+      if (!sub.enabled) continue;
+      if (sub.name === 'Inventario S') extraInventory += 6;
+      if (sub.name === 'Inventario M') extraInventory += 12;
+      if (sub.name === 'Inventario L') extraInventory += 18;
+    }
+
+    totalInventory = baseInventory + extraInventory;
   }
 
-  let extraInventory = 0;
-  for (const sub of pokemon.subskills) {
-    if (!sub.enabled) continue;
-    if (sub.name === 'Inventario S') extraInventory += 6;
-    if (sub.name === 'Inventario M') extraInventory += 12;
-    if (sub.name === 'Inventario L') extraInventory += 18;
-  }
-
-  let totalInventory = baseInventory + extraInventory;
   if (config.goodCampTicket) {
     totalInventory = Math.round(totalInventory * 1.20);
   }

@@ -53,6 +53,9 @@ export default async function handler(req: any, res: any) {
     const systemPrompt = `You are an expert OCR vision AI specialized in extracting data from "Pokémon Sleep" mobile screenshots.
 You may be provided with 1 or 2 screenshots of the same Pokémon (e.g. top section with Level/RP/Nature and a second scrolled section showing all 5 Subskills and 3 Ingredient slots).
 Combine and synthesize all visible information across all provided screenshots to create a single complete JSON representation of the Pokémon.
+IMPORTANT RULES:
+- SCROLLED SCREENSHOTS: If the top header or Pokémon species name is scrolled off-screen or cut off, look lower down at the candy text (e.g. "Caramelos Gastly", "Caramelos Pikachu", "Pikachu Candy") to accurately determine the species name!
+- INGREDIENT ICONS: In Pokémon Sleep, ingredient slots show icons with quantities (e.g. x1, x2, x4). Carefully inspect the shapes and colors of the ingredient icons.
 
 Expected JSON Schema:
 {
@@ -63,6 +66,7 @@ Expected JSON Schema:
   "nature": string,            // nature name (e.g. "Audaz", "Huraña", "Firme", "Alegre", "Adamant", "Modest", etc.)
   "mainSkillName": string,     // main skill name if visible (e.g. "Afortunado", "Imán ingredientes S", "Carga vigor S")
   "mainSkillLevel": number,    // main skill level (integer 1-7, default 1)
+  "carryLimit": number,        // bag / inventory capacity if visible (integer, e.g. 19, 24, 30)
   "ingredients": [             // up to 3 ingredient slots:
     { "slot": 1, "unlockLevel": 1, "name": string, "count": number },
     { "slot": 2, "unlockLevel": 30, "name": string, "count": number },

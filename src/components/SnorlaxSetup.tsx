@@ -229,7 +229,7 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/75 backdrop-blur-xl overflow-y-auto">
           <div className="glass-dreamy rounded-[32px] border border-white/20 w-full max-w-xl max-h-[90vh] flex flex-col shadow-2xl relative my-auto overflow-hidden animate-dreamy-tab-enter">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-5 border-b border-white/10 bg-white/[0.04] backdrop-blur-md relative z-10">
+            <div className="flex-shrink-0 flex items-center justify-between p-5 border-b border-white/10 bg-white/[0.04] backdrop-blur-md relative z-10">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center text-xl flex-shrink-0 shadow-inner">
                   <span>⛺</span>
@@ -253,7 +253,7 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
             </div>
 
             {/* Stepper Progress Indicator */}
-            <div className="px-5 pt-4 pb-3 bg-white/[0.03] flex items-center justify-between relative z-10 border-b border-white/10">
+            <div className="flex-shrink-0 px-5 pt-4 pb-3 bg-white/[0.03] flex items-center justify-between relative z-10 border-b border-white/10">
               {[1, 2, 3, 4].map((s) => (
                 <div
                   key={s}
@@ -281,7 +281,7 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
             </div>
 
             {/* Stepper Body Content */}
-            <div className="p-5 space-y-4 relative z-10 overflow-y-auto flex-1 min-h-[220px]">
+            <div className="p-5 space-y-4 relative z-10 overflow-y-auto overscroll-contain flex-1 min-h-[220px] custom-scrollbar">
               {/* STEP 1: ISLA & BONUS */}
               {step === 1 && (
                 <div key={1} className="space-y-4 animate-dreamy-tab-enter">
@@ -432,7 +432,7 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 max-h-48 overflow-y-auto p-2 rounded-2xl bg-white/[0.04] border border-white/10">
+                      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 p-2 rounded-2xl bg-white/[0.04] border border-white/10">
                         {CANONICAL_BERRIES.map((b) => {
                           const meta = BERRIES[b];
                           const isCurrentSlotBerry = config.favoriteBerries[activeBerrySlot] === b;
@@ -522,8 +522,8 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
               )}
             </div>
 
-            {/* Stepper Footer Buttons */}
-            <div className="p-4 border-t border-white/10 bg-white/[0.03] flex items-center justify-between relative z-10">
+            {/* Stepper Footer Buttons - Pinned */}
+            <div className="flex-shrink-0 p-4 border-t border-white/10 bg-[#0d1326]/95 backdrop-blur-xl flex items-center justify-between relative z-10">
               <button
                 type="button"
                 onClick={() => setStep((s) => Math.max(1, s - 1) as any)}

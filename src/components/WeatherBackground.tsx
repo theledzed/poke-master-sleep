@@ -10,6 +10,7 @@ interface WeatherBackgroundProps {
 
 export const STORAGE_KEY_WEATHER = 'sleep_master_weather_v1';
 export const STORAGE_KEY_AUTO = 'sleep_master_weather_auto_v1';
+export const STORAGE_KEY_WEATHER_CACHE = 'sleep_master_weather_cache_v1';
 
 /**
  * Determine atmospheric weather based on current local time
@@ -57,9 +58,11 @@ export const WeatherBackground: React.FC<WeatherBackgroundProps> = ({
 }) => {
   const [weather, setWeather] = useState<WeatherMode>(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY_WEATHER);
-      if (saved && ['morning', 'afternoon', 'night', 'rain'].includes(saved)) {
-        return saved as WeatherMode;
+      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+        const saved = localStorage.getItem(STORAGE_KEY_WEATHER);
+        if (saved && ['morning', 'afternoon', 'night', 'rain'].includes(saved)) {
+          return saved as WeatherMode;
+        }
       }
     } catch (e) {
       // ignore
@@ -69,33 +72,65 @@ export const WeatherBackground: React.FC<WeatherBackgroundProps> = ({
 
   const activeWeather = propWeather || weather;
 
-  // Real-time automatic weather detection on mount
+  // Real-time automatic weather detection on mount (Cached 30 minutes to prevent jarring repaints)
   useEffect(() => {
-    const isAuto = localStorage.getItem(STORAGE_KEY_AUTO) !== 'false';
+    let isAuto = true;
+    try {
+      isAuto = localStorage.getItem(STORAGE_KEY_AUTO) !== 'false';
+    } catch {}
     if (!isAuto) return;
 
-    if ('geolocation' in navigator) {
+    // 1. Check if we have a fresh cached live weather (< 30 minutes old)
+    try {
+      const cachedStr = localStorage.getItem(STORAGE_KEY_WEATHER_CACHE);
+      if (cachedStr) {
+        const cached = JSON.parse(cachedStr);
+        if (cached && cached.weather && Date.now() - cached.timestamp < 30 * 60 * 1000) {
+          if (cached.weather !== activeWeather) {
+            setWeather(cached.weather);
+            if (onWeatherChange) onWeatherChange(cached.weather);
+          }
+          return; // Skip GPS query!
+        }
+      }
+    } catch (e) {}
+
+    // 2. Query GPS only if cache expired
+    if (typeof navigator !== 'undefined' && 'geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const liveWeather = await fetchLiveWeatherFromCoords(
             position.coords.latitude,
             position.coords.longitude
           );
-          setWeather(liveWeather);
-          if (onWeatherChange) onWeatherChange(liveWeather);
+          try {
+            localStorage.setItem(
+              STORAGE_KEY_WEATHER_CACHE,
+              JSON.stringify({ weather: liveWeather, timestamp: Date.now() })
+            );
+          } catch {}
+
+          if (liveWeather !== activeWeather) {
+            setWeather(liveWeather);
+            if (onWeatherChange) onWeatherChange(liveWeather);
+          }
         },
         () => {
           // Fallback to local clock
           const timeWeather = getAutoWeatherByTime();
-          setWeather(timeWeather);
-          if (onWeatherChange) onWeatherChange(timeWeather);
+          if (timeWeather !== activeWeather) {
+            setWeather(timeWeather);
+            if (onWeatherChange) onWeatherChange(timeWeather);
+          }
         },
-        { timeout: 6000 }
+        { timeout: 5000, maximumAge: 30 * 60 * 1000 }
       );
     } else {
       const timeWeather = getAutoWeatherByTime();
-      setWeather(timeWeather);
-      if (onWeatherChange) onWeatherChange(timeWeather);
+      if (timeWeather !== activeWeather) {
+        setWeather(timeWeather);
+        if (onWeatherChange) onWeatherChange(timeWeather);
+      }
     }
   }, []);
 

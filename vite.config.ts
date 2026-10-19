@@ -42,6 +42,9 @@ function ocrServerMiddleware(env: Record<string, string>) {
 
               const systemPrompt = `You are an expert OCR vision AI specialized in extracting data from "Pokémon Sleep" mobile screenshots.
 Analyze the provided screenshot of a Pokémon summary screen and extract all fields into strict JSON format with no markdown wrappers or codeblocks.
+IMPORTANT RULES:
+- SCROLLED SCREENSHOTS: If the top header or Pokémon species name is scrolled off-screen or cut off, look lower down at the candy text (e.g. "Caramelos Gastly", "Caramelos Pikachu", "Pikachu Candy") to accurately determine the species name!
+- INGREDIENT ICONS: In Pokémon Sleep, ingredient slots show icons with quantities (e.g. x1, x2, x4). Carefully inspect the shapes and colors of the ingredient icons.
 
 Expected JSON Schema:
 {
@@ -52,6 +55,7 @@ Expected JSON Schema:
   "nature": string,
   "mainSkillName": string,
   "mainSkillLevel": number,
+  "carryLimit": number,
   "ingredients": [
     { "slot": 1, "unlockLevel": 1, "name": string, "count": number },
     { "slot": 2, "unlockLevel": 30, "name": string, "count": number },

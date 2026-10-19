@@ -237,10 +237,10 @@ export const PokedexView: React.FC<PokedexViewProps> = ({
               onChange={(e) => setSelectedSpecialty(e.target.value)}
               className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-full text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400/50 transition-all font-bold"
             >
-              <option value="all" className="bg-slate-900">🎯 Todas las especialidades</option>
+              <option value="all" className="bg-slate-900">Todas las especialidades</option>
               {specialties.map(spec => (
                 <option key={spec} value={spec} className="bg-slate-900">
-                  {spec === 'Bayas' ? '🍒' : spec === 'Ingredientes' ? '🥗' : spec === 'Habilidades' ? '⚡' : '🌟'} {spec}
+                  {spec}
                 </option>
               ))}
             </select>
@@ -253,10 +253,10 @@ export const PokedexView: React.FC<PokedexViewProps> = ({
               onChange={(e) => setSelectedBerry(e.target.value)}
               className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-full text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400/50 transition-all font-bold"
             >
-              <option value="all" className="bg-slate-900">🍒 Todas las bayas (18 tipos)</option>
+              <option value="all" className="bg-slate-900">Todas las bayas (18 tipos)</option>
               {CANONICAL_BERRIES.map(berry => (
                 <option key={berry} value={berry} className="bg-slate-900">
-                  {BERRIES[berry]?.icon || '🍒'} {berry} ({BERRIES[berry]?.type})
+                  {berry} • Tipo {BERRIES[berry]?.type || 'Normal'}
                 </option>
               ))}
             </select>
@@ -269,10 +269,10 @@ export const PokedexView: React.FC<PokedexViewProps> = ({
               onChange={(e) => setSelectedIngredient(e.target.value)}
               className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-full text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-400/40 focus:border-sky-400/50 transition-all font-bold"
             >
-              <option value="all" className="bg-slate-900">🌾 Todos los ingredientes</option>
+              <option value="all" className="bg-slate-900">Todos los ingredientes (17)</option>
               {allIngredients.map(ing => (
                 <option key={ing} value={ing} className="bg-slate-900">
-                  {ing} ({INGREDIENTS[ing]?.vigor} pts)
+                  {ing} • {INGREDIENTS[ing]?.vigor || 100} pts vigor
                 </option>
               ))}
             </select>

@@ -15,6 +15,7 @@ import {
 import { getPokemonSkillLevel } from '../services/optimizer';
 import { evaluateSinglePokemonGenetics } from '../services/pokedexEvaluator';
 import { canPokemonEvolve } from '../services/evolutionService';
+import { getSpeciesMasterData } from '../data/speciesMaster';
 import { EvolutionModal } from './EvolutionModal';
 import {
   Lock,
@@ -64,6 +65,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
   const berryMeta = BERRIES[pokemon.berry];
   const typeTheme = getTypeTheme(berryMeta?.type || 'Normal');
   const dexId = getPokemonDexId(pokemon.name);
+  const masterData = useMemo(() => getSpeciesMasterData(pokemon.name), [pokemon.name]);
 
   const isShiny = pokemon.notes?.toLowerCase().includes('shiny') || pokemon.notes?.toLowerCase().includes('variocolor');
   const isSpecial = isSpecialPokemon(pokemon);
@@ -331,11 +333,11 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
         {/* COMPACT DETAIL MODAL: Detailed Ficha without breaking grid height */}
         {showDetailModal && (
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md"
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md overflow-y-auto"
             onClick={() => setShowDetailModal(false)}
           >
             <div
-              className="cozy-card rounded-3xl max-w-md w-full p-5 text-white shadow-2xl relative max-h-[90vh] overflow-y-auto"
+              className="cozy-card rounded-3xl max-w-md w-full p-5 text-white shadow-2xl relative max-h-[90vh] overflow-y-auto overscroll-contain my-auto custom-scrollbar"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close Button */}
@@ -383,31 +385,41 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-slate-300 mt-1">
+                  <div className="flex items-center gap-2 text-xs text-slate-300 mt-1 flex-wrap">
                     <span className="tabular-nums font-bold text-white">PA {pokemon.rp.toLocaleString()}</span>
                     <span>•</span>
                     <span className="text-slate-400 tabular-nums font-medium flex items-center gap-1">
                       <Clock className="w-3 h-3 text-[var(--accent-primary)]" />
                       {pokemon.frequencyStr}
                     </span>
+                    <span>•</span>
+                    <span className="text-sky-300 tabular-nums font-bold" title="Capacidad de la bolsa">
+                      Bolsa: {pokemon.carryLimit || masterData?.carryLimit || 16}
+                    </span>
                   </div>
                 </div>
               </div>
 
-              {/* Specialty & Berry */}
-              <div className="grid grid-cols-2 gap-2 mb-3">
+              {/* Specialty & Berry & Bolsa */}
+              <div className="grid grid-cols-3 gap-2 mb-3">
                 <div className="bg-white/[0.04] p-2.5 rounded-2xl">
                   <span className="text-[9px] uppercase font-black text-slate-400 block mb-1">Especialidad</span>
-                  <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full inline-block ${specialtyBadge.bg} ${specialtyBadge.text}`}>
+                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full inline-block truncate ${specialtyBadge.bg} ${specialtyBadge.text}`}>
                     {pokemon.specialty}
                   </span>
                 </div>
                 <div className="bg-white/[0.04] p-2.5 rounded-2xl">
                   <span className="text-[9px] uppercase font-black text-slate-400 block mb-1">Baya ({berryMultiplier}x)</span>
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-200">
-                    <img src={getBerrySpriteUrl(pokemon.berry)} alt={pokemon.berry} className="w-4 h-4 object-contain" />
-                    <span>{pokemon.berry}</span>
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-200 truncate">
+                    <img src={getBerrySpriteUrl(pokemon.berry)} alt={pokemon.berry} className="w-4 h-4 object-contain flex-shrink-0" />
+                    <span className="truncate">{pokemon.berry.replace('Baya ', '')}</span>
                     {isFavoriteBerry && <span className="text-purple-300 font-black">⭐</span>}
+                  </div>
+                </div>
+                <div className="bg-white/[0.04] p-2.5 rounded-2xl">
+                  <span className="text-[9px] uppercase font-black text-slate-400 block mb-1">Bolsa</span>
+                  <div className="text-xs font-black text-sky-300 tabular-nums">
+                    {pokemon.carryLimit || masterData?.carryLimit || 16} <span className="text-[10px] text-slate-400 font-normal">slots</span>
                   </div>
                 </div>
               </div>

@@ -895,7 +895,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto">
           <div className="cozy-card pokeball-watermark rounded-3xl w-full max-w-3xl max-h-[85vh] flex flex-col shadow-2xl relative my-auto overflow-hidden border border-[var(--surface-border)]">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-5 border-b border-[var(--surface-border)] bg-[var(--surface-inner)] relative z-10">
+            <div className="flex-shrink-0 flex items-center justify-between p-5 border-b border-[var(--surface-border)] bg-[var(--surface-inner)] relative z-10">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-[var(--accent-primary)]/20 border border-[var(--accent-primary)]/30 flex items-center justify-center text-xl flex-shrink-0 shadow-sm">
                   <span>🐾</span>
@@ -918,7 +918,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
             </div>
 
             {/* Modal Filters */}
-            <div className="p-4 bg-[var(--surface-inner)] border-b border-[var(--surface-border)] grid grid-cols-1 sm:grid-cols-4 gap-2.5 relative z-10">
+            <div className="flex-shrink-0 p-4 bg-[var(--surface-inner)] border-b border-[var(--surface-border)] grid grid-cols-1 sm:grid-cols-4 gap-2.5 relative z-10">
               <div className="relative sm:col-span-2">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5" />
                 <input
@@ -959,7 +959,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
             </div>
 
             {/* Quick Filter Pill */}
-            <div className="px-5 py-2.5 bg-[var(--surface-inner)]/60 border-b border-[var(--surface-border)] flex items-center justify-between text-xs relative z-10">
+            <div className="flex-shrink-0 px-5 py-2.5 bg-[var(--surface-inner)]/60 border-b border-[var(--surface-border)] flex items-center justify-between text-xs relative z-10">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
@@ -977,7 +977,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
             </div>
 
             {/* Modal Body: Pokemon Grid */}
-            <div className="p-4 overflow-y-auto flex-1 min-h-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 relative z-10">
+            <div className="p-4 overflow-y-auto overscroll-contain flex-1 min-h-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 relative z-10 custom-scrollbar">
               {pickerList.map((p) => {
                 const isAlreadyInTeam = currentTeamIds.includes(p.id);
                 const isSpecial = isSpecialPokemon(p);
