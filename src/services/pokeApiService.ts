@@ -1,4 +1,4 @@
-import { getSpeciesMasterData } from '../data/speciesMaster';
+import { getSpeciesMasterData, SPECIES_MASTER_DATA } from '../data/speciesMaster';
 
 // PokeAPI integration service for Pokemon Sleep Master
 
@@ -148,30 +148,39 @@ export function getPokemonDexId(name: string): number | null {
   return null;
 }
 
-export type SpriteStyle = 'showdown' | 'sleep' | 'artwork' | 'home' | 'pixel';
+export type SpriteStyle = 'showdown' | 'sleep' | 'sleep_full' | 'artwork' | 'home' | 'pixel';
 
-// Official Pokemon Artwork & Sprites (Supports Shiny and Sleep Avatar!)
+// Official Pokemon Artwork & Sprites (Supports Shiny and Sleep Avatar & Full Body!)
 export function getPokemonArtworkUrl(
   nameOrId: string | number,
   style: SpriteStyle = 'showdown',
   isShiny: boolean = false
 ): string {
   let dexId: number | null = null;
+  let pokemonName = '';
+
   if (typeof nameOrId === 'number') {
     dexId = nameOrId;
+    const found = SPECIES_MASTER_DATA.find(s => s.dexNumber === nameOrId);
+    if (found) pokemonName = found.name;
   } else {
+    pokemonName = nameOrId;
     dexId = getPokemonDexId(nameOrId);
   }
 
+  const cleanName = pokemonName.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+
+  // 1. Sleep Avatar Portrait (256x256 circular head bust)
   if (style === 'sleep') {
-    const cleanName = typeof nameOrId === 'string'
-      ? nameOrId.toLowerCase().replace(/[^a-z0-9]/g, '')
-      : '';
-    if (isShiny && cleanName) {
-      return `/images/avatar/portrait/${cleanName}_shiny.png`;
-    }
     if (cleanName) {
-      return `/images/avatar/portrait/${cleanName}.png`;
+      return `/images/avatar/portrait/${cleanName}${isShiny ? '_shiny' : ''}.png`;
+    }
+  }
+
+  // 2. Sleep Full Body Illustration (492x448 full body 2D artwork with shadow)
+  if (style === 'sleep_full') {
+    if (cleanName) {
+      return `/images/pokemon/${cleanName}${isShiny ? '_shiny' : ''}.png`;
     }
   }
 
@@ -211,6 +220,17 @@ export function getPokemonAvatarUrl(name: string, isShiny: boolean = false): str
     return `/images/avatar/portrait/${cleanName}_shiny.png`;
   }
   return `/images/avatar/portrait/${cleanName}.png`;
+}
+
+/**
+ * Returns local official Pokémon Sleep full-body illustration (2D standing artwork with shadow)
+ */
+export function getPokemonFullBodyUrl(name: string, isShiny: boolean = false): string {
+  const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (isShiny) {
+    return `/images/pokemon/${cleanName}_shiny.png`;
+  }
+  return `/images/pokemon/${cleanName}.png`;
 }
 
 

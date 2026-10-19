@@ -82,7 +82,7 @@ export const App: React.FC = () => {
   const [spriteStyle, setSpriteStyle] = useState<SpriteStyle>(() => {
     try {
       const saved = localStorage.getItem('pokesleep_sprite_style');
-      if (saved === 'showdown' || saved === 'sleep' || saved === 'artwork') {
+      if (saved === 'showdown' || saved === 'sleep' || saved === 'sleep_full' || saved === 'artwork') {
         return saved as SpriteStyle;
       }
     } catch (e) {}

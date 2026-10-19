@@ -68,9 +68,15 @@ export const ViewSettingsDropdown: React.FC<ViewSettingsDropdownProps> = ({
   const spriteOptions: { id: SpriteStyle; label: string; desc: string; icon: string }[] = [
     {
       id: 'sleep',
-      label: 'Oficial Sleep',
-      desc: 'Retratos redondos oficiales del juego',
+      label: 'Retrato Sleep',
+      desc: 'Iconos circulares de rostro oficiales (100% homologados)',
       icon: '💤'
+    },
+    {
+      id: 'sleep_full',
+      label: 'Cuerpo Entero Sleep',
+      desc: 'Ilustraciones 2D completas de pie (100% homologadas)',
+      icon: '🧍'
     },
     {
       id: 'showdown',
