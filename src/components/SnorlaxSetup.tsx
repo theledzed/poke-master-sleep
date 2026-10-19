@@ -155,7 +155,7 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
                   +{config.areaBonus || 0}% Zona
                 </span>
                 {config.goodCampTicket && (
-                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-200 border border-amber-300/30 backdrop-blur-md">
+                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-200 border border-purple-300/30 backdrop-blur-md">
                     🏕️ Pase
                   </span>
                 )}
@@ -169,7 +169,7 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
                 </span>
 
                 <span className="tabular-nums text-[var(--text-creamy)] font-bold bg-white/[0.06] backdrop-blur-md px-3 py-0.5 rounded-full border border-white/10">
-                  Olla: <strong className="text-amber-200 tabular-nums">{effectivePot}</strong>
+                  Olla: <strong className="text-white tabular-nums">{effectivePot}</strong>
                 </span>
 
                 {/* 3 Berries in soft translucent pill */}
@@ -299,7 +299,7 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
                       <select
                         value={config.areaBonus || 0}
                         onChange={(e) => onChangeConfig({ ...config, areaBonus: Number(e.target.value) })}
-                        className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-full text-xs text-amber-300 tabular-nums font-bold focus:outline-none focus:ring-2 focus:ring-amber-400"
+                        className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-full text-xs text-white tabular-nums font-bold focus:outline-none focus:ring-2 focus:ring-purple-400"
                       >
                         {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75].map(b => (
                           <option key={b} value={b} className="bg-slate-900">
@@ -415,7 +415,7 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
                           <span>🍒</span>
                           <span>Elige baya para Ranura #{activeBerrySlot + 1}:</span>
                         </span>
-                        <span className="text-[10px] text-amber-300 tabular-nums font-bold">
+                        <span className="text-[10px] text-purple-200 tabular-nums font-bold">
                           18 Tipos Oficiales
                         </span>
                       </div>
@@ -479,7 +479,7 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
                     <select
                       value={config.potSize}
                       onChange={(e) => onChangeConfig({ ...config, potSize: parseInt(e.target.value, 10) })}
-                      className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-full text-xs text-amber-300 tabular-nums font-bold focus:outline-none focus:ring-2 focus:ring-amber-400"
+                      className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-full text-xs text-white tabular-nums font-bold focus:outline-none focus:ring-2 focus:ring-purple-400"
                     >
                       {POT_SIZES.map(size => (
                         <option key={size} value={size} className="bg-slate-900">

@@ -109,17 +109,17 @@ export const PwaInstallPrompt: React.FC = () => {
           className="fixed bottom-16 lg:bottom-4 right-4 z-40 max-w-sm w-[calc(100%-2rem)] sm:w-auto animate-in fade-in slide-in-from-bottom-4 duration-300"
         >
           <div className="relative flex items-center gap-3 p-3 sm:p-3.5 rounded-2xl cozy-card border border-[var(--surface-border)] shadow-2xl backdrop-blur-xl text-white">
-            <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-600 flex items-center justify-center shadow-md shadow-amber-500/25">
+            <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center shadow-md shadow-purple-500/25">
               {isIos ? (
-                <Apple className="w-5 h-5 text-slate-950" />
+                <Apple className="w-5 h-5 text-white" />
               ) : (
-                <Smartphone className="w-5 h-5 text-slate-950" />
+                <Smartphone className="w-5 h-5 text-white" />
               )}
             </div>
 
             <div className="flex-1 min-w-0 pr-1">
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-200 border border-amber-400/30">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-200 border border-purple-400/30">
                   App PWA
                 </span>
                 <span className="text-xs font-bold truncate">Instalar App</span>
@@ -167,10 +167,10 @@ export const PwaInstallPrompt: React.FC = () => {
               setIsDismissed(false);
             }
           }}
-          className="fixed bottom-16 lg:bottom-4 right-4 z-30 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--surface-inner)] border border-[var(--surface-border)] text-amber-300 hover:text-white hover:bg-white/10 shadow-lg text-[11px] font-bold backdrop-blur-md transition-all cursor-pointer animate-in fade-in"
+          className="fixed bottom-16 lg:bottom-4 right-4 z-30 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--surface-inner)] border border-[var(--surface-border)] text-white hover:text-white hover:bg-white/10 shadow-lg text-[11px] font-bold backdrop-blur-md transition-all cursor-pointer animate-in fade-in"
           title="Instalar Pokémon Sleep Master"
         >
-          <Download className="w-3.5 h-3.5 text-amber-400" />
+          <Download className="w-3.5 h-3.5 text-purple-300" />
           <span>Instalar PWA</span>
         </button>
       )}
@@ -187,14 +187,14 @@ export const PwaInstallPrompt: React.FC = () => {
             {/* Header */}
             <div className="flex items-start justify-between gap-4 mb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/30">
-                  <Apple className="w-6 h-6 text-slate-950" />
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/30">
+                  <Apple className="w-6 h-6 text-white" />
                 </div>
                 <div>
                   <h3 id="ios-modal-title" className="text-base sm:text-lg font-bold text-white leading-tight">
                     Instalar en tu iPhone / iPad
                   </h3>
-                  <p className="text-xs text-amber-300">
+                  <p className="text-xs text-purple-200">
                     Sigue estos 3 pasos sencillos desde Safari:
                   </p>
                 </div>
@@ -212,13 +212,13 @@ export const PwaInstallPrompt: React.FC = () => {
             <div className="space-y-3.5 my-4">
               {/* Step 1 */}
               <div className="flex items-start gap-3 p-3 rounded-2xl bg-[var(--surface-inner)] border border-[var(--surface-border)]">
-                <div className="w-7 h-7 rounded-full bg-amber-500/20 text-amber-400 tabular-nums font-black text-xs flex items-center justify-center flex-shrink-0 mt-0.5 border border-amber-400/30">
+                <div className="w-7 h-7 rounded-full bg-purple-500/20 text-purple-300 tabular-nums font-black text-xs flex items-center justify-center flex-shrink-0 mt-0.5 border border-purple-400/30">
                   1
                 </div>
                 <div className="flex-1 text-xs text-slate-200">
                   <div className="font-semibold text-white flex items-center gap-1.5">
                     <span>Toca el botón</span>
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold border border-amber-400/30">
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-200 font-bold border border-purple-400/30">
                       <Share2 className="w-3.5 h-3.5" /> Compartir
                     </span>
                   </div>
@@ -230,7 +230,7 @@ export const PwaInstallPrompt: React.FC = () => {
 
               {/* Step 2 */}
               <div className="flex items-start gap-3 p-3 rounded-2xl bg-[var(--surface-inner)] border border-[var(--surface-border)]">
-                <div className="w-7 h-7 rounded-full bg-amber-500/20 text-amber-400 tabular-nums font-black text-xs flex items-center justify-center flex-shrink-0 mt-0.5 border border-amber-400/30">
+                <div className="w-7 h-7 rounded-full bg-purple-500/20 text-purple-300 tabular-nums font-black text-xs flex items-center justify-center flex-shrink-0 mt-0.5 border border-purple-400/30">
                   2
                 </div>
                 <div className="flex-1 text-xs text-slate-200">
@@ -248,13 +248,13 @@ export const PwaInstallPrompt: React.FC = () => {
 
               {/* Step 3 */}
               <div className="flex items-start gap-3 p-3 rounded-2xl bg-[var(--surface-inner)] border border-[var(--surface-border)]">
-                <div className="w-7 h-7 rounded-full bg-amber-500/20 text-amber-400 tabular-nums font-black text-xs flex items-center justify-center flex-shrink-0 mt-0.5 border border-amber-400/30">
+                <div className="w-7 h-7 rounded-full bg-purple-500/20 text-purple-300 tabular-nums font-black text-xs flex items-center justify-center flex-shrink-0 mt-0.5 border border-purple-400/30">
                   3
                 </div>
                 <div className="flex-1 text-xs text-slate-200">
                   <div className="font-semibold text-white flex items-center gap-1.5">
                     <span>Presiona</span>
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold border border-amber-400/30">
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-200 font-bold border border-purple-400/30">
                       "Agregar"
                     </span>
                   </div>
@@ -266,8 +266,8 @@ export const PwaInstallPrompt: React.FC = () => {
             </div>
 
             {/* Note */}
-            <div className="p-3 rounded-xl bg-[var(--surface-inner)] border border-[var(--surface-border)] flex items-start gap-2.5 mb-5 text-[11px] text-amber-200">
-              <CheckCircle2 className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+            <div className="p-3 rounded-xl bg-[var(--surface-inner)] border border-[var(--surface-border)] flex items-start gap-2.5 mb-5 text-[11px] text-slate-200">
+              <CheckCircle2 className="w-4 h-4 text-purple-300 flex-shrink-0 mt-0.5" />
               <span>
                 La aplicación se abrirá como app nativa: sin barras de navegación, con soporte sin conexión y carga ultrarrápida.
               </span>

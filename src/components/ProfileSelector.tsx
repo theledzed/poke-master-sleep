@@ -22,7 +22,7 @@ export const ProfileSelector: React.FC<ProfileSelectorProps> = ({
           onClick={() => onSelectProfile('cris')}
           className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-full text-xs font-black transition-all ${
             activeProfile === 'cris'
-              ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-md shadow-amber-500/25 scale-[1.02]'
+              ? 'bg-white text-indigo-950 shadow-md shadow-white/20 scale-[1.02]'
               : 'text-slate-400 hover:text-slate-200'
           }`}
           title="Perfil de Cris (Caja y Snorlax)"
@@ -66,7 +66,7 @@ export const ProfileSelector: React.FC<ProfileSelectorProps> = ({
           <CloudCheck className="w-3.5 h-3.5 text-emerald-400" />
         )}
         {syncStatus === 'error' && (
-          <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
+          <AlertCircle className="w-3.5 h-3.5 text-rose-400" />
         )}
         {syncStatus === 'local' && (
           <HardDrive className="w-3.5 h-3.5 text-slate-400" />

@@ -106,29 +106,29 @@ export const WeatherBackground: React.FC<WeatherBackgroundProps> = ({
         return {
           label: 'Amanecer Pastel',
           icon: Sun,
-          iconColor: 'text-amber-200',
+          iconColor: 'text-pink-200',
           bgGradient: 'from-[#1A1638] via-[#3B1B3A] to-[#25122B]',
           orbs: [
             { bg: 'bg-pink-400/20', size: 'w-96 h-96', pos: '-top-20 -left-20', delay: '0s' },
-            { bg: 'bg-amber-300/18', size: 'w-[420px] h-[420px]', pos: 'top-10 -right-20', delay: '2s' },
+            { bg: 'bg-indigo-300/18', size: 'w-[420px] h-[420px]', pos: 'top-10 -right-20', delay: '2s' },
             { bg: 'bg-purple-400/20', size: 'w-80 h-80', pos: 'bottom-40 left-1/3', delay: '4s' }
           ],
-          starColor: 'text-pink-200/70',
-          dotColor: 'bg-amber-200/60'
+          starColor: 'text-pink-200/80',
+          dotColor: 'bg-pink-100/60'
         };
       case 'afternoon':
         return {
           label: 'Crepúsculo Dorado',
           icon: Sunset,
-          iconColor: 'text-orange-200',
+          iconColor: 'text-rose-200',
           bgGradient: 'from-[#1B1032] via-[#3F1735] to-[#250D24]',
           orbs: [
-            { bg: 'bg-orange-400/20', size: 'w-[420px] h-[420px]', pos: '-top-20 -right-20', delay: '0s' },
-            { bg: 'bg-rose-500/18', size: 'w-96 h-96', pos: 'top-1/4 -left-20', delay: '2s' },
-            { bg: 'bg-purple-500/18', size: 'w-80 h-80', pos: 'bottom-20 right-1/4', delay: '4s' }
+            { bg: 'bg-rose-400/20', size: 'w-[420px] h-[420px]', pos: '-top-20 -right-20', delay: '0s' },
+            { bg: 'bg-purple-500/18', size: 'w-96 h-96', pos: 'top-1/4 -left-20', delay: '2s' },
+            { bg: 'bg-pink-500/18', size: 'w-80 h-80', pos: 'bottom-20 right-1/4', delay: '4s' }
           ],
-          starColor: 'text-orange-200/70',
-          dotColor: 'bg-orange-200/60'
+          starColor: 'text-rose-200/80',
+          dotColor: 'bg-purple-100/60'
         };
       case 'rain':
         return {
@@ -183,37 +183,55 @@ export const WeatherBackground: React.FC<WeatherBackgroundProps> = ({
         ))}
       </div>
 
-      {/* Atmospheric Particles & 4-Point Stars (✦) */}
+      {/* Atmospheric Particles: Ethereal Falling Rain or Floating Breeze Stardust */}
       {activeWeather === 'rain' ? (
-        /* Gentle soft rain mist */
-        <div className="absolute inset-0 opacity-25">
-          <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <pattern id="rain-pattern" width="80" height="100" patternUnits="userSpaceOnUse">
-                <line x1="10" y1="0" x2="6" y2="20" stroke="#7DD3FC" strokeWidth="0.8" strokeOpacity="0.4" />
-                <line x1="50" y1="35" x2="46" y2="55" stroke="#A5F3FC" strokeWidth="0.8" strokeOpacity="0.35" />
-                <line x1="30" y1="70" x2="26" y2="90" stroke="#7DD3FC" strokeWidth="0.8" strokeOpacity="0.3" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#rain-pattern)" />
-          </svg>
+        /* Gentle soft falling ethereal drizzle */
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {[
+            { left: '4%', delay: '0.1s', dur: '1.9s' },
+            { left: '11%', delay: '0.8s', dur: '2.4s' },
+            { left: '18%', delay: '1.3s', dur: '1.8s' },
+            { left: '25%', delay: '0.4s', dur: '2.2s' },
+            { left: '32%', delay: '1.7s', dur: '2.0s' },
+            { left: '39%', delay: '0.2s', dur: '2.5s' },
+            { left: '46%', delay: '1.1s', dur: '1.9s' },
+            { left: '53%', delay: '0.6s', dur: '2.3s' },
+            { left: '60%', delay: '1.5s', dur: '2.1s' },
+            { left: '67%', delay: '0.3s', dur: '1.8s' },
+            { left: '74%', delay: '1.0s', dur: '2.4s' },
+            { left: '81%', delay: '0.5s', dur: '2.0s' },
+            { left: '88%', delay: '1.4s', dur: '2.2s' },
+            { left: '94%', delay: '0.7s', dur: '1.9s' },
+            { left: '98%', delay: '1.2s', dur: '2.3s' }
+          ].map((drop, idx) => (
+            <div
+              key={`rain-${idx}`}
+              className="rain-streak"
+              style={{
+                left: drop.left,
+                top: '-40px',
+                animationDelay: drop.delay,
+                animationDuration: drop.dur
+              }}
+            />
+          ))}
         </div>
       ) : (
-        /* Dreamy Stars & 4-Point Sparkles (✦) */
+        /* Dreamy Drifting Stars & 4-Point Sparkles (✦) */
         <div className="absolute inset-0">
-          {/* Delicate 4-point Sparkles */}
+          {/* Delicate 4-point Sparkles drifting with ethereal breeze */}
           {[
-            { top: '10%', left: '20%', size: 'text-xs', delay: '0.2s', dur: '3.5s' },
-            { top: '18%', left: '78%', size: 'text-sm', delay: '1.2s', dur: '4s' },
-            { top: '32%', left: '48%', size: 'text-xs', delay: '2.1s', dur: '3s' },
-            { top: '45%', left: '88%', size: 'text-xs', delay: '0.8s', dur: '4.5s' },
-            { top: '62%', left: '15%', size: 'text-sm', delay: '1.7s', dur: '3.8s' },
-            { top: '75%', left: '65%', size: 'text-xs', delay: '2.5s', dur: '4.2s' },
-            { top: '85%', left: '30%', size: 'text-xs', delay: '0.5s', dur: '3.2s' }
+            { top: '10%', left: '18%', size: 'text-xs', delay: '0.2s', dur: '5.5s' },
+            { top: '18%', left: '76%', size: 'text-sm', delay: '1.2s', dur: '6s' },
+            { top: '32%', left: '46%', size: 'text-xs', delay: '2.1s', dur: '5s' },
+            { top: '45%', left: '86%', size: 'text-xs', delay: '0.8s', dur: '6.5s' },
+            { top: '62%', left: '14%', size: 'text-sm', delay: '1.7s', dur: '5.8s' },
+            { top: '75%', left: '63%', size: 'text-xs', delay: '2.5s', dur: '6.2s' },
+            { top: '85%', left: '28%', size: 'text-xs', delay: '0.5s', dur: '5.2s' }
           ].map((sparkle, idx) => (
             <div
               key={`sparkle-${idx}`}
-              className={`absolute select-none font-bold ${sparkle.size} ${weatherConfig.starColor} drop-shadow-[0_0_8px_rgba(255,255,255,0.6)] animate-pulse`}
+              className={`breeze-mote select-none font-bold ${sparkle.size} ${weatherConfig.starColor} drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]`}
               style={{
                 top: sparkle.top,
                 left: sparkle.left,
@@ -342,7 +360,7 @@ export const WeatherPill: React.FC<{
           <button
             onClick={handleEnableAuto}
             className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all mb-1 ${
-              isAuto ? 'bg-[var(--accent-primary)] text-slate-950 font-black shadow-sm' : 'text-slate-300 hover:bg-white/5'
+              isAuto ? 'bg-white text-indigo-950 font-black shadow-md' : 'text-slate-300 hover:bg-white/5'
             }`}
           >
             <span className="flex items-center gap-2">
@@ -363,7 +381,7 @@ export const WeatherPill: React.FC<{
                 key={opt.mode}
                 onClick={() => handleManualSelect(opt.mode)}
                 className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                  isSelected ? 'bg-[var(--accent-primary)] text-slate-950 font-bold shadow-sm' : 'text-slate-300 hover:bg-white/5'
+                  isSelected ? 'bg-white text-indigo-950 font-black shadow-md' : 'text-slate-300 hover:bg-white/5'
                 }`}
               >
                 <span className="flex items-center gap-2">

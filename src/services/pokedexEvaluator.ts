@@ -402,7 +402,7 @@ export function auditPokedexCollection(allPokemons: Pokemon[]): PokemonAuditResu
     if (isShiny || isSpecial) {
       verdict = 'TROFEO_CONSERVAR';
       verdictLabel = isShiny ? '✨ Trofeo Shiny (Conservar)' : '🌟 Singular / Legendario (Conservar)';
-      verdictBadgeColor = 'bg-amber-500/20 text-amber-300 border-amber-400/40';
+      verdictBadgeColor = 'bg-purple-500/20 text-purple-200 border-purple-400/40';
       recommendation = isShiny
         ? 'Ejemplar variocolor de altísimo valor coleccionable. Intocable para transferir; consérvalo con orgullo.'
         : 'Espécimen singular/legendario de evento único. Consérvalo en tu equipo para aprovechar su habilidad especial.';
@@ -430,7 +430,7 @@ export function auditPokedexCollection(allPokemons: Pokemon[]): PokemonAuditResu
     } else if (score < 50 && totalInFamily === 1) {
       verdict = 'UTIL_TEMPORAL';
       verdictLabel = '⚠️ Genética Débil (Conservar por Cobertura)';
-      verdictBadgeColor = 'bg-amber-500/15 text-amber-200 border-amber-400/30';
+      verdictBadgeColor = 'bg-indigo-500/15 text-indigo-200 border-indigo-400/30';
       pros.push('📌 Es tu único ejemplar de esta línea/baya.');
       recommendation = 'Su genética es baja, pero al ser tu único ejemplar de esta baya o especie, no lo descartes aún. Consérvalo hasta reclutar un reemplazo digno.';
     } else {

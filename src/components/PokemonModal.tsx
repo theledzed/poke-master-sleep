@@ -492,7 +492,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                 onError={(e) => { (e.target as HTMLElement).style.opacity = '0.4'; }}
               />
               {isShiny && (
-                <span className="absolute -top-1 -right-1 bg-amber-400 text-slate-950 p-0.5 rounded-full shadow animate-pulse">
+                <span className="absolute -top-1 -right-1 bg-purple-300 text-indigo-950 p-0.5 rounded-full shadow animate-pulse">
                   <Sparkles className="w-3 h-3 fill-current" />
                 </span>
               )}
@@ -502,7 +502,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                 <h4 className="font-bold text-white text-sm flex items-center gap-1.5">
                   <span>{name || 'Escribe el nombre del Pokémon'}</span>
                   {isShiny && (
-                    <span className="text-[10px] font-bold text-amber-300 bg-amber-400/20 border border-amber-400/40 px-1.5 py-0.2 rounded-full">
+                    <span className="text-[10px] font-bold text-purple-200 bg-purple-500/20 border border-purple-400/40 px-1.5 py-0.2 rounded-full">
                       Variocolor
                     </span>
                   )}
@@ -517,7 +517,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                 onClick={() => setIsShiny(prev => !prev)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all self-start sm:self-auto ${
                   isShiny
-                    ? 'bg-amber-400 text-slate-950 shadow-md shadow-amber-400/20 ring-2 ring-amber-400/50'
+                    ? 'btn-dreamy-pearl text-indigo-950 shadow-md ring-2 ring-purple-300'
                     : 'bg-slate-800 text-slate-400 hover:text-white border border-slate-700'
                 }`}
               >
@@ -531,14 +531,14 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
           {matchedMaster && (
             <div className="p-3 bg-[var(--surface-inner)] border border-[var(--surface-border)] rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center text-amber-300 flex-shrink-0">
+                <div className="w-8 h-8 rounded-xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center text-purple-200 flex-shrink-0">
                   <Wand2 className="w-4 h-4" />
                 </div>
                 <div>
                   <div className="font-bold text-white flex items-center gap-2">
                     <span>{matchedMaster.name}</span>
                     <span className="text-[10px] text-slate-400 tabular-nums font-bold">#{String(matchedMaster.dexNumber).padStart(3, '0')}</span>
-                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-200 border border-amber-400/30 capitalize font-medium">
+                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-200 border border-purple-400/30 capitalize font-medium">
                       {matchedMaster.type}
                     </span>
                   </div>
@@ -547,9 +547,9 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                     <span>•</span>
                     <span>Ratio Ingr: <strong className="text-emerald-300 tabular-nums font-bold">{matchedMaster.ingredientRate}%</strong></span>
                     <span>•</span>
-                    <span>Ratio Hab: <strong className="text-amber-300 tabular-nums font-bold">{matchedMaster.skillRate}%</strong></span>
+                    <span>Ratio Hab: <strong className="text-white tabular-nums font-bold">{matchedMaster.skillRate}%</strong></span>
                     <span>•</span>
-                    <span>Frec. Base: <strong className="text-amber-300 tabular-nums font-bold">{matchedMaster.frequencyStr}</strong></span>
+                    <span>Frec. Base: <strong className="text-white tabular-nums font-bold">{matchedMaster.frequencyStr}</strong></span>
                   </div>
                 </div>
               </div>
@@ -558,10 +558,10 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setIsEvolutionModalOpen(true)}
-                    className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/25 to-yellow-500/25 hover:from-amber-500/35 hover:to-yellow-500/35 border border-amber-400/40 text-amber-300 font-bold text-xs transition-all shadow-sm hover:scale-[1.02] active:scale-95"
+                    className="btn-dreamy-pearl flex items-center gap-1.5 px-3.5 py-1 rounded-full text-indigo-950 font-bold text-xs transition-all shadow-md hover:scale-[1.02] active:scale-95"
                     title="Simular o aplicar evolución"
                   >
-                    <Dna className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+                    <Dna className="w-3.5 h-3.5 text-indigo-950" />
                     <span>Evolucionar (What-If)</span>
                   </button>
                 )}
@@ -592,7 +592,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                     setSuggestions(searchMasterSpecies(name, 8));
                     setShowSuggestions(true);
                   }}
-                  className="w-full pl-3 pr-8 py-2 bg-slate-950 border border-slate-800 focus:border-amber-400 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-amber-400 font-medium"
+                  className="w-full pl-3 pr-8 py-2 bg-slate-950 border border-slate-800 focus:border-purple-400 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-purple-400 font-medium"
                 />
                 <button
                   type="button"
@@ -613,7 +613,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                   ref={suggestionsRef}
                   className="absolute left-0 right-0 top-full mt-1.5 bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-2xl shadow-2xl z-50 max-h-64 overflow-y-auto divide-y divide-white/10 backdrop-blur-xl"
                 >
-                  <div className="p-2 bg-[var(--surface-inner)] text-[10px] text-amber-300 font-semibold uppercase tracking-wider flex items-center justify-between">
+                  <div className="p-2 bg-[var(--surface-inner)] text-[10px] text-purple-200 font-semibold uppercase tracking-wider flex items-center justify-between">
                     <span>Especies de Pokémon Sleep</span>
                     <span className="text-slate-400 font-normal text-[9px]">Click para autocompletar</span>
                   </div>
@@ -629,7 +629,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                         className="w-full text-left px-3 py-2.5 hover:bg-white/5 flex items-center justify-between gap-2 transition-colors group"
                       >
                         <div className="flex items-center gap-2.5 truncate">
-                          <div className="w-9 h-9 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-center p-0.5 flex-shrink-0 group-hover:border-amber-400/40">
+                          <div className="w-9 h-9 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-center p-0.5 flex-shrink-0 group-hover:border-purple-400/40">
                             <img
                               src={artworkUrl}
                               alt={entry.name}
@@ -644,12 +644,12 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                               <span className="tabular-nums font-bold text-[10px] text-slate-400">
                                 #{String(entry.dexNumber).padStart(3, '0')}
                               </span>
-                              <span className="font-bold text-xs text-white group-hover:text-amber-200 truncate">
+                              <span className="font-bold text-xs text-white group-hover:text-purple-100 truncate">
                                 {entry.name}
                               </span>
                             </div>
                             <div className="text-[10px] text-slate-400 flex items-center gap-2 truncate mt-0.5">
-                              <span className="flex items-center gap-1 text-amber-300">
+                              <span className="flex items-center gap-1 text-purple-200">
                                 <img src={berrySprite} alt="" className="w-3 h-3 object-contain" />
                                 <span>{entry.berry}</span>
                               </span>
@@ -668,7 +668,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                             : entry.specialty === 'Ingredientes'
                             ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
                             : entry.specialty === 'Todo'
-                            ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                            ? 'bg-purple-500/20 text-purple-200 border-purple-500/40'
                             : 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30'
                         }`}>
                           {entry.specialty}
@@ -707,7 +707,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                 onBlur={() => {
                   if (level === '' || Number(level) < 1) setLevel(1);
                 }}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-amber-400 tabular-nums font-bold"
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-purple-400 tabular-nums font-bold"
               />
             </div>
 
@@ -730,7 +730,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                 onBlur={() => {
                   if (rp === '' || Number(rp) < 0) setRp(0);
                 }}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-amber-400 tabular-nums font-bold"
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-purple-400 tabular-nums font-bold"
               />
             </div>
           </div>
@@ -742,7 +742,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
               <select
                 value={specialty}
                 onChange={(e) => setSpecialty(e.target.value as Specialty)}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400 font-medium"
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-400 font-medium"
               >
                 <option value="Bayas">Bayas (+1 Baya base)</option>
                 <option value="Ingredientes">Ingredientes (Mayor cuota)</option>
@@ -764,7 +764,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                 <select
                   value={berry}
                   onChange={(e) => setBerry(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium"
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-400 font-medium"
                 >
                   {CANONICAL_BERRIES.map(b => (
                     <option key={b} value={b}>
@@ -781,7 +781,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                   <button
                     type="button"
                     onClick={handleRecalculateFrequency}
-                    className="text-[10px] text-amber-300 hover:text-amber-200 flex items-center gap-1 font-semibold hover:underline"
+                    className="text-[10px] text-purple-300 hover:text-purple-200 flex items-center gap-1 font-semibold hover:underline"
                     title="Recalcular automáticamente frecuencia según nivel y naturaleza"
                   >
                     <RefreshCw className="w-3 h-3" /> Auto-calc
@@ -793,7 +793,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                 placeholder="ej. 35 min 12s o 1h 5min"
                 value={frequencyStr}
                 onChange={(e) => setFrequencyStr(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-amber-400 tabular-nums font-bold"
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-purple-400 tabular-nums font-bold"
               />
             </div>
           </div>
@@ -812,7 +812,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                     setFrequencyStr(calculateDynamicFrequency(matchedMaster.baseFrequency, numLvl, newNat));
                   }
                 }}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium"
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-400 font-medium"
               >
                 {Object.keys(NATURES).map(natKey => {
                   const nat = NATURES[natKey];
@@ -841,7 +841,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                 <select
                   value={mainSkillName}
                   onChange={(e) => setMainSkillName(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium truncate"
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-400 font-medium truncate"
                 >
                   {Object.keys(MAIN_SKILLS_META).map(sk => (
                     <option key={sk} value={sk}>
@@ -854,12 +854,12 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
             <div className="sm:col-span-2">
               <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center justify-between">
                 <span>Nivel</span>
-                <span className="text-[10px] text-amber-400 font-bold">1-7</span>
+                <span className="text-[10px] text-purple-300 font-bold">1-7</span>
               </label>
               <select
                 value={mainSkillLevel}
                 onChange={(e) => setMainSkillLevel(parseInt(e.target.value, 10))}
-                className="w-full px-2.5 py-2 bg-slate-950 border border-amber-400/40 rounded-xl text-xs text-amber-300 font-black focus:outline-none focus:ring-2 focus:ring-amber-400 tabular-nums shadow-inner text-center"
+                className="w-full px-2.5 py-2 bg-slate-950 border border-purple-400/40 rounded-xl text-xs text-purple-200 font-black focus:outline-none focus:ring-2 focus:ring-purple-400 tabular-nums shadow-inner text-center"
                 title="Nivel de Habilidad Principal (1 a 7)"
               >
                 {[1, 2, 3, 4, 5, 6, 7].map(lvl => (
@@ -915,7 +915,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                     >
                       <img src={getIngredientSpriteUrl(slot1Cand.name)} alt="" className="w-4 h-4 object-contain" />
                       <span>{slot1Cand.name}</span>
-                      <span className="tabular-nums font-black text-amber-300">×{slot1Cand.c1}</span>
+                      <span className="tabular-nums font-black text-white">×{slot1Cand.c1}</span>
                       {ing1Name === slot1Cand.name && Number(ing1Count) === slot1Cand.c1 && (
                         <Check className="w-3 h-3 text-emerald-400 stroke-[3]" />
                       )}
@@ -974,11 +974,11 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                     {level !== '' && Number(level) >= 30 ? (
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                     ) : (
-                      <Lock className="w-3.5 h-3.5 text-amber-500" />
+                      <Lock className="w-3.5 h-3.5 text-purple-400/80" />
                     )}
                     <span>Slot 2 (Nv. 30)</span>
                   </span>
-                  <span className={`text-[10px] tabular-nums font-medium ${level !== '' && Number(level) >= 30 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                  <span className={`text-[10px] tabular-nums font-medium ${level !== '' && Number(level) >= 30 ? 'text-emerald-400' : 'text-slate-400'}`}>
                     {level !== '' && Number(level) >= 30 ? 'Desbloqueado' : 'Bloqueado (Nv. 30)'}
                   </span>
                 </div>
@@ -1001,7 +1001,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                       >
                         <img src={getIngredientSpriteUrl(slot1Cand.name)} alt="" className="w-4 h-4 object-contain" />
                         <span>{slot1Cand.name}</span>
-                        <span className="tabular-nums font-black text-amber-300">×{slot1Cand.c2}</span>
+                        <span className="tabular-nums font-black text-white">×{slot1Cand.c2}</span>
                         {ing2Name === slot1Cand.name && Number(ing2Count) === slot1Cand.c2 && (
                           <Check className="w-3 h-3 text-emerald-400 stroke-[3]" />
                         )}
@@ -1022,7 +1022,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                       >
                         <img src={getIngredientSpriteUrl(slot2Cand.name)} alt="" className="w-4 h-4 object-contain" />
                         <span>{slot2Cand.name}</span>
-                        <span className="tabular-nums font-black text-amber-300">×{slot2Cand.c2}</span>
+                        <span className="tabular-nums font-black text-white">×{slot2Cand.c2}</span>
                         {ing2Name === slot2Cand.name && Number(ing2Count) === slot2Cand.c2 && (
                           <Check className="w-3 h-3 text-emerald-400 stroke-[3]" />
                         )}
@@ -1082,11 +1082,11 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                     {level !== '' && Number(level) >= 60 ? (
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                     ) : (
-                      <Lock className="w-3.5 h-3.5 text-amber-500" />
+                      <Lock className="w-3.5 h-3.5 text-purple-400/80" />
                     )}
                     <span>Slot 3 (Nv. 60)</span>
                   </span>
-                  <span className={`text-[10px] tabular-nums font-medium ${level !== '' && Number(level) >= 60 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                  <span className={`text-[10px] tabular-nums font-medium ${level !== '' && Number(level) >= 60 ? 'text-emerald-400' : 'text-slate-400'}`}>
                     {level !== '' && Number(level) >= 60 ? 'Desbloqueado' : 'Bloqueado (Nv. 60)'}
                   </span>
                 </div>
@@ -1109,7 +1109,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                       >
                         <img src={getIngredientSpriteUrl(slot1Cand.name)} alt="" className="w-4 h-4 object-contain" />
                         <span>{slot1Cand.name}</span>
-                        <span className="tabular-nums font-black text-amber-300">×{slot1Cand.c3}</span>
+                        <span className="tabular-nums font-black text-white">×{slot1Cand.c3}</span>
                         {ing3Name === slot1Cand.name && Number(ing3Count) === slot1Cand.c3 && (
                           <Check className="w-3 h-3 text-emerald-400 stroke-[3]" />
                         )}
@@ -1130,7 +1130,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                       >
                         <img src={getIngredientSpriteUrl(slot2Cand.name)} alt="" className="w-4 h-4 object-contain" />
                         <span>{slot2Cand.name}</span>
-                        <span className="tabular-nums font-black text-amber-300">×{slot2Cand.c3}</span>
+                        <span className="tabular-nums font-black text-white">×{slot2Cand.c3}</span>
                         {ing3Name === slot2Cand.name && Number(ing3Count) === slot2Cand.c3 && (
                           <Check className="w-3 h-3 text-emerald-400 stroke-[3]" />
                         )}
@@ -1151,7 +1151,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                       >
                         <img src={getIngredientSpriteUrl(slot3Cand.name)} alt="" className="w-4 h-4 object-contain" />
                         <span>{slot3Cand.name}</span>
-                        <span className="tabular-nums font-black text-amber-300">×{slot3Cand.c3}</span>
+                        <span className="tabular-nums font-black text-white">×{slot3Cand.c3}</span>
                         {ing3Name === slot3Cand.name && Number(ing3Count) === slot3Cand.c3 && (
                           <Check className="w-3 h-3 text-emerald-400 stroke-[3]" />
                         )}

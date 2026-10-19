@@ -39,7 +39,7 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
             <h2 className="text-xl font-black text-white tracking-tight">
               Recetario Oficial de Pokémon Sleep
             </h2>
-            <span className="text-xs font-black px-3 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-400/30">
+            <span className="text-xs font-black px-3 py-1 rounded-full bg-purple-500/15 text-purple-200 border border-purple-400/30">
               78 Recetas
             </span>
           </div>
@@ -53,7 +53,7 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
           <div className="bg-[var(--surface-inner)] border border-[var(--surface-border)] px-4 py-2 rounded-full flex items-center gap-3 shadow-inner">
             <div className="text-xs whitespace-nowrap">
               <span className="text-[var(--text-muted)]">Nivel de Plato: </span>
-              <span className="font-black text-amber-300 tabular-nums">Nv. {previewLevel}</span>
+              <span className="font-black text-white tabular-nums">Nv. {previewLevel}</span>
               <span className="text-emerald-400 text-[11px] ml-1.5 font-bold tabular-nums">(+{levelBonus}%)</span>
             </div>
             <input
@@ -62,7 +62,7 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
               max="65"
               value={previewLevel}
               onChange={(e) => setPreviewLevel(parseInt(e.target.value, 10))}
-              className="w-24 sm:w-28 accent-amber-400 cursor-pointer"
+              className="w-24 sm:w-28 accent-purple-400 cursor-pointer"
             />
           </div>
 
@@ -102,7 +102,7 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
             onClick={() => setSelectedType('curry')}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-black uppercase tracking-wider transition-all ${
               selectedType === 'curry'
-                ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-amber-950 font-black shadow-md border-b-2 border-amber-800'
+                ? 'bg-gradient-to-r from-orange-500 to-rose-500 text-white font-black shadow-md border-b-2 border-orange-800'
                 : 'bg-[var(--surface-inner)] hover:bg-white/10 text-[var(--text-muted)] border border-[var(--surface-border)] font-bold'
             }`}
           >
@@ -112,7 +112,7 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
             onClick={() => setSelectedType('salad')}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-black uppercase tracking-wider transition-all ${
               selectedType === 'salad'
-                ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-emerald-950 font-black shadow-md border-b-2 border-emerald-800'
+                ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-black shadow-md border-b-2 border-emerald-800'
                 : 'bg-[var(--surface-inner)] hover:bg-white/10 text-[var(--text-muted)] border border-[var(--surface-border)] font-bold'
             }`}
           >
@@ -122,7 +122,7 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
             onClick={() => setSelectedType('dessert')}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-black uppercase tracking-wider transition-all ${
               selectedType === 'dessert'
-                ? 'bg-gradient-to-r from-pink-500 to-rose-400 text-rose-950 font-black shadow-md border-b-2 border-rose-800'
+                ? 'bg-gradient-to-r from-pink-500 to-rose-400 text-white font-black shadow-md border-b-2 border-rose-800'
                 : 'bg-[var(--surface-inner)] hover:bg-white/10 text-[var(--text-muted)] border border-[var(--surface-border)] font-bold'
             }`}
           >
@@ -137,7 +137,7 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
             placeholder="Buscar receta o ingrediente..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full sm:w-64 pl-10 pr-3 py-2 bg-white/5 border border-white/10 rounded-full text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-amber-400 font-medium"
+            className="w-full sm:w-64 pl-10 pr-3 py-2 bg-white/5 border border-white/10 rounded-full text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-purple-400 font-medium"
           />
         </div>
       </div>
@@ -175,7 +175,7 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-1">
                       <div>
-                        <h4 className="font-black text-[var(--text-heading)] text-sm truncate group-hover:text-amber-200 transition-colors">
+                        <h4 className="font-black text-[var(--text-heading)] text-sm truncate group-hover:text-purple-200 transition-colors">
                           {recipe.name}
                         </h4>
                         {onUpdateRecipeLevel && (
@@ -184,7 +184,7 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
                             <select
                               value={config?.recipeLevels?.[recipe.name] || 1}
                               onChange={(e) => onUpdateRecipeLevel(recipe.name, parseInt(e.target.value, 10))}
-                              className="bg-[var(--surface-inner)] border border-[var(--surface-border)] text-amber-300 font-black text-xs rounded-lg px-2 py-0.5 focus:ring-1 focus:ring-amber-400 focus:outline-none tabular-nums"
+                              className="bg-[var(--surface-inner)] border border-[var(--surface-border)] text-white font-black text-xs rounded-lg px-2 py-0.5 focus:ring-1 focus:ring-purple-400 focus:outline-none tabular-nums"
                               title="Guardar tu nivel de esta receta"
                             >
                               {Array.from({ length: 65 }, (_, idx) => idx + 1).map(lvl => (
@@ -197,7 +197,7 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
                         )}
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <div className="text-xs tabular-nums font-black text-amber-300">
+                        <div className="text-xs tabular-nums font-black text-white">
                           {scaledVigor.toLocaleString()} pts
                         </div>
                         {previewLevel > 1 && (
@@ -274,7 +274,7 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
             .map(([name, meta]) => (
               <div
                 key={name}
-                className="bg-white/[0.06] border border-white/10 hover:border-amber-400/30 rounded-2xl p-2.5 flex items-center justify-between text-xs transition-colors"
+                className="bg-white/[0.06] border border-white/10 hover:border-purple-400/30 rounded-2xl p-2.5 flex items-center justify-between text-xs transition-colors"
               >
                 <div className="flex items-center gap-1.5 min-w-0 mr-1">
                   <img
@@ -285,7 +285,7 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
                   />
                   <span className="text-[var(--text-creamy)] font-medium truncate">{name}</span>
                 </div>
-                <span className="font-black tabular-nums text-amber-300 flex-shrink-0">
+                <span className="font-black tabular-nums text-white flex-shrink-0">
                   {meta.vigor}
                 </span>
               </div>

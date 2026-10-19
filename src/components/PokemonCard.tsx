@@ -86,7 +86,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
     'Bayas': { bg: 'bg-rose-500/15', text: 'text-rose-300', border: 'border-rose-500/30' },
     'Ingredientes': { bg: 'bg-emerald-500/15', text: 'text-emerald-300', border: 'border-emerald-500/30' },
     'Habilidades': { bg: 'bg-indigo-500/15', text: 'text-indigo-300', border: 'border-indigo-500/30' },
-    'Todo': { bg: 'bg-amber-500/15', text: 'text-amber-300', border: 'border-amber-500/30' }
+    'Todo': { bg: 'bg-purple-500/15', text: 'text-purple-200', border: 'border-purple-500/30' }
   }[pokemon.specialty] || { bg: 'bg-slate-800', text: 'text-slate-300', border: 'border-slate-700' };
 
   // Primary sprite URL according to user preference (showdown, sleep, artwork)
@@ -124,7 +124,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
             else setShowDetailModal(true);
           }}
           className={`h-[144px] max-h-[144px] min-h-[144px] glass-dreamy rounded-[26px] border border-white/10 p-2.5 relative overflow-hidden flex items-stretch gap-2.5 transition-all cursor-pointer group select-none active:scale-[0.99] hover:border-white/20 hover:shadow-xl ${
-            isFavoriteBerry ? 'ring-2 ring-amber-300/40' : ''
+            isFavoriteBerry ? 'ring-2 ring-purple-300/40' : ''
           }`}
           title="Toca para editar o ver detalles completos"
         >
@@ -152,7 +152,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
                   </span>
                 )}
                 {isShiny && (
-                  <span className="text-[8px] font-black text-amber-200 bg-amber-400/20 px-1.5 py-0.2 rounded-full flex items-center gap-0.5">
+                  <span className="text-[8px] font-black text-purple-200 bg-purple-500/20 px-1.5 py-0.2 rounded-full flex items-center gap-0.5">
                     <Sparkles className="w-2 h-2" />
                   </span>
                 )}
@@ -225,7 +225,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
             {/* Slot 1: Baya & Producción */}
             <div className={`px-2 py-1 rounded-lg flex items-center justify-between text-[11px] ${
               isFavoriteBerry
-                ? 'bg-amber-400/15 text-amber-100'
+                ? 'bg-purple-500/15 text-purple-100'
                 : 'bg-white/[0.06] text-slate-100'
             }`}>
               <div className="flex items-center gap-1.5 truncate">
@@ -238,9 +238,9 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
                 <span className="truncate font-semibold text-[10px]">{pokemon.berry}</span>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0 tabular-nums">
-                <span className="font-black text-[10px] text-amber-300">×{berryMultiplier}</span>
+                <span className="font-black text-[10px] text-white">×{berryMultiplier}</span>
                 {isFavoriteBerry && (
-                  <span className="text-[8px] bg-amber-400/30 text-amber-300 px-1.5 py-0.2 rounded-full font-black">
+                  <span className="text-[8px] bg-purple-500/30 text-purple-200 px-1.5 py-0.2 rounded-full font-black">
                     ⭐ Fav
                   </span>
                 )}
@@ -254,7 +254,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
                   <img
                     src={mainSkillMeta.iconUrl}
                     alt=""
-                    className="w-3.5 h-3.5 object-contain flex-shrink-0"
+                    className="w-3 h-3 object-contain flex-shrink-0"
                     onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
                   />
                 ) : (
@@ -276,7 +276,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
                 {activeIngredients.map((ing, idx) => (
                   <span
                     key={idx}
-                    className="flex items-center gap-1 bg-amber-500/15 text-amber-100 px-2 py-0.5 rounded-full text-[10px] tabular-nums"
+                    className="flex items-center gap-1 bg-purple-500/15 text-purple-100 px-2 py-0.5 rounded-full text-[10px] tabular-nums"
                     title={`${ing.name} ×${ing.count}`}
                   >
                     <img
@@ -313,7 +313,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
                     e.stopPropagation();
                     setShowEvolutionModal(true);
                   }}
-                  className="flex items-center gap-0.5 text-[8px] font-display font-bold text-amber-200 bg-amber-500/25 hover:bg-amber-500 hover:text-slate-950 px-2 py-0.5 rounded-full transition-all"
+                  className="flex items-center gap-0.5 text-[8px] font-display font-bold text-purple-200 bg-purple-500/25 hover:bg-purple-500 hover:text-white px-2 py-0.5 rounded-full transition-all"
                   title="Evolucionar Pokémon"
                 >
                   <Dna className="w-2.5 h-2.5" />
@@ -362,7 +362,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
                     </span>
                     <span className={`text-[10px] font-black px-2 py-0.2 rounded-full border ${
                       genetic.score >= 88 ? 'bg-violet-500/20 text-violet-200 border-violet-400/40' :
-                      genetic.score >= 76 ? 'bg-amber-400/20 text-amber-200 border-amber-400/40' :
+                      genetic.score >= 76 ? 'bg-purple-500/20 text-purple-200 border-purple-400/40' :
                       genetic.score >= 64 ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/40' :
                       genetic.score >= 50 ? 'bg-blue-400/20 text-blue-200 border-blue-400/40' :
                       'bg-slate-700 text-slate-300 border-slate-600'
@@ -376,7 +376,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
                     )}
                   </div>
                   <div className="flex items-center gap-2 text-xs text-slate-300 mt-1">
-                    <span className="tabular-nums font-bold text-amber-300">PA {pokemon.rp.toLocaleString()}</span>
+                    <span className="tabular-nums font-bold text-white">PA {pokemon.rp.toLocaleString()}</span>
                     <span>•</span>
                     <span className="text-slate-400 tabular-nums font-medium flex items-center gap-1">
                       <Clock className="w-3 h-3 text-[var(--accent-primary)]" />
@@ -399,7 +399,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-200">
                     <img src={getBerrySpriteUrl(pokemon.berry)} alt={pokemon.berry} className="w-4 h-4 object-contain" />
                     <span>{pokemon.berry}</span>
-                    {isFavoriteBerry && <span className="text-amber-400 font-black">⭐</span>}
+                    {isFavoriteBerry && <span className="text-purple-300 font-black">⭐</span>}
                   </div>
                 </div>
               </div>
@@ -436,7 +436,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
                   {pokemon.subskills.map((sub, idx) => {
                     const tierStyles = {
                       'gold': sub.enabled
-                        ? 'bg-amber-400/20 text-amber-300 border-amber-400/50 font-black'
+                        ? 'bg-purple-500/20 text-purple-100 border-purple-400/40 font-black'
                         : 'bg-slate-900/50 text-slate-500 border-slate-800 line-through',
                       'blue': sub.enabled
                         ? 'bg-indigo-500/20 text-indigo-200 border-indigo-400/50 font-bold'
@@ -485,7 +485,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
                         <img src={getIngredientSpriteUrl(ing.name)} alt={ing.name} className="w-4 h-4 object-contain" />
                         <span>{ing.name}</span>
                       </div>
-                      <span className={`tabular-nums font-bold ${ing.enabled ? 'text-amber-400' : 'text-slate-500'}`}>
+                      <span className={`tabular-nums font-bold ${ing.enabled ? 'text-white' : 'text-slate-500'}`}>
                         ×{ing.count} (Nv.{ing.unlockLevel})
                       </span>
                     </div>
@@ -507,10 +507,10 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
                     onClick={() => {
                       setShowEvolutionModal(true);
                     }}
-                    className="btn-cozy-secondary px-3.5 py-2 text-xs flex items-center gap-1.5 text-amber-300 border-amber-400/30"
+                    className="btn-cozy-secondary px-3.5 py-2 text-xs flex items-center gap-1.5 text-purple-200 border-purple-400/30"
                     title={`Evolucionar a ${pokemon.name}`}
                   >
-                    <Dna className="w-3.5 h-3.5 text-amber-300" />
+                    <Dna className="w-3.5 h-3.5 text-purple-300" />
                     <span>Evolucionar</span>
                   </button>
                 )}
@@ -569,7 +569,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
           else setShowDetailModal(true);
         }}
         className={`pokeball-watermark glass-dreamy rounded-[28px] border border-white/10 transition-all duration-300 relative overflow-hidden group hover:-translate-y-1 hover:border-white/20 hover:shadow-2xl flex flex-col justify-between cursor-pointer active:scale-[0.995] ${
-          isFavoriteBerry ? 'ring-2 ring-amber-300/40' : ''
+          isFavoriteBerry ? 'ring-2 ring-purple-400/40' : ''
         } p-4 sm:p-5`}
         title="Toca para editar Pokémon"
       >
@@ -588,7 +588,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
               </span>
             )}
             {isShiny && (
-              <span className="text-[9px] font-black text-amber-300 bg-amber-400/20 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+              <span className="text-[9px] font-black text-white bg-white/20 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
                 <Sparkles className="w-2.5 h-2.5" /> Shiny
               </span>
             )}
@@ -601,7 +601,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
 
           <div className="flex items-center gap-1.5">
             {isFavoriteBerry && (
-              <span className="bg-amber-400/20 text-amber-300 font-display font-bold text-[9px] px-2.5 py-0.5 rounded-full border border-amber-400/30 uppercase tracking-wider flex items-center gap-1">
+              <span className="bg-purple-500/20 text-purple-200 font-display font-bold text-[9px] px-2.5 py-0.5 rounded-full border border-purple-300/30 uppercase tracking-wider flex items-center gap-1">
                 <Star className="w-2.5 h-2.5 fill-current" /> ×2 Baya
               </span>
             )}
@@ -612,7 +612,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
                   e.stopPropagation();
                   setShowEvolutionModal(true);
                 }}
-                className="p-2 rounded-xl bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 transition-all shadow"
+                className="p-2 rounded-xl bg-purple-500/20 hover:bg-purple-500 text-purple-200 hover:text-white transition-all shadow"
                 title={`Evolucionar ${pokemon.name}`}
               >
                 <Dna className="w-3.5 h-3.5" />
@@ -804,7 +804,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
               {pokemon.subskills.map((sub, idx) => {
                 const tierStyles = {
                   'gold': sub.enabled
-                    ? 'bg-amber-500/20 text-amber-100 border border-amber-300/30 font-bold shadow-sm'
+                    ? 'bg-purple-500/20 text-purple-100 border border-purple-300/30 font-bold shadow-sm'
                     : 'bg-white/[0.03] text-slate-500 line-through',
                   'blue': sub.enabled
                     ? 'bg-indigo-500/20 text-indigo-200 border border-indigo-400/30 font-bold shadow-sm'

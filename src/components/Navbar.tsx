@@ -107,7 +107,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <span>{tab.label}</span>
                     {tab.count !== undefined && (
                       <span className={`text-[10px] px-1.5 py-0.2 rounded-full tabular-nums font-black ${
-                        isActive ? 'bg-black/20 text-white' : 'bg-black/30 text-amber-200'
+                        isActive ? 'bg-indigo-950/15 text-indigo-950' : 'bg-white/10 text-white'
                       }`}>
                         {tab.count}
                       </span>

@@ -537,8 +537,8 @@ export const MAIN_SKILLS_META: Record<string, MainSkillMeta> = {
   },
   'Cocinitas S': {
     name: 'Cocinitas S',
-    badgeBg: 'bg-amber-500/20 border-amber-400/40',
-    badgeText: 'text-amber-300',
+    badgeBg: 'bg-purple-500/20 border-purple-400/40',
+    badgeText: 'text-purple-200',
     iconSymbol: '🍳',
     category: 'pot'
   },
@@ -663,8 +663,8 @@ export const MAIN_SKILLS_META: Record<string, MainSkillMeta> = {
   },
   'Moflete Estático (Ánimo enérgico S)': {
     name: 'Moflete Estático (Ánimo enérgico S)',
-    badgeBg: 'bg-amber-500/20 border-amber-400/40',
-    badgeText: 'text-amber-300',
+    badgeBg: 'bg-purple-500/20 border-purple-400/40',
+    badgeText: 'text-purple-200',
     iconSymbol: '🐹',
     category: 'energy'
   },

@@ -290,11 +290,11 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
   return (
     <div className="space-y-6 my-6">
       {/* Top Header */}
-      <div className="cozy-card pokeball-watermark p-5 sm:p-6 rounded-3xl relative overflow-hidden border border-[var(--surface-border)] shadow-xl">
+      <div className="glass-dreamy pokeball-watermark p-5 sm:p-6 rounded-[28px] relative overflow-hidden border border-white/10 shadow-xl">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
           <div>
-            <div className="flex items-center gap-2 text-amber-400 text-xs font-black uppercase tracking-wider mb-1">
-              <Swords className="w-4 h-4 text-amber-400" />
+            <div className="flex items-center gap-2 text-purple-200 text-xs font-black uppercase tracking-wider mb-1">
+              <Swords className="w-4 h-4 text-purple-300" />
               <span>Laboratorio de Campamento</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-display font-bold text-[var(--text-heading)] tracking-tight flex items-center gap-2">
@@ -306,15 +306,15 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
           </div>
 
           {/* Snorlax Context Pills */}
-          <div className="flex flex-wrap items-center gap-2 bg-[var(--surface-inner)] p-2.5 rounded-2xl border border-[var(--surface-border)] self-start md:self-auto text-xs shadow-inner">
-            <span className="flex items-center gap-1.5 text-slate-200 font-bold px-2.5 py-1 rounded-full bg-white/5 border border-white/10">
+          <div className="flex flex-wrap items-center gap-2 bg-white/[0.06] p-2 rounded-full border border-white/10 self-start md:self-auto text-xs shadow-inner">
+            <span className="flex items-center gap-1.5 text-slate-200 font-bold px-3 py-1 rounded-full bg-white/5 border border-white/10">
               <span>{config.dishType === 'curry' ? '🍲' : config.dishType === 'salad' ? '🥗' : '☕'}</span>
               <span className="capitalize">{config.dishType === 'curry' ? 'Curris' : config.dishType === 'salad' ? 'Ensaladas' : 'Postres'}</span>
             </span>
 
             <span className="text-slate-200 tabular-nums font-bold px-3 py-1 rounded-full bg-white/5 border border-white/10 flex items-center gap-1">
               <span>Puchero: {getEffectivePotCapacity(config)}</span>
-              {config.goodCampTicket && <span className="text-amber-400 text-[10px]">🏕️ (+50%)</span>}
+              {config.goodCampTicket && <span className="text-purple-200 text-[10px]">🏕️ (+50%)</span>}
             </span>
 
             {onToggleGoodCampTicket && (
@@ -322,25 +322,25 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                 onClick={onToggleGoodCampTicket}
                 className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-bold transition-all ${
                   config.goodCampTicket
-                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
+                    ? 'bg-white/15 text-white border-white/25 shadow-sm'
                     : 'bg-white/5 text-slate-400 border-white/10 hover:text-slate-200'
                 }`}
                 title="Pase de Acampada (+50% Olla, +20% velocidad)"
               >
                 <span>🏕️ Pase</span>
-                <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-black ${config.goodCampTicket ? 'bg-amber-400 text-slate-950' : 'bg-slate-800 text-slate-400'}`}>
+                <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-black ${config.goodCampTicket ? 'bg-white text-indigo-950 font-black' : 'bg-slate-800 text-slate-400'}`}>
                   {config.goodCampTicket ? 'ACTIVO' : 'OFF'}
                 </span>
               </button>
             )}
 
             {onUpdateAreaBonus && (
-              <label className="flex items-center gap-1.5 text-amber-300 font-bold cursor-pointer bg-white/5 px-3 py-1 rounded-full border border-white/10 transition-all">
+              <label className="flex items-center gap-1.5 text-slate-200 font-bold cursor-pointer bg-white/5 px-3 py-1 rounded-full border border-white/10 transition-all">
                 <span className="text-[11px] text-slate-400">🏝️ Zona:</span>
                 <select
                   value={config.areaBonus || 0}
                   onChange={(e) => onUpdateAreaBonus(Number(e.target.value))}
-                  className="bg-transparent text-amber-300 tabular-nums font-bold focus:outline-none cursor-pointer text-xs"
+                  className="bg-transparent text-white tabular-nums font-bold focus:outline-none cursor-pointer text-xs"
                 >
                   {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75].map(b => (
                     <option key={b} value={b} className="bg-slate-900 text-slate-200">
@@ -366,34 +366,34 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
         </div>
 
         {/* Team Tabs & Action Buttons */}
-        <div className="mt-5 pt-4 border-t border-[var(--surface-border)] flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
-          <div className="flex items-center gap-1 bg-[var(--surface-inner)] p-1 rounded-2xl border border-[var(--surface-border)] shadow-inner">
+        <div className="mt-5 pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
+          <div className="flex items-center gap-1.5 bg-white/[0.08] backdrop-blur-2xl p-1 rounded-full border border-white/10 shadow-inner">
             <button
               onClick={() => setActiveCustomTeamIndex(0)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${
                 activeCustomTeamIndex === 0
-                  ? 'bg-amber-400 text-slate-950 font-black shadow-md shadow-amber-400/25'
-                  : 'text-slate-300 hover:text-white hover:bg-white/5'
+                  ? 'btn-dreamy-pearl text-indigo-950 font-black shadow-lg scale-[1.02]'
+                  : 'text-slate-300 hover:text-white hover:bg-white/10'
               }`}
             >
               <span>⭐ Mi Equipo 1</span>
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-lg tabular-nums font-bold ${
-                activeCustomTeamIndex === 0 ? 'bg-black/20 text-slate-950' : 'bg-white/10 text-slate-400'
+              <span className={`text-[10px] px-2 py-0.5 rounded-full tabular-nums font-bold ${
+                activeCustomTeamIndex === 0 ? 'bg-indigo-950/15 text-indigo-950 font-black' : 'bg-white/10 text-slate-300'
               }`}>
                 {team1Ids.filter(Boolean).length}/5
               </span>
             </button>
             <button
               onClick={() => setActiveCustomTeamIndex(1)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${
                 activeCustomTeamIndex === 1
-                  ? 'bg-amber-400 text-slate-950 font-black shadow-md shadow-amber-400/25'
-                  : 'text-slate-300 hover:text-white hover:bg-white/5'
+                  ? 'btn-dreamy-pearl text-indigo-950 font-black shadow-lg scale-[1.02]'
+                  : 'text-slate-300 hover:text-white hover:bg-white/10'
               }`}
             >
               <span>🌟 Mi Equipo 2</span>
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-lg tabular-nums font-bold ${
-                activeCustomTeamIndex === 1 ? 'bg-black/20 text-slate-950' : 'bg-white/10 text-slate-400'
+              <span className={`text-[10px] px-2 py-0.5 rounded-full tabular-nums font-bold ${
+                activeCustomTeamIndex === 1 ? 'bg-indigo-950/15 text-indigo-950 font-black' : 'bg-white/10 text-slate-300'
               }`}>
                 {team2Ids.filter(Boolean).length}/5
               </span>
@@ -405,7 +405,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
             {config.currentTeam?.pokemonIds && config.currentTeam.pokemonIds.length > 0 && (
               <button
                 onClick={handleLoadCurrentTeam}
-                className="btn-cozy-secondary px-3.5 py-2 text-xs text-emerald-300 border-emerald-500/30 flex items-center gap-1.5"
+                className="btn-dreamy-ghost px-3.5 py-2 text-xs text-white border-white/20 flex items-center gap-1.5"
                 title="Cargar los Pokémon que tienes marcados como tu Equipo Actual en Juego"
               >
                 <Download className="w-3.5 h-3.5" />
@@ -416,17 +416,17 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
             {/* Set as in-game team button or badge */}
             {currentTeamPokemons.length === 5 && (
               isCurrentCustomTeamInGame ? (
-                <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-xs font-bold shadow-sm">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-100 text-xs font-bold shadow-sm">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-indigo-300" />
                   <span>En Juego ⭐</span>
                 </div>
               ) : (
                 <button
                   onClick={handleSaveAsCurrentTeam}
-                  className="btn-cozy-secondary px-3.5 py-2 text-xs text-amber-300 border-amber-400/40 flex items-center gap-1.5"
+                  className="btn-dreamy-ghost px-3.5 py-2 text-xs text-white border-white/20 flex items-center gap-1.5"
                   title="Establecer esta alineación de 5 Pokémon como tu Equipo Actual en Juego"
                 >
-                  {saveTeamStatus ? <Check className="w-3.5 h-3.5" /> : <Star className="w-3.5 h-3.5 fill-current text-amber-300" />}
+                  {saveTeamStatus ? <Check className="w-3.5 h-3.5" /> : <Star className="w-3.5 h-3.5 fill-current text-purple-300" />}
                   <span>{saveTeamStatus || 'Guardar en Juego ⭐'}</span>
                 </button>
               )
@@ -460,7 +460,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
             <div className="flex-1">
               <div className="flex items-center gap-2 text-xs font-display font-bold uppercase tracking-wider text-[var(--text-heading)] mb-3">
-                <Scale className="w-4 h-4 text-amber-400" />
+                <Scale className="w-4 h-4 text-purple-300" />
                 <span>Comparativa de Rendimiento del Campamento</span>
               </div>
 
@@ -468,11 +468,11 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                 {/* Recommended Score */}
                 <div className="bg-[var(--surface-inner)] p-4 rounded-2xl border border-[var(--surface-border)] shadow-inner">
                   <div className="flex items-center justify-between gap-1 mb-1">
-                    <span className="text-[11px] text-amber-300 font-bold flex items-center gap-1 uppercase tracking-wider">
+                    <span className="text-[11px] text-purple-200 font-bold flex items-center gap-1 uppercase tracking-wider">
                       <Trophy className="w-3.5 h-3.5" /> Recomendado
                     </span>
                     {recommendedWeeklyProj && (
-                      <span className="text-[9px] bg-amber-400/20 text-amber-300 font-bold px-2 py-0.5 rounded-full border border-amber-400/30 truncate">
+                      <span className="text-[9px] bg-white/10 text-white font-bold px-2 py-0.5 rounded-full border border-white/15 truncate">
                         🏅 {recommendedWeeklyProj.estadoRangoFinal.rangoActual}
                       </span>
                     )}
@@ -483,7 +483,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                   <div className="flex items-center justify-between text-[10px] text-[var(--text-muted)] tabular-nums mt-0.5">
                     <span>pts / día</span>
                     {recommendedWeeklyProj && (
-                      <span className="text-amber-300 font-bold">
+                      <span className="text-purple-200 font-bold">
                         ~{recommendedWeeklyProj.vigorFinalSemana.toLocaleString()} /sem
                       </span>
                     )}
@@ -538,7 +538,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
               <div className="mt-3.5 pt-3 border-t border-white/10 space-y-1.5">
                 {comparisonDiff.reasons.map((r, idx) => (
                   <div key={idx} className="text-xs text-slate-300 flex items-center gap-2">
-                    <span className="text-amber-400 text-xs">💡</span>
+                    <span className="text-purple-300 text-xs">💡</span>
                     <span>{r}</span>
                   </div>
                 ))}
@@ -568,7 +568,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
               </div>
 
               <div className="bg-white/[0.04] p-3.5 rounded-2xl border border-white/10 text-center text-xs shadow-inner">
-                <span className="text-amber-300 text-[10px] font-black uppercase tracking-wider block mb-1">⚡ Skill</span>
+                <span className="text-purple-300 text-[10px] font-black uppercase tracking-wider block mb-1">⚡ Skill</span>
                 <div className="tabular-nums text-white text-xs font-black">
                   {customEvaluation.skillVigorDaily.toLocaleString()}
                 </div>
@@ -588,7 +588,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
             <h3 className="font-black text-white text-base flex items-center gap-2">
               <span>{activeCustomTeamIndex === 0 ? '🔵' : '🟣'}</span>
               <span>Alineación de {activeCustomTeamIndex === 0 ? 'Mi Equipo 1' : 'Mi Equipo 2'}</span>
-              <span className="text-xs px-3 py-1 rounded-full bg-white/10 text-amber-300 tabular-nums font-black border border-white/10">
+              <span className="text-xs px-3 py-1 rounded-full bg-white/10 text-white tabular-nums font-black border border-white/15">
                 {currentTeamPokemons.length} / 5 Compañeros
               </span>
             </h3>
@@ -608,16 +608,16 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                 <button
                   key={slotIdx}
                   onClick={() => setPickerSlotIndex(slotIdx)}
-                  className="h-[142px] max-h-[142px] min-h-[142px] rounded-2xl border-2 border-dashed border-[var(--surface-border)] hover:border-amber-400/50 bg-[var(--surface-inner)]/50 hover:bg-[var(--surface-inner)] p-3 flex items-center justify-center gap-3 transition-all group shadow-sm relative overflow-hidden"
+                  className="h-[142px] max-h-[142px] min-h-[142px] rounded-2xl border-2 border-dashed border-white/15 hover:border-white/30 bg-white/[0.03] hover:bg-white/[0.07] p-3 flex items-center justify-center gap-3 transition-all group shadow-sm relative overflow-hidden"
                 >
-                  <div className="w-12 h-12 rounded-xl bg-amber-400/10 group-hover:bg-amber-400/20 border border-amber-400/20 group-hover:border-amber-400/40 flex items-center justify-center transition-all shadow-inner flex-shrink-0">
-                    <Plus className="w-5 h-5 text-amber-300 group-hover:scale-110 transition-transform" />
+                  <div className="w-12 h-12 rounded-xl bg-white/10 group-hover:bg-white/15 border border-white/20 flex items-center justify-center transition-all shadow-inner flex-shrink-0">
+                    <Plus className="w-5 h-5 text-white group-hover:scale-110 transition-transform" />
                   </div>
                   <div className="text-left">
-                    <span className="text-[10px] tabular-nums font-black text-amber-300 block">
+                    <span className="text-[10px] tabular-nums font-black text-purple-200 block">
                       Espacio #{slotIdx + 1}
                     </span>
-                    <span className="text-xs font-bold text-white group-hover:text-amber-200 transition-colors">
+                    <span className="text-xs font-bold text-white group-hover:text-purple-100 transition-colors">
                       + Elegir Pokémon
                     </span>
                   </div>
@@ -686,13 +686,13 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
         <div className="cozy-card p-5 sm:p-6 border border-[var(--surface-border)] shadow-xl">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <Utensils className="w-5 h-5 text-amber-300" />
+              <Utensils className="w-5 h-5 text-purple-300" />
               <h3 className="font-bold text-white text-base">
                 Plan Culinario y Relleno de {activeCustomTeamIndex === 0 ? 'Mi Equipo 1' : 'Mi Equipo 2'}
               </h3>
             </div>
             <span className="text-xs bg-[var(--surface-inner)] border border-[var(--surface-border)] px-3 py-1 rounded-full text-[var(--text-creamy)] tabular-nums">
-              Vigor Cocina: <strong className="text-amber-300 font-black tabular-nums">{customEvaluation.cookingVigorDaily.toLocaleString()}</strong> pts/día
+              Vigor Cocina: <strong className="text-white font-black tabular-nums">{customEvaluation.cookingVigorDaily.toLocaleString()}</strong> pts/día
             </span>
           </div>
 
@@ -704,11 +704,11 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
               >
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-black uppercase tracking-wider text-amber-300">
+                    <span className="text-xs font-black uppercase tracking-wider text-purple-200">
                       {meal.mealName}
                     </span>
                     <div className="text-right">
-                      <span className="text-xs tabular-nums font-black text-amber-300">
+                      <span className="text-xs tabular-nums font-black text-white">
                         +{meal.totalMealVigor.toLocaleString()} pts
                       </span>
                       <span className="block text-[9px] text-[var(--text-muted)] font-sans">
@@ -745,7 +745,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                             <select
                               value={meal.recipeLevel || 1}
                               onChange={(e) => onUpdateRecipeLevel(meal.recipe.name, parseInt(e.target.value, 10))}
-                              className="bg-[var(--surface-inner)] border border-[var(--surface-border)] text-amber-300 font-bold text-xs rounded-lg px-1.5 py-0.5 focus:ring-1 focus:ring-amber-400 focus:outline-none tabular-nums"
+                              className="bg-[var(--surface-inner)] border border-[var(--surface-border)] text-white font-bold text-xs rounded-lg px-1.5 py-0.5 focus:ring-1 focus:ring-white/40 focus:outline-none tabular-nums"
                               title="Ajustar el nivel real de esta receta en tu juego"
                             >
                               {Array.from({ length: 65 }, (_, idx) => idx + 1).map(lvl => (
@@ -802,7 +802,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                     <div>
                       <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center justify-between">
                         <span>Relleno Adicional</span>
-                        <span className="text-[10px] text-amber-200/90 font-bold tabular-nums">
+                        <span className="text-[10px] text-purple-200 font-bold tabular-nums">
                           +{meal.fillerVigor.toLocaleString()} pts
                         </span>
                       </div>
@@ -840,11 +840,11 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                     <span className="text-[var(--text-muted)]">Total en olla:</span>
                     <span className="text-white font-semibold">{(meal.recipeVigor + meal.fillerVigor).toLocaleString()} pts</span>
                   </div>
-                  <div className="flex items-center justify-between text-amber-200 font-bold">
+                  <div className="flex items-center justify-between text-purple-200 font-bold">
                     <span>Plato Normal {(config.areaBonus || 0) > 0 ? `(+${config.areaBonus}% Zona)` : ''}:</span>
                     <span>{Math.round((meal.recipeVigor + meal.fillerVigor) * (1 + (config.areaBonus || 0) / 100)).toLocaleString()} pts</span>
                   </div>
-                  <div className="flex items-center justify-between text-amber-300 font-bold">
+                  <div className="flex items-center justify-between text-white font-bold">
                     <span>Si sale ¡Riquísimo! ({config.isSunday ? '×3' : '×2'}):</span>
                     <span>{Math.round((meal.recipeVigor + meal.fillerVigor) * (1 + (config.areaBonus || 0) / 100) * (config.isSunday ? 3 : 2)).toLocaleString()} pts</span>
                   </div>
@@ -872,7 +872,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                       className="w-3.5 h-3.5 object-contain"
                     />
                     <span>{name}</span>
-                    <span className="font-bold text-amber-400 tabular-nums">+{count}</span>
+                    <span className="font-black text-white tabular-nums">+{count}</span>
                   </span>
                 ))}
             </div>
@@ -955,13 +955,13 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                   type="checkbox"
                   checked={pickerOnlyFavorites}
                   onChange={(e) => setPickerOnlyFavorites(e.target.checked)}
-                  className="rounded bg-slate-900 border-[var(--surface-border)] text-amber-500 focus:ring-amber-500 h-4 w-4"
+                  className="rounded bg-slate-900 border-[var(--surface-border)] text-purple-400 focus:ring-purple-400 h-4 w-4"
                 />
                 <span className="text-slate-200 flex items-center gap-1.5 font-bold">
                   <span>🍒</span> Solo con Baya Favorita de la semana (×2)
                 </span>
               </label>
-              <span className="text-amber-300 text-[11px] tabular-nums font-bold">
+              <span className="text-white text-[11px] tabular-nums font-bold">
                 {pickerList.length} disponibles
               </span>
             </div>
@@ -988,10 +988,10 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                       isAlreadyInTeam
                         ? 'bg-[var(--surface-inner)]/30 border-white/5 opacity-40'
                         : wouldConflictSpecial
-                        ? 'bg-amber-950/25 border-amber-500/30 hover:border-amber-400'
+                        ? 'bg-rose-950/25 border-rose-500/30 hover:border-rose-400'
                         : isFavorite
-                        ? 'cozy-card border-amber-400/40 hover:border-amber-400'
-                        : 'cozy-card border-[var(--surface-border)] hover:border-amber-400/50 hover:bg-white/5'
+                        ? 'cozy-card border-purple-400/40 hover:border-purple-400'
+                        : 'cozy-card border-[var(--surface-border)] hover:border-white/40 hover:bg-white/5'
                     }`}
                   >
                     {/* Centered Pedestal with Showdown Sprite */}
@@ -1011,7 +1011,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                         }`}
                       />
                       {isShiny && (
-                        <span className="absolute -top-1 -right-1 text-[8px] bg-amber-400 text-slate-950 px-1 rounded-full font-bold z-20">
+                        <span className="absolute -top-1 -right-1 text-[8px] bg-purple-300 text-indigo-950 px-1 rounded-full font-bold z-20">
                           ★
                         </span>
                       )}
@@ -1024,21 +1024,21 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                           {isSpecial && (
                             <span className={`text-[8px] font-black px-1.5 py-0.2 rounded-full flex items-center gap-0.5 ${
                               wouldConflictSpecial
-                                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                                ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
                                 : 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
                             }`} title={wouldConflictSpecial ? 'Ya tienes otro Legendario en el equipo' : 'Pokémon Legendario / Especial'}>
                               👑 {wouldConflictSpecial ? 'Máx 1' : 'Especial'}
                             </span>
                           )}
                         </div>
-                        <span className="text-[9px] font-black text-emerald-300 bg-emerald-500/20 border border-emerald-500/30 px-1.5 py-0.2 rounded-full tabular-nums">
+                        <span className="text-[9px] font-black text-purple-200 bg-purple-500/20 border border-purple-500/30 px-1.5 py-0.2 rounded-full tabular-nums">
                           Nv.{p.level}
                         </span>
                       </div>
 
                       <div className="flex items-center gap-2 text-[10px] text-slate-300 mt-0.5 font-bold">
-                        <span className="tabular-nums text-amber-300 flex items-center gap-0.5 font-bold">
-                          <Zap className="w-2.5 h-2.5 fill-amber-300 text-amber-300" /> PA {p.rp}
+                        <span className="tabular-nums text-white flex items-center gap-0.5 font-bold">
+                          <Zap className="w-2.5 h-2.5 fill-purple-300 text-purple-300" /> PA {p.rp}
                         </span>
                         <span>•</span>
                         <span className="flex items-center gap-1 truncate">
@@ -1047,7 +1047,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                             alt={p.berry}
                             className="w-3.5 h-3.5 object-contain"
                           />
-                          <span className={isFavorite ? 'text-amber-400 font-black' : ''}>
+                          <span className={isFavorite ? 'text-purple-300 font-black' : ''}>
                             {p.berry} {isFavorite && '×2'}
                           </span>
                         </span>
@@ -1066,7 +1066,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                           <span>{mainSkill}</span>
                         </span>
                         {isAlreadyInTeam && (
-                          <span className="text-[9px] text-amber-300 font-bold">
+                          <span className="text-[9px] text-purple-200 font-bold">
                             (En equipo)
                           </span>
                         )}

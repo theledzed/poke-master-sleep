@@ -113,9 +113,9 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
         };
       case 'B':
         return {
-          badge: 'bg-amber-500 text-slate-950 font-bold',
-          glow: 'border-amber-400/40',
-          text: 'text-amber-300'
+          badge: 'bg-indigo-500 text-white font-bold',
+          glow: 'border-indigo-400/40',
+          text: 'text-indigo-300'
         };
       case 'C':
         return {
@@ -164,8 +164,8 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
             </div>
             <div className="h-6 w-px bg-white/10" />
             <div className="text-center px-2">
-              <span className="text-[10px] text-amber-400 uppercase font-bold block">Promesas</span>
-              <span className="text-lg font-black text-amber-300 tabular-nums">{counts.PROMESA_INVERTIR}</span>
+              <span className="text-[10px] text-purple-300 uppercase font-bold block">Promesas</span>
+              <span className="text-lg font-black text-white tabular-nums">{counts.PROMESA_INVERTIR}</span>
             </div>
             <div className="h-6 w-px bg-white/10" />
             <div className="text-center px-2">
@@ -223,12 +223,12 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
             onClick={() => setFilterCategory('TROFEO_CONSERVAR')}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
               filterCategory === 'TROFEO_CONSERVAR'
-                ? 'bg-amber-500 text-slate-950 font-black shadow-sm'
-                : 'text-amber-300 hover:text-white hover:bg-white/5'
+                ? 'bg-purple-500 text-white font-black shadow-sm shadow-purple-500/25'
+                : 'text-purple-300 hover:text-white hover:bg-white/5'
             }`}
           >
             <span>✨ Trofeos</span>
-            <span className="text-[10px] tabular-nums px-1.5 py-0.2 rounded-full bg-amber-950/60 text-amber-200 border border-amber-500/30 font-black">
+            <span className="text-[10px] tabular-nums px-1.5 py-0.2 rounded-full bg-purple-950/60 text-purple-200 border border-purple-500/30 font-black">
               {counts.TROFEO_CONSERVAR}
             </span>
           </button>
@@ -256,7 +256,7 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
             placeholder="Buscar por nombre o nota..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 bg-[var(--surface-inner)] border border-[var(--surface-border)] rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-amber-400 font-medium"
+            className="w-full pl-9 pr-3 py-2 bg-[var(--surface-inner)] border border-[var(--surface-border)] rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-purple-400 font-medium"
           />
         </div>
       </div>
@@ -284,7 +284,7 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
                     : verdict === 'TITULAR_ELITE'
                     ? 'border-emerald-500/35 hover:border-emerald-400/60'
                     : verdict === 'PROMESA_INVERTIR'
-                    ? 'border-amber-400/35 hover:border-amber-400/60'
+                    ? 'border-purple-400/35 hover:border-purple-400/60'
                     : 'border-[var(--surface-border)] hover:border-slate-500'
                 }`}
               >
@@ -311,7 +311,7 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
                       <div>
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <h4 className="font-black text-white text-base leading-tight">{pokemon.name}</h4>
-                          <span className="text-[10px] font-black text-amber-200 bg-amber-500/20 px-2 py-0.2 rounded-full border border-amber-400/30 tabular-nums">
+                          <span className="text-[10px] font-black text-purple-200 bg-purple-500/20 px-2 py-0.2 rounded-full border border-purple-400/30 tabular-nums">
                             Nv. {pokemon.level}
                           </span>
                         </div>

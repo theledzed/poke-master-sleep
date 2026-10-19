@@ -94,14 +94,14 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-200">
       <div className="relative w-full max-w-2xl cozy-card border border-[var(--surface-border)] rounded-3xl shadow-2xl overflow-hidden text-white flex flex-col max-h-[92vh]">
         {/* Glowing Top Ambient Header */}
-        <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-amber-500/10 via-transparent to-transparent pointer-events-none" />
+        <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-purple-500/15 via-transparent to-transparent pointer-events-none" />
 
         {/* Modal Header */}
         <div className="p-4 sm:p-5 border-b border-[var(--surface-border)] flex items-center justify-between relative z-10">
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-300 p-0.5 shadow-lg shadow-amber-500/25 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-500 to-indigo-400 p-0.5 shadow-lg shadow-purple-500/25 flex items-center justify-center">
               <div className="w-full h-full bg-[var(--surface-inner)] rounded-[14px] flex items-center justify-center">
-                <Dna className="w-5 h-5 text-amber-300 animate-pulse" />
+                <Dna className="w-5 h-5 text-purple-200 animate-pulse" />
               </div>
             </div>
             <div>
@@ -109,7 +109,7 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
                 <h3 className="text-base sm:text-lg font-black tracking-tight text-white flex items-center gap-1.5">
                   <span>Laboratorio de Evolución</span>
                 </h3>
-                <span className="text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-400/30 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-black uppercase tracking-wider bg-purple-500/20 text-purple-200 border border-purple-400/30 px-2 py-0.5 rounded-full">
                   What-If
                 </span>
               </div>
@@ -135,7 +135,7 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
             <div>
               <label className="block text-xs font-bold text-slate-200 mb-1.5 flex items-center justify-between">
                 <span>Ramas de Evolución Disponibles ({availableEvolutions.length})</span>
-                <span className="text-[10px] text-amber-300 font-semibold">Selecciona tu objetivo</span>
+                <span className="text-[10px] text-purple-200 font-semibold">Selecciona tu objetivo</span>
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                 {availableEvolutions.map((target, idx) => {
@@ -148,7 +148,7 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
                       onClick={() => setSelectedTargetIndex(idx)}
                       className={`flex items-center gap-2 p-2 rounded-xl border text-xs font-bold transition-all text-left ${
                         isSelected
-                          ? 'bg-amber-500/25 border-amber-400 text-white shadow-md shadow-amber-500/20 ring-1 ring-amber-400'
+                          ? 'bg-purple-500/25 border-purple-400 text-white shadow-md shadow-purple-500/20 ring-1 ring-purple-400'
                           : 'bg-slate-900/70 border-slate-800 text-slate-300 hover:bg-white/5 hover:border-slate-700'
                       }`}
                     >
@@ -191,7 +191,7 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
                 <div className="min-w-0">
                   <h4 className="font-black text-sm text-[var(--text-heading)] truncate">{pokemon.name}</h4>
                   <p className="text-[11px] text-slate-400 truncate">{pokemon.specialty}</p>
-                  <p className="text-[11px] tabular-nums text-amber-300 font-bold">{preview.frequencyStrBefore}</p>
+                  <p className="text-[11px] tabular-nums text-white font-bold">{preview.frequencyStrBefore}</p>
                 </div>
               </div>
 
@@ -216,30 +216,30 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
 
             {/* Center Transformation Pillar */}
             <div className="sm:col-span-1 flex sm:flex-col items-center justify-center gap-1.5 py-1 sm:py-0">
-              <div className="w-8 h-8 rounded-full bg-amber-500/20 border border-amber-400/40 flex items-center justify-center shadow-md shadow-amber-500/10">
-                <ArrowRight className="w-4 h-4 text-amber-300 transform sm:rotate-0 rotate-90" />
+              <div className="w-8 h-8 rounded-full bg-purple-500/20 border border-purple-400/40 flex items-center justify-center shadow-md shadow-purple-500/10">
+                <ArrowRight className="w-4 h-4 text-purple-200 transform sm:rotate-0 rotate-90" />
               </div>
             </div>
 
             {/* Right Card: Evolved Stage */}
             <div
-              className={`sm:col-span-5 bg-gradient-to-br from-amber-500/10 via-[var(--surface-card)] to-[var(--surface-inner)] border border-amber-400/40 rounded-2xl p-3.5 space-y-2.5 relative overflow-hidden shadow-lg shadow-amber-500/10 transition-all ${
-                isEvolvingAnimation ? 'ring-4 ring-amber-400 scale-[1.02] duration-300' : ''
+              className={`sm:col-span-5 bg-gradient-to-br from-purple-500/10 via-[var(--surface-card)] to-[var(--surface-inner)] border border-purple-400/40 rounded-2xl p-3.5 space-y-2.5 relative overflow-hidden shadow-lg shadow-purple-500/10 transition-all ${
+                isEvolvingAnimation ? 'ring-4 ring-purple-400 scale-[1.02] duration-300' : ''
               }`}
             >
               {/* Subtle Aura */}
-              <div className="absolute -top-10 -right-10 w-24 h-24 bg-amber-400/15 rounded-full blur-xl pointer-events-none" />
+              <div className="absolute -top-10 -right-10 w-24 h-24 bg-purple-400/15 rounded-full blur-xl pointer-events-none" />
 
-              <div className="flex items-center justify-between text-[11px] font-bold text-amber-300 border-b border-amber-400/20 pb-1.5">
+              <div className="flex items-center justify-between text-[11px] font-bold text-purple-200 border-b border-purple-400/20 pb-1.5">
                 <span className="flex items-center gap-1">
-                  <Dna className="w-3.5 h-3.5 text-amber-300" />
+                  <Dna className="w-3.5 h-3.5 text-purple-200" />
                   <span>Tras Evolucionar</span>
                 </span>
                 <span className="tabular-nums text-emerald-400 font-black">Nv. {pokemon.level}</span>
               </div>
 
               <div className="flex items-center gap-3">
-                <div className="w-16 h-16 rounded-2xl bg-white/[0.06] border border-amber-400/40 p-1 flex items-center justify-center flex-shrink-0 relative overflow-hidden shadow-md">
+                <div className="w-16 h-16 rounded-2xl bg-white/[0.06] border border-purple-400/40 p-1 flex items-center justify-center flex-shrink-0 relative overflow-hidden shadow-md">
                   <img
                     src={targetArtworkUrl}
                     alt={targetMaster.name}
@@ -272,9 +272,9 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
               <div className="space-y-1.5 text-xs pt-1">
                 <div className="flex items-center justify-between bg-[var(--surface-inner)] border border-[var(--surface-border)] px-2 py-1 rounded-lg">
                   <span className="text-slate-300 text-[11px]">Habilidad:</span>
-                  <span className="font-bold text-amber-300 truncate max-w-[140px] text-right flex items-center gap-1">
+                  <span className="font-bold text-purple-200 truncate max-w-[140px] text-right flex items-center gap-1">
                     <span>Nv. {preview.skillLevelAfter}</span>
-                    <span className="text-[9px] bg-amber-400/20 text-amber-300 px-1 rounded font-black">+1</span>
+                    <span className="text-[9px] bg-purple-400/20 text-purple-200 px-1 rounded font-black">+1</span>
                   </span>
                 </div>
                 <div className="flex items-center justify-between bg-[var(--surface-inner)] border border-[var(--surface-border)] px-2 py-1 rounded-lg">
@@ -337,13 +337,13 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
             type="button"
             onClick={handleEvolve}
             disabled={isEvolvingAnimation}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-xs transition-all shadow-lg ${
+            className={`btn-dreamy-pearl flex items-center gap-2 px-6 py-2.5 rounded-full font-black text-xs text-indigo-950 transition-all shadow-xl ${
               isEvolvingAnimation
-                ? 'bg-amber-500 text-slate-950 shadow-amber-500/30 scale-95 ring-2 ring-white'
-                : 'bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-slate-950 shadow-amber-500/25 hover:scale-[1.02] active:scale-95'
+                ? 'scale-95 ring-2 ring-purple-300 opacity-90'
+                : 'hover:scale-[1.02] active:scale-95'
             }`}
           >
-            <Dna className={`w-4 h-4 ${isEvolvingAnimation ? 'animate-spin' : ''}`} />
+            <Dna className={`w-4 h-4 text-indigo-950 ${isEvolvingAnimation ? 'animate-spin' : ''}`} />
             <span>
               {isEvolvingAnimation ? '¡Evolucionando Pokémon...!' : `¡Evolucionar a ${targetMaster.name}!`}
             </span>

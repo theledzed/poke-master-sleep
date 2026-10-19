@@ -164,7 +164,7 @@ export const ViewSettingsDropdown: React.FC<ViewSettingsDropdownProps> = ({
           <div>
             <div className="text-[9px] uppercase font-bold text-slate-400 px-2 mb-1 flex items-center justify-between">
               <span>Estilo de Pokémon</span>
-              <span className="text-[9px] text-amber-200 font-normal">En vivo</span>
+              <span className="text-[9px] text-purple-200 font-normal">En vivo</span>
             </div>
             <div className="space-y-1">
               {spriteOptions.map(opt => {

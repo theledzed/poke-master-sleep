@@ -107,7 +107,7 @@ export const PokedexView: React.FC<PokedexViewProps> = ({
             <h2 className="text-xl font-display font-bold text-[var(--text-heading)] tracking-tight">
               Mi Caja de Ayudantes
             </h2>
-            <span className="text-xs font-display font-bold px-3 py-1 rounded-full bg-[var(--surface-inner)] text-[var(--accent-primary)] border border-[var(--surface-border)]">
+            <span className="text-xs font-display font-bold px-3 py-1 rounded-full bg-white/10 text-white border border-white/15">
               {filteredPokemons.length} de {pokemons.length} Pokémon
             </span>
           </div>
@@ -123,7 +123,7 @@ export const PokedexView: React.FC<PokedexViewProps> = ({
               onClick={() => handleViewModeToggle('cards')}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-display font-bold transition-all ${
                 activeViewMode === 'cards'
-                  ? 'btn-cozy-primary text-white scale-[1.02]'
+                  ? 'btn-dreamy-pearl text-indigo-950 scale-[1.02]'
                   : 'text-slate-300 hover:text-white'
               }`}
             >
@@ -133,11 +133,11 @@ export const PokedexView: React.FC<PokedexViewProps> = ({
               onClick={() => handleViewModeToggle('audit')}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-display font-bold transition-all ${
                 activeViewMode === 'audit'
-                  ? 'btn-cozy-primary text-white scale-[1.02]'
+                  ? 'btn-dreamy-pearl text-indigo-950 scale-[1.02]'
                   : 'text-slate-300 hover:text-white'
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+              <Sparkles className="w-3.5 h-3.5 text-purple-300" />
               <span>🔬 Auditoría</span>
             </button>
           </div>
@@ -357,18 +357,6 @@ export const PokedexView: React.FC<PokedexViewProps> = ({
       )}
         </>
       )}
-
-      {/* Floating Action Button (Mobile FAB) for Quick Pokemon Registration */}
-      <div className="lg:hidden fixed bottom-20 right-4 z-40">
-        <button
-          onClick={onAddNew}
-          className="btn-cozy-primary w-13 h-13 p-3.5 rounded-full flex items-center justify-center shadow-2xl active:scale-90"
-          aria-label="Registrar Pokémon"
-          title="Registrar nuevo Pokémon"
-        >
-          <Plus className="w-6 h-6 stroke-[3] text-white" />
-        </button>
-      </div>
     </div>
   );
 };

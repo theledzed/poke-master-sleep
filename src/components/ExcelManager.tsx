@@ -151,8 +151,8 @@ export const ExcelManager: React.FC<ExcelManagerProps> = ({
         {/* Import Box */}
         <div className="bg-slate-900/90 border border-slate-800/90 rounded-3xl p-6 flex flex-col justify-between shadow-xl shadow-black/20">
           <div>
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mb-4">
-              <Upload className="w-6 h-6 text-amber-400" />
+            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center mb-4">
+              <Upload className="w-6 h-6 text-indigo-400" />
             </div>
             <h3 className="font-bold text-white text-base mb-1">
               Importar / Actualizar desde Excel o CSV
@@ -224,7 +224,7 @@ export const ExcelManager: React.FC<ExcelManagerProps> = ({
             <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 mt-1.5">
               <span>Total: <strong className="text-white font-semibold">{pokemons.length} Pokémon</strong></span>
               <span>•</span>
-              <span>Especialistas Bayas: <strong className="text-amber-400 font-semibold">{pokemons.filter(p => p.specialty === 'Bayas').length}</strong></span>
+              <span>Especialistas Bayas: <strong className="text-purple-300 font-semibold">{pokemons.filter(p => p.specialty === 'Bayas').length}</strong></span>
               <span>•</span>
               <span>Especialistas Ingredientes: <strong className="text-emerald-400 font-semibold">{pokemons.filter(p => p.specialty === 'Ingredientes').length}</strong></span>
               <span>•</span>
