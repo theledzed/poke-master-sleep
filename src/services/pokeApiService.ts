@@ -164,14 +164,12 @@ export function getPokemonArtworkUrl(
   }
 
   if (style === 'sleep') {
-    // If shiny, local /images/avatar/portrait only contains normal non-shiny portraits.
-    // For shiny Pokemon in sleep mode, show the official high-resolution 3D Shiny model from Pokemon HOME!
-    if (isShiny && dexId) {
-      return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/shiny/${dexId}.png`;
-    }
     const cleanName = typeof nameOrId === 'string'
       ? nameOrId.toLowerCase().replace(/[^a-z0-9]/g, '')
       : '';
+    if (isShiny && cleanName) {
+      return `/images/avatar/portrait/${cleanName}_shiny.png`;
+    }
     if (cleanName) {
       return `/images/avatar/portrait/${cleanName}.png`;
     }
@@ -184,7 +182,9 @@ export function getPokemonArtworkUrl(
       ? nameOrId.toLowerCase().replace(/[^a-z0-9]/g, '')
       : '';
     if (cleanName) {
-      return `/images/avatar/portrait/${cleanName}.png`;
+      return isShiny
+        ? `/images/avatar/portrait/${cleanName}_shiny.png`
+        : `/images/avatar/portrait/${cleanName}.png`;
     }
     return '';
   }
@@ -206,13 +206,10 @@ export function getPokemonArtworkUrl(
  * Returns local high-res Pokémon Sleep avatar portrait if available, with Showdown animated GIF as fallback
  */
 export function getPokemonAvatarUrl(name: string, isShiny: boolean = false): string {
-  if (isShiny) {
-    const dexId = getPokemonDexId(name);
-    if (dexId) {
-      return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/shiny/${dexId}.png`;
-    }
-  }
   const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (isShiny) {
+    return `/images/avatar/portrait/${cleanName}_shiny.png`;
+  }
   return `/images/avatar/portrait/${cleanName}.png`;
 }
 

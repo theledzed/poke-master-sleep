@@ -107,14 +107,14 @@ export const WeatherBackground: React.FC<WeatherBackgroundProps> = ({
           label: 'Amanecer Azul',
           icon: Sun,
           iconColor: 'text-sky-200',
-          bgGradient: 'from-[#0B1C33] via-[#132D4E] to-[#0E2038]',
+          bgGradient: 'from-[#0F3A5D] via-[#0284C7] to-[#38BDF8]/40',
           orbs: [
-            { bg: 'bg-sky-400/22', size: 'w-96 h-96', pos: '-top-20 -left-20', delay: '0s' },
-            { bg: 'bg-blue-300/20', size: 'w-[420px] h-[420px]', pos: 'top-10 -right-20', delay: '2s' },
-            { bg: 'bg-cyan-400/18', size: 'w-80 h-80', pos: 'bottom-40 left-1/3', delay: '4s' }
+            { bg: 'bg-sky-300/30', size: 'w-[480px] h-[480px]', pos: '-top-20 -left-20', delay: '0s' },
+            { bg: 'bg-cyan-200/25', size: 'w-[420px] h-[420px]', pos: 'top-10 -right-20', delay: '2s' },
+            { bg: 'bg-blue-300/22', size: 'w-80 h-80', pos: 'bottom-40 left-1/3', delay: '4s' }
           ],
-          starColor: 'text-sky-200/80',
-          dotColor: 'bg-sky-100/60'
+          starColor: 'text-sky-100',
+          dotColor: 'bg-sky-100'
         };
       case 'afternoon':
         return {
@@ -253,8 +253,55 @@ export const WeatherBackground: React.FC<WeatherBackgroundProps> = ({
             </div>
           ))}
         </div>
+      ) : activeWeather === 'afternoon' ? (
+        /* Sunset Dusk with Golden Drifting Embers & Warm Horizon Glow (No Night Stars) */
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {/* Warm Twilight Horizon Glow */}
+          <div className="absolute -bottom-24 inset-x-0 h-80 bg-gradient-to-t from-amber-500/20 via-rose-500/12 to-transparent blur-3xl pointer-events-none" />
+
+          {/* Golden Twilight Embers / Warm Dust Particles */}
+          {[
+            { top: '20%', left: '15%', size: 'w-2 h-2', bg: 'bg-amber-300/40', delay: '0.2s', dur: '7s' },
+            { top: '35%', left: '72%', size: 'w-2.5 h-2.5', bg: 'bg-rose-300/35', delay: '1.5s', dur: '8.5s' },
+            { top: '48%', left: '30%', size: 'w-1.5 h-1.5', bg: 'bg-amber-200/45', delay: '2.8s', dur: '6.5s' },
+            { top: '60%', left: '82%', size: 'w-2 h-2', bg: 'bg-orange-300/35', delay: '0.8s', dur: '9s' },
+            { top: '72%', left: '18%', size: 'w-2.5 h-2.5', bg: 'bg-amber-300/40', delay: '2.1s', dur: '7.8s' },
+            { top: '82%', left: '55%', size: 'w-2 h-2', bg: 'bg-rose-200/40', delay: '3.4s', dur: '8s' }
+          ].map((ember, idx) => (
+            <div
+              key={`ember-${idx}`}
+              className={`golden-ember rounded-full ${ember.size} ${ember.bg} blur-[0.8px] shadow-[0_0_12px_rgba(251,191,36,0.6)]`}
+              style={{
+                top: ember.top,
+                left: ember.left,
+                animationDelay: ember.delay,
+                animationDuration: ember.dur
+              }}
+            />
+          ))}
+
+          {/* Soft Floating Golden Dust Motes */}
+          {[
+            { top: '15%', left: '42%', size: 'w-1 h-1' },
+            { top: '28%', left: '88%', size: 'w-1.5 h-1.5' },
+            { top: '55%', left: '12%', size: 'w-1 h-1' },
+            { top: '65%', left: '60%', size: 'w-1.5 h-1.5' },
+            { top: '78%', left: '85%', size: 'w-1 h-1' }
+          ].map((dot, idx) => (
+            <div
+              key={`afternoon-dot-${idx}`}
+              className={`absolute ${dot.size} rounded-full bg-amber-200/50 blur-[0.5px] animate-pulse`}
+              style={{
+                top: dot.top,
+                left: dot.left,
+                animationDelay: `${idx * 0.8}s`,
+                animationDuration: `${3.5 + (idx % 3)}s`
+              }}
+            />
+          ))}
+        </div>
       ) : (
-        /* Dreamy Drifting Stars & 4-Point Sparkles (✦) */
+        /* Dreamy Drifting Stars & 4-Point Sparkles (✦) for Night Mode */
         <div className="absolute inset-0">
           {/* Delicate 4-point Sparkles drifting with ethereal breeze */}
           {[
