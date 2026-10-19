@@ -360,7 +360,11 @@ export const WeatherPill: React.FC<{
 }> = ({ currentWeather, onSelectWeather }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isAuto, setIsAuto] = useState(() => {
-    return localStorage.getItem(STORAGE_KEY_AUTO) !== 'false';
+    try {
+      return typeof window !== 'undefined' && localStorage.getItem(STORAGE_KEY_AUTO) !== 'false';
+    } catch {
+      return true;
+    }
   });
   const menuRef = useRef<HTMLDivElement>(null);
 

@@ -34,9 +34,11 @@ export const App: React.FC = () => {
   // Active Profile ('cris' | 'ady')
   const [activeProfile, setActiveProfile] = useState<ProfileId>(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY_ACTIVE_PROFILE);
-      if (saved === 'cris' || saved === 'ady') {
-        return saved as ProfileId;
+      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+        const saved = localStorage.getItem(STORAGE_KEY_ACTIVE_PROFILE);
+        if (saved === 'cris' || saved === 'ady') {
+          return saved as ProfileId;
+        }
       }
     } catch (e) {
       // ignore
@@ -62,9 +64,11 @@ export const App: React.FC = () => {
   // Weather state (Morning, Afternoon, Night, Rain)
   const [weather, setWeather] = useState<WeatherMode>(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY_WEATHER);
-      if (saved && ['morning', 'afternoon', 'night', 'rain'].includes(saved)) {
-        return saved as WeatherMode;
+      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+        const saved = localStorage.getItem(STORAGE_KEY_WEATHER);
+        if (saved && ['morning', 'afternoon', 'night', 'rain'].includes(saved)) {
+          return saved as WeatherMode;
+        }
       }
     } catch (e) {
       // ignore
@@ -74,7 +78,9 @@ export const App: React.FC = () => {
 
   // Keep root HTML element synchronized with atmospheric weather theme
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme-weather', weather);
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('data-theme-weather', weather);
+    }
   }, [weather]);
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('optimizer');
@@ -82,9 +88,11 @@ export const App: React.FC = () => {
   const [isCalculating, setIsCalculating] = useState(false);
   const [spriteStyle, setSpriteStyle] = useState<SpriteStyle>(() => {
     try {
-      const saved = localStorage.getItem('pokesleep_sprite_style');
-      if (saved === 'showdown' || saved === 'sleep' || saved === 'sleep_full' || saved === 'artwork') {
-        return saved as SpriteStyle;
+      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+        const saved = localStorage.getItem('pokesleep_sprite_style');
+        if (saved === 'showdown' || saved === 'sleep' || saved === 'sleep_full' || saved === 'artwork') {
+          return saved as SpriteStyle;
+        }
       }
     } catch (e) {}
     return 'sleep';
@@ -93,15 +101,19 @@ export const App: React.FC = () => {
   const handleSpriteStyleChange = useCallback((newStyle: SpriteStyle) => {
     setSpriteStyle(newStyle);
     try {
-      localStorage.setItem('pokesleep_sprite_style', newStyle);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('pokesleep_sprite_style', newStyle);
+      }
     } catch (e) {}
   }, []);
 
   const [cardViewMode, setCardViewMode] = useState<CardViewMode>(() => {
     try {
-      const saved = localStorage.getItem('pokesleep_card_view_mode');
-      if (saved === 'compact' || saved === 'detailed') {
-        return saved as CardViewMode;
+      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+        const saved = localStorage.getItem('pokesleep_card_view_mode');
+        if (saved === 'compact' || saved === 'detailed') {
+          return saved as CardViewMode;
+        }
       }
     } catch (e) {}
     return 'compact';

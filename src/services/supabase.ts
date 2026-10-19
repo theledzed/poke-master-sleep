@@ -116,6 +116,17 @@ export function getProfileFromLocal(profileId: ProfileId): {
   pokemons: Pokemon[];
   config: SnorlaxConfig;
 } {
+  const isServer = typeof window === 'undefined' || typeof localStorage === 'undefined';
+
+  if (isServer) {
+    const defaultBox = profileId === 'cris' ? parseCsvText(DEFAULT_CSV_DATA) : [];
+    const { pokemons: sanitized } = sanitizePokemonSkills(defaultBox);
+    return {
+      pokemons: sanitized,
+      config: { ...DEFAULT_SNORLAX_CONFIG }
+    };
+  }
+
   const { boxKey, configKey, legacyBoxKey, legacyConfigKey } = getLocalStorageKeys(profileId);
 
   // 1. Pokemons

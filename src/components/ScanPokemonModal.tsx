@@ -40,7 +40,11 @@ export const ScanPokemonModal: React.FC<ScanPokemonModalProps> = ({
   // Optional custom API key configuration
   const [showKeyConfig, setShowKeyConfig] = useState(false);
   const [apiKey, setApiKey] = useState<string>(() => {
-    return localStorage.getItem(STORAGE_KEY_GEMINI_KEY) || '';
+    try {
+      return (typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY_GEMINI_KEY) : '') || '';
+    } catch {
+      return '';
+    }
   });
   const [isKeySaved, setIsKeySaved] = useState(false);
 
