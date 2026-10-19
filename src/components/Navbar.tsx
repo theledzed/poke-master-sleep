@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Tent,
   BookOpen,
@@ -55,6 +55,41 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'recipes' as ActiveTab, label: 'Recetario', shortLabel: 'Recetas', icon: UtensilsCrossed },
   ];
 
+  // Tab index mapping (treats 'excel' as part of 'pokedex' / Mi Caja tab)
+  const tabIndexMap: Record<ActiveTab, number> = {
+    optimizer: 0,
+    simulator: 1,
+    pokedex: 2,
+    recipes: 3,
+    excel: 2
+  };
+  const effectiveActiveIndex = tabIndexMap[activeTab] ?? 0;
+
+  // Desktop sliding indicator pill position
+  const desktopTabsRef = useRef<(HTMLButtonElement | null)[]>([]);
+  const [desktopPillStyle, setDesktopPillStyle] = useState<{ left: number; width: number; ready: boolean }>({
+    left: 0,
+    width: 0,
+    ready: false
+  });
+
+  const updateDesktopPill = useCallback(() => {
+    const el = desktopTabsRef.current[effectiveActiveIndex];
+    if (el) {
+      setDesktopPillStyle({
+        left: el.offsetLeft,
+        width: el.offsetWidth,
+        ready: true
+      });
+    }
+  }, [effectiveActiveIndex]);
+
+  useEffect(() => {
+    updateDesktopPill();
+    window.addEventListener('resize', updateDesktopPill);
+    return () => window.removeEventListener('resize', updateDesktopPill);
+  }, [updateDesktopPill]);
+
   return (
     <>
       <header className="sticky top-0 z-40 bg-indigo-950/40 backdrop-blur-2xl border-b border-white/10 shadow-lg transition-colors duration-500">
@@ -88,26 +123,36 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
             </div>
 
-            {/* Desktop Navigation Pills */}
-            <nav className="hidden lg:flex items-center gap-1.5 bg-white/[0.06] backdrop-blur-2xl p-1.5 rounded-full border border-white/10 shadow-inner">
-              {tabs.map(tab => {
+            {/* Desktop Navigation Pills with Smooth Sliding Luminous Capsule */}
+            <nav className="hidden lg:flex items-center gap-1.5 bg-white/[0.06] backdrop-blur-2xl p-1.5 rounded-full border border-white/10 shadow-inner relative">
+              {desktopPillStyle.ready && (
+                <div
+                  className="absolute top-1.5 bottom-1.5 rounded-full btn-dreamy-pearl shadow-lg pointer-events-none sliding-pill-spring"
+                  style={{
+                    left: `${desktopPillStyle.left}px`,
+                    width: `${desktopPillStyle.width}px`,
+                  }}
+                />
+              )}
+              {tabs.map((tab, idx) => {
                 const Icon = tab.icon;
-                const isActive = activeTab === tab.id;
+                const isActive = activeTab === tab.id || (tab.id === 'pokedex' && activeTab === 'excel');
                 return (
                   <button
                     key={tab.id}
+                    ref={(el) => { desktopTabsRef.current[idx] = el; }}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-display font-bold transition-all ${
+                    className={`relative z-10 flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-display font-bold transition-colors duration-200 ${
                       isActive
-                        ? 'btn-dreamy-pearl scale-[1.02]'
-                        : 'text-slate-300 hover:text-white hover:bg-white/10'
+                        ? 'text-indigo-950 font-black'
+                        : 'text-slate-300 hover:text-white hover:bg-white/5'
                     }`}
                   >
-                    <Icon className="w-3.5 h-3.5 stroke-[2.2]" />
+                    <Icon className={`w-3.5 h-3.5 stroke-[2.2] transition-transform duration-300 ${isActive ? 'scale-110' : ''}`} />
                     <span>{tab.label}</span>
                     {tab.count !== undefined && (
-                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full tabular-nums font-black ${
-                        isActive ? 'bg-indigo-950/15 text-indigo-950' : 'bg-white/10 text-white'
+                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full tabular-nums font-black transition-colors duration-200 ${
+                        isActive ? 'bg-indigo-950/15 text-indigo-950 font-black' : 'bg-white/10 text-white'
                       }`}>
                         {tab.count}
                       </span>
@@ -150,31 +195,60 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </header>
 
-      {/* Dreamy Mobile Bottom Navigation Dock (Floating Frosted Island, rounded-full) */}
-      <nav className="lg:hidden fixed bottom-4 left-4 right-4 z-50 max-w-md mx-auto bg-indigo-950/75 backdrop-blur-2xl rounded-full border border-white/15 p-2 shadow-2xl safe-area-pb transition-all">
-        <div className="grid grid-cols-4 gap-1 items-center">
-          {tabs.map(tab => {
+      {/* Dreamy Mobile Bottom Navigation Dock with Sliding Focus Capsule */}
+      <nav className="lg:hidden fixed bottom-4 left-4 right-4 z-50 max-w-md mx-auto bg-indigo-950/80 backdrop-blur-2xl rounded-full border border-white/15 p-1.5 shadow-2xl safe-area-pb">
+        <div className="relative grid grid-cols-4 items-center">
+          {/* Sliding Pill Indicator for Active Tab (Smooth Glide Physics) */}
+          {effectiveActiveIndex >= 0 && (
+            <div
+              className="absolute inset-y-0 rounded-full bg-white/20 border border-white/25 shadow-lg backdrop-blur-md pointer-events-none sliding-pill-spring"
+              style={{
+                width: '25%',
+                transform: `translateX(${effectiveActiveIndex * 100}%)`,
+              }}
+            />
+          )}
+
+          {tabs.map((tab) => {
             const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
+            const isActive = activeTab === tab.id || (tab.id === 'pokedex' && activeTab === 'excel');
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex flex-col items-center justify-center min-h-[46px] py-1 px-1 rounded-full transition-all select-none ${
+                className={`relative z-10 flex flex-col items-center justify-center min-h-[46px] py-1 px-1 rounded-full select-none transition-all duration-200 ${
                   isActive
-                    ? 'bg-white/20 text-white font-display font-bold border border-white/25 shadow-md scale-[1.02]'
+                    ? 'text-white'
                     : 'text-slate-400 hover:text-slate-200 active:scale-95'
                 }`}
               >
                 <div className="relative">
-                  <Icon className={`w-5 h-5 transition-transform ${isActive ? 'scale-110 stroke-[2.4]' : 'stroke-[1.8]'}`} />
+                  <Icon
+                    className={`w-5 h-5 transition-all duration-300 ${
+                      isActive
+                        ? 'scale-110 -translate-y-0.5 stroke-[2.4] text-white'
+                        : 'scale-100 translate-y-0 stroke-[1.8] text-slate-400'
+                    }`}
+                  />
                   {tab.count !== undefined && (
-                    <span className="absolute -top-1 -right-2 text-[8px] tabular-nums font-black bg-[var(--accent-primary)] text-slate-950 px-1 rounded-full leading-none py-0.5">
+                    <span
+                      className={`absolute -top-1 -right-2 text-[8px] tabular-nums font-black px-1 rounded-full leading-none py-0.5 transition-all duration-300 ${
+                        isActive
+                          ? 'bg-[var(--accent-primary)] text-slate-950 shadow-sm scale-105'
+                          : 'bg-white/10 text-slate-300'
+                      }`}
+                    >
                       {tab.count}
                     </span>
                   )}
                 </div>
-                <span className="text-[10px] font-display font-bold mt-0.5 truncate tracking-tight">{tab.shortLabel || tab.label}</span>
+                <span
+                  className={`text-[10px] font-display mt-0.5 truncate tracking-tight transition-all duration-200 ${
+                    isActive ? 'font-bold text-white scale-[1.02]' : 'font-medium text-slate-400'
+                  }`}
+                >
+                  {tab.shortLabel || tab.label}
+                </span>
               </button>
             );
           })}
@@ -183,3 +257,4 @@ export const Navbar: React.FC<NavbarProps> = ({
     </>
   );
 };
+

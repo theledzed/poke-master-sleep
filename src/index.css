@@ -267,3 +267,40 @@
   will-change: transform, opacity;
 }
 
+/* ==========================================================================
+   DREAMY TAB & SEGMENTED TRANSITION UTILITIES
+   ========================================================================== */
+
+@keyframes dreamyTabEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.995);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-dreamy-tab-enter {
+  animation: dreamyTabEnter 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: opacity, transform;
+}
+
+@keyframes springPulse {
+  0% { transform: scale(0.92); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.animate-spring-bounce {
+  animation: springPulse 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.sliding-pill-spring {
+  transition: transform 320ms cubic-bezier(0.34, 1.4, 0.64, 1),
+              width 320ms cubic-bezier(0.34, 1.4, 0.64, 1),
+              left 320ms cubic-bezier(0.34, 1.4, 0.64, 1);
+  will-change: transform, left, width;
+}
+

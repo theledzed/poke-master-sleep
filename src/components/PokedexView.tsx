@@ -118,12 +118,20 @@ export const PokedexView: React.FC<PokedexViewProps> = ({
 
         <div className="flex flex-wrap items-center gap-2.5">
           {/* View mode segmented toggle: Fichas vs Auditoria */}
-          <div className="flex items-center gap-1 bg-[var(--surface-inner)] p-1 rounded-full border border-[var(--surface-border)] shadow-inner">
+          <div className="relative flex items-center bg-white/[0.08] p-1 rounded-full border border-white/10 shadow-inner">
+            {/* Sliding Pill Indicator */}
+            <div
+              className="absolute top-1 bottom-1 rounded-full btn-dreamy-pearl shadow-md pointer-events-none sliding-pill-spring"
+              style={{
+                width: 'calc(50% - 4px)',
+                left: activeViewMode === 'cards' ? '4px' : 'calc(50%)',
+              }}
+            />
             <button
               onClick={() => handleViewModeToggle('cards')}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-display font-bold transition-all ${
+              className={`relative z-10 px-3.5 py-1.5 rounded-full text-xs font-display font-bold transition-colors duration-200 flex items-center gap-1.5 select-none ${
                 activeViewMode === 'cards'
-                  ? 'btn-dreamy-pearl text-indigo-950 scale-[1.02]'
+                  ? 'text-indigo-950 font-black'
                   : 'text-slate-300 hover:text-white'
               }`}
             >
@@ -131,13 +139,13 @@ export const PokedexView: React.FC<PokedexViewProps> = ({
             </button>
             <button
               onClick={() => handleViewModeToggle('audit')}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-display font-bold transition-all ${
+              className={`relative z-10 px-3.5 py-1.5 rounded-full text-xs font-display font-bold transition-colors duration-200 flex items-center gap-1.5 select-none ${
                 activeViewMode === 'audit'
-                  ? 'btn-dreamy-pearl text-indigo-950 scale-[1.02]'
+                  ? 'text-indigo-950 font-black'
                   : 'text-slate-300 hover:text-white'
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5 text-purple-300" />
+              <Sparkles className={`w-3.5 h-3.5 ${activeViewMode === 'audit' ? 'text-indigo-950' : 'text-purple-300'}`} />
               <span>🔬 Auditoría</span>
             </button>
           </div>

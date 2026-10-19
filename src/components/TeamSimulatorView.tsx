@@ -367,17 +367,25 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
 
         {/* Team Tabs & Action Buttons */}
         <div className="mt-5 pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
-          <div className="flex items-center gap-1.5 bg-white/[0.08] backdrop-blur-2xl p-1 rounded-full border border-white/10 shadow-inner">
+          <div className="relative flex items-center bg-white/[0.08] backdrop-blur-2xl p-1 rounded-full border border-white/10 shadow-inner">
+            {/* Sliding Pill Indicator */}
+            <div
+              className="absolute top-1 bottom-1 rounded-full btn-dreamy-pearl shadow-md pointer-events-none sliding-pill-spring"
+              style={{
+                width: 'calc(50% - 4px)',
+                left: activeCustomTeamIndex === 0 ? '4px' : 'calc(50%)',
+              }}
+            />
             <button
               onClick={() => setActiveCustomTeamIndex(0)}
-              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${
+              className={`relative z-10 px-4 py-1.5 rounded-full text-xs font-bold transition-colors duration-200 flex items-center gap-2 select-none ${
                 activeCustomTeamIndex === 0
-                  ? 'btn-dreamy-pearl text-indigo-950 font-black shadow-lg scale-[1.02]'
-                  : 'text-slate-300 hover:text-white hover:bg-white/10'
+                  ? 'text-indigo-950 font-black'
+                  : 'text-slate-300 hover:text-white'
               }`}
             >
               <span>⭐ Mi Equipo 1</span>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full tabular-nums font-bold ${
+              <span className={`text-[10px] px-2 py-0.5 rounded-full tabular-nums font-bold transition-colors duration-200 ${
                 activeCustomTeamIndex === 0 ? 'bg-indigo-950/15 text-indigo-950 font-black' : 'bg-white/10 text-slate-300'
               }`}>
                 {team1Ids.filter(Boolean).length}/5
@@ -385,14 +393,14 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
             </button>
             <button
               onClick={() => setActiveCustomTeamIndex(1)}
-              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${
+              className={`relative z-10 px-4 py-1.5 rounded-full text-xs font-bold transition-colors duration-200 flex items-center gap-2 select-none ${
                 activeCustomTeamIndex === 1
-                  ? 'btn-dreamy-pearl text-indigo-950 font-black shadow-lg scale-[1.02]'
-                  : 'text-slate-300 hover:text-white hover:bg-white/10'
+                  ? 'text-indigo-950 font-black'
+                  : 'text-slate-300 hover:text-white'
               }`}
             >
               <span>🌟 Mi Equipo 2</span>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full tabular-nums font-bold ${
+              <span className={`text-[10px] px-2 py-0.5 rounded-full tabular-nums font-bold transition-colors duration-200 ${
                 activeCustomTeamIndex === 1 ? 'bg-indigo-950/15 text-indigo-950 font-black' : 'bg-white/10 text-slate-300'
               }`}>
                 {team2Ids.filter(Boolean).length}/5

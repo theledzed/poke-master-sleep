@@ -348,16 +348,24 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
           </div>
 
           {/* View mode toggle */}
-          <div className="flex items-center gap-1 bg-white/[0.08] backdrop-blur-xl p-1 rounded-full border border-white/10 self-start sm:self-auto shadow-sm">
+          <div className="relative flex items-center bg-white/[0.08] backdrop-blur-xl p-1 rounded-full border border-white/10 self-start sm:self-auto shadow-sm">
+            {/* Sliding Pill Indicator */}
+            <div
+              className="absolute top-1 bottom-1 rounded-full btn-dreamy-pearl shadow-md pointer-events-none sliding-pill-spring"
+              style={{
+                width: 'calc(50% - 4px)',
+                left: effectiveViewMode === 'compact' ? '4px' : 'calc(50%)',
+              }}
+            />
             <button
               onClick={() => {
                 setTeamViewMode('compact');
                 onCardViewModeChange?.('compact');
               }}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all ${
+              className={`relative z-10 flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-colors duration-200 select-none ${
                 effectiveViewMode === 'compact'
-                  ? 'btn-dreamy-pearl shadow-sm'
-                  : 'text-slate-300 hover:text-white hover:bg-white/10'
+                  ? 'text-indigo-950 font-black'
+                  : 'text-slate-300 hover:text-white'
               }`}
             >
               <Smartphone className="w-3.5 h-3.5" />
@@ -368,10 +376,10 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
                 setTeamViewMode('detailed');
                 onCardViewModeChange?.('detailed');
               }}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all ${
+              className={`relative z-10 flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-colors duration-200 select-none ${
                 effectiveViewMode === 'detailed'
-                  ? 'btn-dreamy-pearl shadow-sm'
-                  : 'text-slate-300 hover:text-white hover:bg-white/10'
+                  ? 'text-indigo-950 font-black'
+                  : 'text-slate-300 hover:text-white'
               }`}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
@@ -380,9 +388,9 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
           </div>
         </div>
 
-        {/* Pokemon Cards Display */}
+        {/* Pokemon Cards Display with smooth enter transition */}
         {effectiveViewMode === 'compact' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2.5">
+          <div key={`compact-${selectedRank}`} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2.5 animate-dreamy-tab-enter">
             {currentResult.team.map((poke, idx) => (
               <PokemonCard
                 key={poke.id}
@@ -396,7 +404,7 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3.5">
+          <div key={`detailed-${selectedRank}`} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3.5 animate-dreamy-tab-enter">
             {currentResult.team.map((poke, idx) => (
               <PokemonCard
                 key={poke.id}

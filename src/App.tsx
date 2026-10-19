@@ -355,7 +355,7 @@ export const App: React.FC = () => {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 pt-6 pb-32 sm:pb-36 lg:pb-12">
         {/* TAB 1: OPTIMIZADOR */}
         {activeTab === 'optimizer' && (
-          <div className="space-y-6">
+          <div key="optimizer" className="animate-dreamy-tab-enter space-y-6">
             <SnorlaxSetup
               config={config}
               onChangeConfig={setConfig}
@@ -381,59 +381,67 @@ export const App: React.FC = () => {
 
         {/* TAB 2: SIMULADOR DE EQUIPOS */}
         {activeTab === 'simulator' && (
-          <TeamSimulatorView
-            pokemons={pokemons}
-            config={config}
-            recommendedResult={optimizedResults[0]}
-            spriteStyle={spriteStyle}
-            onEditPokemon={handleEditPokemon}
-            onUpdateRecipeLevel={handleUpdateRecipeLevel}
-            onUpdateAreaBonus={handleUpdateAreaBonus}
-            onToggleGoodCampTicket={handleToggleGoodCampTicket}
-            onSetCurrentTeam={handleSetCurrentTeam}
-            onUpdateMidWeekProgress={handleUpdateMidWeekProgress}
-            onResetMidWeekProgress={handleResetMidWeekProgress}
-          />
+          <div key="simulator" className="animate-dreamy-tab-enter">
+            <TeamSimulatorView
+              pokemons={pokemons}
+              config={config}
+              recommendedResult={optimizedResults[0]}
+              spriteStyle={spriteStyle}
+              onEditPokemon={handleEditPokemon}
+              onUpdateRecipeLevel={handleUpdateRecipeLevel}
+              onUpdateAreaBonus={handleUpdateAreaBonus}
+              onToggleGoodCampTicket={handleToggleGoodCampTicket}
+              onSetCurrentTeam={handleSetCurrentTeam}
+              onUpdateMidWeekProgress={handleUpdateMidWeekProgress}
+              onResetMidWeekProgress={handleResetMidWeekProgress}
+            />
+          </div>
         )}
 
         {/* TAB 3: MI POKEDEX */}
         {activeTab === 'pokedex' && (
-          <PokedexView
-            pokemons={pokemons}
-            favoriteBerries={config.favoriteBerries}
-            onEditPokemon={handleEditPokemon}
-            onDeletePokemon={handleDeletePokemon}
-            onAddNew={handleAddNewPokemon}
-            onEvolvePokemon={handleSavePokemon}
-            spriteStyle={spriteStyle}
-            onSpriteStyleChange={handleSpriteStyleChange}
-            activeProfile={activeProfile}
-            onGoToDatabase={() => setActiveTab('excel')}
-            cardViewMode={cardViewMode}
-            onCardViewModeChange={handleCardViewModeChange}
-            viewMode={pokedexViewMode}
-            onViewModeChange={setPokedexViewMode}
-          />
+          <div key="pokedex" className="animate-dreamy-tab-enter">
+            <PokedexView
+              pokemons={pokemons}
+              favoriteBerries={config.favoriteBerries}
+              onEditPokemon={handleEditPokemon}
+              onDeletePokemon={handleDeletePokemon}
+              onAddNew={handleAddNewPokemon}
+              onEvolvePokemon={handleSavePokemon}
+              spriteStyle={spriteStyle}
+              onSpriteStyleChange={handleSpriteStyleChange}
+              activeProfile={activeProfile}
+              onGoToDatabase={() => setActiveTab('excel')}
+              cardViewMode={cardViewMode}
+              onCardViewModeChange={handleCardViewModeChange}
+              viewMode={pokedexViewMode}
+              onViewModeChange={setPokedexViewMode}
+            />
+          </div>
         )}
 
         {/* TAB 3: RECETARIO */}
         {activeTab === 'recipes' && (
-          <RecipesView
-            config={config}
-            onUpdateRecipeLevel={handleUpdateRecipeLevel}
-            onUpdateAllRecipeLevels={handleUpdateAllRecipeLevels}
-          />
+          <div key="recipes" className="animate-dreamy-tab-enter">
+            <RecipesView
+              config={config}
+              onUpdateRecipeLevel={handleUpdateRecipeLevel}
+              onUpdateAllRecipeLevels={handleUpdateAllRecipeLevels}
+            />
+          </div>
         )}
 
         {/* TAB 4: BASE DE DATOS EXCEL */}
         {activeTab === 'excel' && (
-          <ExcelManager
-            pokemons={pokemons}
-            onUpdatePokemons={(newPokemons) => {
-              setPokemons(newPokemons);
-              handleRunOptimizer();
-            }}
-          />
+          <div key="excel" className="animate-dreamy-tab-enter">
+            <ExcelManager
+              pokemons={pokemons}
+              onUpdatePokemons={(newPokemons) => {
+                setPokemons(newPokemons);
+                handleRunOptimizer();
+              }}
+            />
+          </div>
         )}
       </main>
 

@@ -242,7 +242,7 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
             </div>
 
             {/* Stepper Progress Indicator */}
-            <div className="px-5 pt-4 pb-2 bg-[var(--surface-inner)] flex items-center justify-between relative z-10 border-b border-[var(--surface-border)]">
+            <div className="px-5 pt-4 pb-2 bg-white/[0.04] flex items-center justify-between relative z-10 border-b border-white/10">
               {[1, 2, 3, 4].map((s) => (
                 <div
                   key={s}
@@ -273,7 +273,7 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
             <div className="p-5 space-y-4 relative z-10 min-h-[220px]">
               {/* STEP 1: ISLA & BONUS */}
               {step === 1 && (
-                <div className="space-y-3">
+                <div key={1} className="space-y-3 animate-dreamy-tab-enter">
                   <div>
                     <label className="block text-xs font-black text-slate-200 uppercase tracking-wider mb-1.5">
                       1. ¿En qué Isla estás acampando esta semana?
@@ -314,7 +314,7 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
 
               {/* STEP 2: MENU CULINARIO */}
               {step === 2 && (
-                <div>
+                <div key={2} className="animate-dreamy-tab-enter">
                   <label className="block text-xs font-black text-slate-200 uppercase tracking-wider mb-2">
                     2. ¿Qué tipo de plato pide tu Snorlax?
                   </label>
@@ -328,17 +328,17 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
                           onClick={() => onChangeConfig({ ...config, dishType: dish.id })}
                           className={`p-4 rounded-3xl border text-center flex flex-col items-center justify-center gap-2 transition-all ${
                             isSelected
-                              ? 'bg-[var(--surface-inner)] border-[var(--accent-primary)] text-white shadow-lg shadow-[var(--accent-glow)] ring-2 ring-[var(--accent-primary)]/40'
-                              : 'bg-[var(--surface-inner)] border-[var(--surface-border)] text-slate-300 hover:border-white/20'
+                              ? 'bg-white/10 border-purple-400/50 text-white shadow-lg ring-2 ring-purple-400/40'
+                              : 'bg-white/[0.04] border-white/10 text-slate-300 hover:border-white/20'
                           }`}
                         >
                           <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl ${
-                            isSelected ? 'bg-[var(--accent-primary)] text-slate-950 font-black' : 'bg-white/10 text-slate-300'
+                            isSelected ? 'bg-white text-indigo-950 font-black' : 'bg-white/10 text-slate-300'
                           }`}>
                             <Icon className="w-6 h-6" />
                           </div>
                           <span className="text-xs font-black uppercase tracking-wider">{dish.label}</span>
-                          {isSelected && <span className="text-[10px] text-[var(--accent-primary)] font-bold">✓ Seleccionado</span>}
+                          {isSelected && <span className="text-[10px] text-purple-200 font-bold">✓ Seleccionado</span>}
                         </button>
                       );
                     })}
@@ -348,7 +348,7 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
 
               {/* STEP 3: 3 BAYAS FAVORITAS (Visual High-Res Berry Grid) */}
               {step === 3 && (
-                <div className="space-y-3.5">
+                <div key={3} className="space-y-3.5 animate-dreamy-tab-enter">
                   <div>
                     <label className="block text-xs font-black text-white uppercase tracking-wider">
                       3. Las 3 Bayas Favoritas de tu Snorlax (×2 Vigor)
@@ -376,14 +376,14 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
                           onClick={() => setActiveBerrySlot(slotIdx)}
                           className={`p-2.5 sm:p-3 rounded-2xl border text-center flex flex-col items-center justify-center transition-all relative ${
                             isSelectedSlot && !isFixed
-                              ? 'bg-[var(--surface-inner)] border-[var(--accent-primary)] shadow-lg shadow-[var(--accent-glow)] ring-2 ring-[var(--accent-primary)]/40'
-                              : 'bg-[var(--surface-inner)] border-[var(--surface-border)] hover:border-white/20'
+                              ? 'bg-white/10 border-purple-400/50 shadow-lg ring-2 ring-purple-400/40'
+                              : 'bg-white/[0.04] border-white/10 hover:border-white/20'
                           } ${isFixed ? 'opacity-90 cursor-default' : 'cursor-pointer active:scale-95'}`}
                         >
                           <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1">
                             <span>Ranura #{slotIdx + 1}</span>
                             {isSelectedSlot && !isFixed && (
-                              <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)] animate-ping" />
+                              <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-ping" />
                             )}
                           </div>
 
@@ -420,7 +420,7 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 max-h-48 overflow-y-auto p-2 rounded-2xl bg-[var(--surface-inner)] border border-[var(--surface-border)]">
+                      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 max-h-48 overflow-y-auto p-2 rounded-2xl bg-white/[0.04] border border-white/10">
                         {CANONICAL_BERRIES.map((b) => {
                           const meta = BERRIES[b];
                           const isCurrentSlotBerry = config.favoriteBerries[activeBerrySlot] === b;
@@ -437,7 +437,7 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
                               }}
                               className={`p-2 rounded-xl border flex flex-col items-center justify-center gap-1 transition-all ${
                                 isCurrentSlotBerry
-                                  ? 'bg-[var(--accent-primary)]/20 border-[var(--accent-primary)] text-white shadow-md ring-1 ring-[var(--accent-primary)]'
+                                  ? 'bg-purple-500/20 border-purple-400 text-white shadow-md ring-1 ring-purple-400'
                                   : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:text-white'
                               } active:scale-95`}
                             >
@@ -471,7 +471,7 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
 
               {/* STEP 4: PUCHERO & PASE DE ACAMPADA */}
               {step === 4 && (
-                <div className="space-y-3.5">
+                <div key={4} className="space-y-3.5 animate-dreamy-tab-enter">
                   <div>
                     <label className="block text-xs font-black text-slate-200 uppercase tracking-wider mb-1.5">
                       Capacidad Base del Puchero

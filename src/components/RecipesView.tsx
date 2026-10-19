@@ -87,43 +87,43 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
 
       {/* Tabs & Search */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 poke-card p-3.5 rounded-3xl">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5 bg-white/[0.06] backdrop-blur-md p-1.5 rounded-full border border-white/10 shadow-inner">
           <button
             onClick={() => setSelectedType('all')}
-            className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-wider transition-all ${
+            className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider transition-all duration-200 select-none ${
               selectedType === 'all'
-                ? 'btn-cozy-primary shadow-md'
-                : 'bg-[var(--surface-inner)] hover:bg-white/10 text-[var(--text-muted)] border border-[var(--surface-border)] font-bold'
+                ? 'btn-dreamy-pearl text-indigo-950 shadow-md scale-[1.02]'
+                : 'text-slate-300 hover:text-white hover:bg-white/10'
             }`}
           >
             Todos ({RECIPES.length})
           </button>
           <button
             onClick={() => setSelectedType('curry')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-black uppercase tracking-wider transition-all ${
+            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider transition-all duration-200 select-none ${
               selectedType === 'curry'
-                ? 'bg-gradient-to-r from-orange-500 to-rose-500 text-white font-black shadow-md border-b-2 border-orange-800'
-                : 'bg-[var(--surface-inner)] hover:bg-white/10 text-[var(--text-muted)] border border-[var(--surface-border)] font-bold'
+                ? 'bg-gradient-to-r from-orange-500 to-rose-500 text-white font-black shadow-md scale-[1.02]'
+                : 'text-slate-300 hover:text-white hover:bg-white/10'
             }`}
           >
             <Soup className="w-3.5 h-3.5" /> Curris (25)
           </button>
           <button
             onClick={() => setSelectedType('salad')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-black uppercase tracking-wider transition-all ${
+            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider transition-all duration-200 select-none ${
               selectedType === 'salad'
-                ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-black shadow-md border-b-2 border-emerald-800'
-                : 'bg-[var(--surface-inner)] hover:bg-white/10 text-[var(--text-muted)] border border-[var(--surface-border)] font-bold'
+                ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-black shadow-md scale-[1.02]'
+                : 'text-slate-300 hover:text-white hover:bg-white/10'
             }`}
           >
             <Salad className="w-3.5 h-3.5" /> Ensaladas (26)
           </button>
           <button
             onClick={() => setSelectedType('dessert')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-black uppercase tracking-wider transition-all ${
+            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider transition-all duration-200 select-none ${
               selectedType === 'dessert'
-                ? 'bg-gradient-to-r from-pink-500 to-rose-400 text-white font-black shadow-md border-b-2 border-rose-800'
-                : 'bg-[var(--surface-inner)] hover:bg-white/10 text-[var(--text-muted)] border border-[var(--surface-border)] font-bold'
+                ? 'bg-gradient-to-r from-pink-500 to-rose-400 text-white font-black shadow-md scale-[1.02]'
+                : 'text-slate-300 hover:text-white hover:bg-white/10'
             }`}
           >
             <Coffee className="w-3.5 h-3.5" /> Postres (27)
