@@ -80,8 +80,34 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
 
   return (
     <>
-      {/* COMPACT CAMP SUMMARY BAR (Cozy Field Journal Header) */}
+      {/* COMPACT CAMP SUMMARY BAR (Cozy Field Journal Header with Campsite Diorama) */}
       <div className="cozy-card p-3.5 sm:p-4 rounded-3xl relative overflow-hidden">
+        {/* Campsite Diorama SVG Silhouette Background */}
+        <div className="absolute right-0 bottom-0 h-full w-72 sm:w-96 pointer-events-none select-none opacity-[0.07] text-amber-200 overflow-hidden">
+          <svg viewBox="0 0 400 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full object-cover">
+            {/* Rolling Hills */}
+            <path d="M0 120 Q 90 70 210 95 T 400 80 L 400 120 L 0 120 Z" fill="currentColor" opacity="0.6" />
+            <path d="M70 120 Q 180 50 290 80 T 400 65 L 400 120 L 70 120 Z" fill="currentColor" opacity="0.4" />
+            {/* Pine Trees */}
+            <path d="M340 75 L350 95 L330 95 Z M340 65 L348 80 L332 80 Z M340 55 L346 68 L334 68 Z" fill="currentColor" />
+            <path d="M365 78 L373 95 L357 95 Z M365 69 L371 82 L359 82 Z" fill="currentColor" />
+            <path d="M310 82 L318 98 L302 98 Z M310 73 L316 85 L304 85 Z" fill="currentColor" />
+            {/* Cozy Tent */}
+            <path d="M230 98 L252 62 L274 98 Z" fill="currentColor" />
+            <path d="M252 62 L252 98 L262 98 Z" fill="#000" opacity="0.3" />
+            <path d="M246 98 L252 75 L258 98 Z" fill="#000" opacity="0.5" />
+            {/* Campfire */}
+            <path d="M210 97 L216 93 L222 97 L216 95 Z" fill="currentColor" />
+            <circle cx="216" cy="90" r="4" fill="#F59E0B" opacity="0.8" />
+            <circle cx="216" cy="88" r="2" fill="#FDE68A" />
+            {/* Stars & Moon */}
+            <circle cx="370" cy="30" r="1.5" fill="currentColor" />
+            <circle cx="340" cy="22" r="1" fill="currentColor" />
+            <circle cx="280" cy="35" r="1.2" fill="currentColor" />
+            <path d="M305 20 A 7 7 0 0 0 312 27 A 8 8 0 1 1 305 20 Z" fill="currentColor" opacity="0.7" />
+          </svg>
+        </div>
+
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 relative z-10">
           {/* Snorlax Island & Conditions summary */}
           <div className="flex items-center gap-3">
@@ -111,8 +137,8 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
                   <span>{dishLabel}</span>
                 </span>
 
-                <span className="font-mono text-slate-300 font-bold bg-[var(--surface-inner)] px-2.5 py-0.5 rounded-lg border border-[var(--surface-border)]">
-                  Olla: <strong className="text-[var(--accent-primary)]">{effectivePot}</strong>
+                <span className="tabular-nums text-[var(--text-creamy)] font-bold bg-[var(--surface-inner)] px-2.5 py-0.5 rounded-lg border border-[var(--surface-border)]">
+                  Olla: <strong className="text-amber-300 tabular-nums">{effectivePot}</strong>
                 </span>
 
                 {/* 3 Berries */}
@@ -242,7 +268,7 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
                       <select
                         value={config.areaBonus || 0}
                         onChange={(e) => onChangeConfig({ ...config, areaBonus: Number(e.target.value) })}
-                        className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-full text-xs text-sky-300 font-mono font-bold focus:outline-none focus:ring-2 focus:ring-sky-400"
+                        className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-full text-xs text-amber-300 tabular-nums font-bold focus:outline-none focus:ring-2 focus:ring-amber-400"
                       >
                         {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75].map(b => (
                           <option key={b} value={b} className="bg-slate-900">
@@ -358,7 +384,7 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
                           <span>🍒</span>
                           <span>Elige baya para Ranura #{activeBerrySlot + 1}:</span>
                         </span>
-                        <span className="text-[10px] text-[var(--accent-primary)] font-mono">
+                        <span className="text-[10px] text-amber-300 tabular-nums font-bold">
                           18 Tipos Oficiales
                         </span>
                       </div>
@@ -422,7 +448,7 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
                     <select
                       value={config.potSize}
                       onChange={(e) => onChangeConfig({ ...config, potSize: parseInt(e.target.value, 10) })}
-                      className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-full text-xs text-sky-300 font-mono font-bold focus:outline-none focus:ring-2 focus:ring-sky-400"
+                      className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-full text-xs text-amber-300 tabular-nums font-bold focus:outline-none focus:ring-2 focus:ring-amber-400"
                     >
                       {POT_SIZES.map(size => (
                         <option key={size} value={size} className="bg-slate-900">

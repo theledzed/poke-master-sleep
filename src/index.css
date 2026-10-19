@@ -19,7 +19,8 @@
   --accent-primary: #FBBF24;
   --accent-secondary: #34D399;
   --accent-glow: rgba(251, 191, 36, 0.25);
-  --text-heading: #FDFBF7;
+  --text-heading: #FFFDF7;
+  --text-creamy: #F3E8D2;
   --card-shadow: 0 10px 28px -6px rgba(8, 20, 32, 0.45), 0 0 0 1px var(--surface-border);
   --sky-glow: radial-gradient(ellipse 90% 65% at 50% -10%, rgba(251, 191, 36, 0.25), transparent 70%);
 }
@@ -36,7 +37,8 @@
   --accent-primary: #FB923C;
   --accent-secondary: #F472B6;
   --accent-glow: rgba(251, 146, 60, 0.28);
-  --text-heading: #FFF7ED;
+  --text-heading: #FFFBF5;
+  --text-creamy: #FEEED8;
   --card-shadow: 0 10px 28px -6px rgba(32, 12, 26, 0.50), 0 0 0 1px var(--surface-border);
   --sky-glow: radial-gradient(ellipse 90% 65% at 50% -10%, rgba(251, 146, 60, 0.28), transparent 70%);
 }
@@ -54,6 +56,7 @@
   --accent-secondary: #FDE047;
   --accent-glow: rgba(167, 139, 250, 0.25);
   --text-heading: #FAF5FF;
+  --text-creamy: #EDE9FE;
   --card-shadow: 0 10px 28px -6px rgba(6, 8, 20, 0.55), 0 0 0 1px var(--surface-border);
   --sky-glow: radial-gradient(ellipse 90% 65% at 50% -10%, rgba(167, 139, 250, 0.22), transparent 70%);
 }
@@ -70,7 +73,8 @@
   --accent-primary: #34D399;
   --accent-secondary: #FBBF24;
   --accent-glow: rgba(52, 211, 153, 0.20);
-  --text-heading: #F0FDF4;
+  --text-heading: #F7FDF9;
+  --text-creamy: #D1FAE5;
   --card-shadow: 0 10px 28px -6px rgba(6, 16, 20, 0.50), 0 0 0 1px var(--surface-border);
   --sky-glow: radial-gradient(ellipse 90% 65% at 50% -10%, rgba(52, 211, 153, 0.18), transparent 70%);
 }
@@ -87,6 +91,10 @@
   h1, h2, h3, .font-display {
     font-family: 'Fredoka', 'Nunito', system-ui, sans-serif;
     letter-spacing: -0.01em;
+  }
+
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
   }
 }
 
@@ -113,14 +121,14 @@
   box-shadow: 0 14px 34px -6px rgba(0, 0, 0, 0.45), 0 0 0 1px var(--border-specular);
 }
 
-/* Squishy 3D Push Button (Nintendo Cozy Style) */
+/* Squishy 3D Push Button (Nintendo Cozy Style: Mango & Honey 3D) */
 .btn-cozy-primary {
-  @apply relative inline-flex items-center justify-center font-display font-bold tracking-wide transition-all select-none;
-  background: linear-gradient(180deg, #F59E0B 0%, #D97706 100%);
-  color: #ffffff;
-  border-radius: 9999px;
-  border-bottom: 3px solid #B45309;
-  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.38);
+  @apply relative inline-flex items-center justify-center font-display font-black tracking-wide transition-all select-none;
+  background: linear-gradient(180deg, #FBBF24 0%, #F59E0B 45%, #EA580C 100%);
+  color: #431407;
+  border-radius: 1rem;
+  border-bottom: 4px solid #9A3412;
+  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.35);
 }
 
 .btn-cozy-primary:hover {

@@ -312,7 +312,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
               <span className="capitalize">{config.dishType === 'curry' ? 'Curris' : config.dishType === 'salad' ? 'Ensaladas' : 'Postres'}</span>
             </span>
 
-            <span className="text-slate-200 font-mono font-bold px-3 py-1 rounded-full bg-white/5 border border-white/10 flex items-center gap-1">
+            <span className="text-slate-200 tabular-nums font-bold px-3 py-1 rounded-full bg-white/5 border border-white/10 flex items-center gap-1">
               <span>Puchero: {getEffectivePotCapacity(config)}</span>
               {config.goodCampTicket && <span className="text-amber-400 text-[10px]">🏕️ (+50%)</span>}
             </span>
@@ -340,7 +340,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                 <select
                   value={config.areaBonus || 0}
                   onChange={(e) => onUpdateAreaBonus(Number(e.target.value))}
-                  className="bg-transparent text-amber-300 font-mono font-bold focus:outline-none cursor-pointer text-xs"
+                  className="bg-transparent text-amber-300 tabular-nums font-bold focus:outline-none cursor-pointer text-xs"
                 >
                   {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75].map(b => (
                     <option key={b} value={b} className="bg-slate-900 text-slate-200">
@@ -377,7 +377,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
               }`}
             >
               <span>⭐ Mi Equipo 1</span>
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-lg font-mono font-bold ${
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-lg tabular-nums font-bold ${
                 activeCustomTeamIndex === 0 ? 'bg-black/20 text-slate-950' : 'bg-white/10 text-slate-400'
               }`}>
                 {team1Ids.filter(Boolean).length}/5
@@ -392,7 +392,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
               }`}
             >
               <span>🌟 Mi Equipo 2</span>
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-lg font-mono font-bold ${
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-lg tabular-nums font-bold ${
                 activeCustomTeamIndex === 1 ? 'bg-black/20 text-slate-950' : 'bg-white/10 text-slate-400'
               }`}>
                 {team2Ids.filter(Boolean).length}/5
@@ -477,10 +477,10 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                       </span>
                     )}
                   </div>
-                  <div className="text-xl sm:text-2xl font-black text-white font-mono mt-0.5">
+                  <div className="text-xl sm:text-2xl font-black text-white tabular-nums mt-0.5">
                     {recommendedResult.totalDailyVigor.toLocaleString()}
                   </div>
-                  <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono mt-0.5">
+                  <div className="flex items-center justify-between text-[10px] text-[var(--text-muted)] tabular-nums mt-0.5">
                     <span>pts / día</span>
                     {recommendedWeeklyProj && (
                       <span className="text-amber-300 font-bold">
@@ -502,10 +502,10 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                       </span>
                     )}
                   </div>
-                  <div className="text-xl sm:text-2xl font-black text-white font-mono mt-0.5">
+                  <div className="text-xl sm:text-2xl font-black text-white tabular-nums mt-0.5">
                     {customEvaluation.totalDailyVigor.toLocaleString()}
                   </div>
-                  <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono mt-0.5">
+                  <div className="flex items-center justify-between text-[10px] text-[var(--text-muted)] tabular-nums mt-0.5">
                     <span>pts / día</span>
                     {customWeeklyProj && (
                       <span className="text-slate-300 font-bold">
@@ -525,10 +525,10 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                     {comparisonDiff.diffTotal >= 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
                     Diferencia
                   </span>
-                  <div className="text-lg sm:text-xl font-black font-mono mt-0.5">
+                  <div className="text-lg sm:text-xl font-black tabular-nums mt-0.5">
                     {comparisonDiff.diffTotal >= 0 ? '+' : ''}{comparisonDiff.diffTotal.toLocaleString()}
                   </div>
-                  <span className="text-[10px] font-bold">
+                  <span className="text-[10px] font-bold tabular-nums">
                     ({comparisonDiff.percentDiff >= 0 ? '+' : ''}{comparisonDiff.percentDiff.toFixed(1)}%)
                   </span>
                 </div>
@@ -547,32 +547,32 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
 
             {/* Quick 3-Metric Bars */}
             <div className="grid grid-cols-3 gap-2.5 lg:w-80">
-              <div className="bg-[#080C16]/90 p-3.5 rounded-2xl border border-white/10 text-center text-xs shadow-inner">
+              <div className="bg-white/[0.04] p-3.5 rounded-2xl border border-white/10 text-center text-xs shadow-inner">
                 <span className="text-rose-300 text-[10px] font-black uppercase tracking-wider block mb-1">🍒 Bayas</span>
-                <div className="font-mono text-white text-xs font-black">
+                <div className="tabular-nums text-white text-xs font-black">
                   {customEvaluation.berryVigorDaily.toLocaleString()}
                 </div>
-                <span className="text-[9px] text-slate-500 block font-mono mt-0.5">
+                <span className="text-[9px] text-[var(--text-muted)] block tabular-nums mt-0.5 font-medium">
                   vs {recommendedResult.berryVigorDaily.toLocaleString()}
                 </span>
               </div>
 
-              <div className="bg-[#080C16]/90 p-3.5 rounded-2xl border border-white/10 text-center text-xs shadow-inner">
+              <div className="bg-white/[0.04] p-3.5 rounded-2xl border border-white/10 text-center text-xs shadow-inner">
                 <span className="text-emerald-300 text-[10px] font-black uppercase tracking-wider block mb-1">🍲 Cocina</span>
-                <div className="font-mono text-white text-xs font-black">
+                <div className="tabular-nums text-white text-xs font-black">
                   {customEvaluation.cookingVigorDaily.toLocaleString()}
                 </div>
-                <span className="text-[9px] text-slate-500 block font-mono mt-0.5">
+                <span className="text-[9px] text-[var(--text-muted)] block tabular-nums mt-0.5 font-medium">
                   vs {recommendedResult.cookingVigorDaily.toLocaleString()}
                 </span>
               </div>
 
-              <div className="bg-[#080C16]/90 p-3.5 rounded-2xl border border-white/10 text-center text-xs shadow-inner">
+              <div className="bg-white/[0.04] p-3.5 rounded-2xl border border-white/10 text-center text-xs shadow-inner">
                 <span className="text-amber-300 text-[10px] font-black uppercase tracking-wider block mb-1">⚡ Skill</span>
-                <div className="font-mono text-white text-xs font-black">
+                <div className="tabular-nums text-white text-xs font-black">
                   {customEvaluation.skillVigorDaily.toLocaleString()}
                 </div>
-                <span className="text-[9px] text-slate-500 block font-mono mt-0.5">
+                <span className="text-[9px] text-[var(--text-muted)] block tabular-nums mt-0.5 font-medium">
                   vs {recommendedResult.skillVigorDaily.toLocaleString()}
                 </span>
               </div>
@@ -588,7 +588,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
             <h3 className="font-black text-white text-base flex items-center gap-2">
               <span>{activeCustomTeamIndex === 0 ? '🔵' : '🟣'}</span>
               <span>Alineación de {activeCustomTeamIndex === 0 ? 'Mi Equipo 1' : 'Mi Equipo 2'}</span>
-              <span className="text-xs px-3 py-1 rounded-full bg-white/10 text-amber-300 font-mono font-black border border-white/10">
+              <span className="text-xs px-3 py-1 rounded-full bg-white/10 text-amber-300 tabular-nums font-black border border-white/10">
                 {currentTeamPokemons.length} / 5 Compañeros
               </span>
             </h3>
@@ -608,16 +608,16 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                 <button
                   key={slotIdx}
                   onClick={() => setPickerSlotIndex(slotIdx)}
-                  className="h-[142px] max-h-[142px] min-h-[142px] rounded-2xl border-2 border-dashed border-[var(--surface-border)] hover:border-[var(--accent-primary)]/50 bg-[var(--surface-inner)]/50 hover:bg-[var(--surface-inner)] p-3 flex items-center justify-center gap-3 transition-all group shadow-sm relative overflow-hidden"
+                  className="h-[142px] max-h-[142px] min-h-[142px] rounded-2xl border-2 border-dashed border-[var(--surface-border)] hover:border-amber-400/50 bg-[var(--surface-inner)]/50 hover:bg-[var(--surface-inner)] p-3 flex items-center justify-center gap-3 transition-all group shadow-sm relative overflow-hidden"
                 >
-                  <div className="w-12 h-12 rounded-xl bg-[var(--accent-primary)]/10 group-hover:bg-[var(--accent-primary)]/20 border border-[var(--accent-primary)]/20 group-hover:border-[var(--accent-primary)]/40 flex items-center justify-center transition-all shadow-inner flex-shrink-0">
-                    <Plus className="w-5 h-5 text-[var(--accent-primary)] group-hover:scale-110 transition-transform" />
+                  <div className="w-12 h-12 rounded-xl bg-amber-400/10 group-hover:bg-amber-400/20 border border-amber-400/20 group-hover:border-amber-400/40 flex items-center justify-center transition-all shadow-inner flex-shrink-0">
+                    <Plus className="w-5 h-5 text-amber-300 group-hover:scale-110 transition-transform" />
                   </div>
                   <div className="text-left">
-                    <span className="text-[10px] font-mono font-black text-[var(--accent-primary)] block">
+                    <span className="text-[10px] tabular-nums font-black text-amber-300 block">
                       Espacio #{slotIdx + 1}
                     </span>
-                    <span className="text-xs font-bold text-white group-hover:text-[var(--accent-primary)] transition-colors">
+                    <span className="text-xs font-bold text-white group-hover:text-amber-200 transition-colors">
                       + Elegir Pokémon
                     </span>
                   </div>
@@ -691,8 +691,8 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                 Plan Culinario y Relleno de {activeCustomTeamIndex === 0 ? 'Mi Equipo 1' : 'Mi Equipo 2'}
               </h3>
             </div>
-            <span className="text-xs bg-[var(--surface-inner)] border border-[var(--surface-border)] px-3 py-1 rounded-full text-slate-200 font-mono">
-              Vigor Cocina: <strong className="text-[var(--accent-primary)] font-black">{customEvaluation.cookingVigorDaily.toLocaleString()}</strong> pts/día
+            <span className="text-xs bg-[var(--surface-inner)] border border-[var(--surface-border)] px-3 py-1 rounded-full text-[var(--text-creamy)] tabular-nums">
+              Vigor Cocina: <strong className="text-amber-300 font-black tabular-nums">{customEvaluation.cookingVigorDaily.toLocaleString()}</strong> pts/día
             </span>
           </div>
 
@@ -708,17 +708,17 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                       {meal.mealName}
                     </span>
                     <div className="text-right">
-                      <span className="text-xs font-mono font-black text-[var(--accent-primary)]">
+                      <span className="text-xs tabular-nums font-black text-amber-300">
                         +{meal.totalMealVigor.toLocaleString()} pts
                       </span>
-                      <span className="block text-[9px] text-slate-400 font-sans">
+                      <span className="block text-[9px] text-[var(--text-muted)] font-sans">
                         promedio diario
                       </span>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-3 mb-2.5">
-                    <div className="w-12 h-12 rounded-xl bg-sky-950/60 border border-sky-400/25 p-1 flex items-center justify-center flex-shrink-0 relative overflow-hidden shadow-inner">
+                    <div className="w-12 h-12 rounded-2xl bg-white/[0.06] border border-white/10 p-1 flex items-center justify-center flex-shrink-0 relative overflow-hidden shadow-inner">
                       <img
                         src={getDishImageUrl(meal.recipe.name)}
                         alt={meal.recipe.name}
@@ -741,11 +741,11 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                         </h4>
                         {meal.recipe.baseVigor > 0 && onUpdateRecipeLevel && (
                           <div className="flex items-center gap-1 flex-shrink-0">
-                            <span className="text-[10px] text-slate-400 font-mono">Nv.</span>
+                            <span className="text-[10px] text-[var(--text-muted)] font-medium">Nv.</span>
                             <select
                               value={meal.recipeLevel || 1}
                               onChange={(e) => onUpdateRecipeLevel(meal.recipe.name, parseInt(e.target.value, 10))}
-                              className="bg-slate-900 border border-slate-700 text-amber-400 font-bold text-xs rounded px-1.5 py-0.5 focus:ring-1 focus:ring-amber-500 focus:outline-none"
+                              className="bg-[var(--surface-inner)] border border-[var(--surface-border)] text-amber-300 font-bold text-xs rounded-lg px-1.5 py-0.5 focus:ring-1 focus:ring-amber-400 focus:outline-none tabular-nums"
                               title="Ajustar el nivel real de esta receta en tu juego"
                             >
                               {Array.from({ length: 65 }, (_, idx) => idx + 1).map(lvl => (
@@ -757,7 +757,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                           </div>
                         )}
                       </div>
-                      <p className="text-[11px] text-slate-400 line-clamp-1">
+                      <p className="text-[11px] text-[var(--text-muted)] line-clamp-1">
                         {meal.recipe.description}
                       </p>
                     </div>
@@ -765,14 +765,14 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
 
                   {/* Recipe Ingredients */}
                   <div className="mb-2">
-                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                    <div className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-1">
                       Ingredientes Receta ({Object.values(meal.recipe.ingredients).reduce((a, b) => a + b, 0)})
                     </div>
                     <div className="flex flex-wrap gap-1">
                       {Object.entries(meal.recipe.ingredients).map(([ing, count]) => (
                         <span
                           key={ing}
-                          className="text-[10px] px-2 py-0.5 rounded bg-[#08182c]/90 text-slate-200 border border-sky-400/20 flex items-center gap-1 font-mono font-bold"
+                          className="text-[10px] px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-100 border border-amber-500/20 flex items-center gap-1 tabular-nums font-bold"
                         >
                           <img
                             src={getIngredientSpriteUrl(ing)}
@@ -798,7 +798,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                         {meal.fillerIngredients.map((fill) => (
                           <span
                             key={fill.name}
-                            className="text-[10px] px-2 py-0.5 rounded bg-amber-400/15 border border-amber-400/30 text-amber-300 flex items-center gap-1 font-medium"
+                            className="text-[10px] px-2 py-0.5 rounded-full bg-amber-400/15 border border-amber-400/30 text-amber-300 flex items-center gap-1 font-medium"
                           >
                             <img
                               src={getIngredientSpriteUrl(fill.name)}
@@ -813,20 +813,20 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                   )}
                 </div>
 
-                <div className="mt-3 pt-2 border-t border-sky-400/15 text-[10px] text-slate-400 flex flex-col gap-1 font-mono">
-                  <div className="flex items-center justify-between text-slate-400">
+                <div className="mt-3 pt-2 border-t border-[var(--surface-border)] text-[10px] text-[var(--text-muted)] flex flex-col gap-1 tabular-nums">
+                  <div className="flex items-center justify-between text-[var(--text-muted)]">
                     <span>Receta (Nv.{meal.recipeLevel || 1}): {meal.recipeVigor.toLocaleString()}</span>
                     <span>Relleno: {meal.fillerVigor.toLocaleString()}</span>
                   </div>
-                  <div className="flex items-center justify-between text-slate-300 pt-1 border-t border-sky-400/10">
-                    <span className="text-slate-400">Total en olla:</span>
+                  <div className="flex items-center justify-between text-slate-300 pt-1 border-t border-white/10">
+                    <span className="text-[var(--text-muted)]">Total en olla:</span>
                     <span className="text-white font-semibold">{(meal.recipeVigor + meal.fillerVigor).toLocaleString()} pts</span>
                   </div>
-                  <div className="flex items-center justify-between text-sky-300 font-semibold">
+                  <div className="flex items-center justify-between text-amber-200 font-bold">
                     <span>Plato Normal {(config.areaBonus || 0) > 0 ? `(+${config.areaBonus}% Zona)` : ''}:</span>
                     <span>{Math.round((meal.recipeVigor + meal.fillerVigor) * (1 + (config.areaBonus || 0) / 100)).toLocaleString()} pts</span>
                   </div>
-                  <div className="flex items-center justify-between text-amber-300 font-medium">
+                  <div className="flex items-center justify-between text-amber-300 font-bold">
                     <span>Si sale ¡Riquísimo! ({config.isSunday ? '×3' : '×2'}):</span>
                     <span>{Math.round((meal.recipeVigor + meal.fillerVigor) * (1 + (config.areaBonus || 0) / 100) * (config.isSunday ? 3 : 2)).toLocaleString()} pts</span>
                   </div>
@@ -836,8 +836,8 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
           </div>
 
           {/* Daily Ingredient Output */}
-          <div className="mt-5 pt-4 border-t border-sky-400/15">
-            <span className="text-xs font-bold text-slate-300 uppercase tracking-wider block mb-2">
+          <div className="mt-5 pt-4 border-t border-[var(--surface-border)]">
+            <span className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider block mb-2">
               Producción Diaria Total de Ingredientes
             </span>
             <div className="flex flex-wrap gap-2">
@@ -846,7 +846,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                 .map(([name, count]) => (
                   <span
                     key={name}
-                    className="text-xs px-2.5 py-1 rounded-xl bg-[#08182c]/90 border border-sky-400/20 text-slate-200 flex items-center gap-1.5"
+                    className="text-xs px-2.5 py-1 rounded-xl bg-white/[0.06] border border-white/10 text-slate-200 flex items-center gap-1.5"
                   >
                     <img
                       src={getIngredientSpriteUrl(name)}
@@ -854,7 +854,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                       className="w-3.5 h-3.5 object-contain"
                     />
                     <span>{name}</span>
-                    <span className="font-bold text-amber-400 font-mono">+{count}</span>
+                    <span className="font-bold text-amber-400 tabular-nums">+{count}</span>
                   </span>
                 ))}
             </div>
@@ -943,7 +943,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                   <span>🍒</span> Solo con Baya Favorita de la semana (×2)
                 </span>
               </label>
-              <span className="text-[var(--accent-primary)] text-[11px] font-mono font-bold">
+              <span className="text-amber-300 text-[11px] tabular-nums font-bold">
                 {pickerList.length} disponibles
               </span>
             </div>
@@ -973,7 +973,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                         ? 'bg-amber-950/25 border-amber-500/30 hover:border-amber-400'
                         : isFavorite
                         ? 'cozy-card border-amber-400/40 hover:border-amber-400'
-                        : 'cozy-card border-[var(--surface-border)] hover:border-[var(--accent-primary)]/50 hover:bg-white/5'
+                        : 'cozy-card border-[var(--surface-border)] hover:border-amber-400/50 hover:bg-white/5'
                     }`}
                   >
                     {/* Centered Pedestal with Showdown Sprite */}
@@ -1013,14 +1013,14 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                             </span>
                           )}
                         </div>
-                        <span className="text-[9px] font-black text-emerald-300 bg-emerald-500/20 border border-emerald-500/30 px-1.5 py-0.2 rounded-full font-mono">
+                        <span className="text-[9px] font-black text-emerald-300 bg-emerald-500/20 border border-emerald-500/30 px-1.5 py-0.2 rounded-full tabular-nums">
                           Nv.{p.level}
                         </span>
                       </div>
 
                       <div className="flex items-center gap-2 text-[10px] text-slate-300 mt-0.5 font-bold">
-                        <span className="font-mono text-sky-300 flex items-center gap-0.5">
-                          <Zap className="w-2.5 h-2.5 fill-sky-300" /> PA {p.rp}
+                        <span className="tabular-nums text-amber-300 flex items-center gap-0.5 font-bold">
+                          <Zap className="w-2.5 h-2.5 fill-amber-300 text-amber-300" /> PA {p.rp}
                         </span>
                         <span>•</span>
                         <span className="flex items-center gap-1 truncate">
@@ -1048,7 +1048,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                           <span>{mainSkill}</span>
                         </span>
                         {isAlreadyInTeam && (
-                          <span className="text-[9px] text-sky-400 font-bold">
+                          <span className="text-[9px] text-amber-300 font-bold">
                             (En equipo)
                           </span>
                         )}

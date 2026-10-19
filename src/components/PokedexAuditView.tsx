@@ -152,25 +152,25 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
             </p>
           </div>
 
-          <div className="flex items-center gap-2 bg-[var(--surface-inner)] border border-[var(--surface-border)] p-3 rounded-2xl self-start md:self-auto text-xs font-mono">
+          <div className="flex items-center gap-2 bg-[var(--surface-inner)] border border-[var(--surface-border)] p-3 rounded-2xl self-start md:self-auto text-xs tabular-nums">
             <div className="text-center px-2">
               <span className="text-[10px] text-slate-400 uppercase font-bold block">Colección</span>
-              <span className="text-lg font-black text-white">{pokemons.length}</span>
+              <span className="text-lg font-black text-white tabular-nums">{pokemons.length}</span>
             </div>
             <div className="h-6 w-px bg-white/10" />
             <div className="text-center px-2">
               <span className="text-[10px] text-emerald-400 uppercase font-bold block">Élite</span>
-              <span className="text-lg font-black text-emerald-300">{counts.TITULAR_ELITE}</span>
+              <span className="text-lg font-black text-emerald-300 tabular-nums">{counts.TITULAR_ELITE}</span>
             </div>
             <div className="h-6 w-px bg-white/10" />
             <div className="text-center px-2">
               <span className="text-[10px] text-amber-400 uppercase font-bold block">Promesas</span>
-              <span className="text-lg font-black text-amber-300">{counts.PROMESA_INVERTIR}</span>
+              <span className="text-lg font-black text-amber-300 tabular-nums">{counts.PROMESA_INVERTIR}</span>
             </div>
             <div className="h-6 w-px bg-white/10" />
             <div className="text-center px-2">
               <span className="text-[10px] text-rose-400 uppercase font-bold block">Caramelos</span>
-              <span className="text-lg font-black text-rose-300">{counts.CAMBIAR_CARAMELOS}</span>
+              <span className="text-lg font-black text-rose-300 tabular-nums">{counts.CAMBIAR_CARAMELOS}</span>
             </div>
           </div>
         </div>
@@ -183,12 +183,12 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
             onClick={() => setFilterCategory('ALL')}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
               filterCategory === 'ALL'
-                ? 'bg-[var(--accent-primary)] text-slate-950 font-black shadow-sm'
+                ? 'btn-cozy-primary text-xs shadow-sm'
                 : 'text-slate-300 hover:text-white hover:bg-white/5'
             }`}
           >
             <span>Todos</span>
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-white/10">{counts.ALL}</span>
+            <span className="text-[10px] tabular-nums px-1.5 py-0.2 rounded-full bg-white/10">{counts.ALL}</span>
           </button>
 
           <button
@@ -200,7 +200,7 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
             }`}
           >
             <span>👑 Élite</span>
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-emerald-950/60 text-emerald-200 border border-emerald-500/30 font-black">
+            <span className="text-[10px] tabular-nums px-1.5 py-0.2 rounded-full bg-emerald-950/60 text-emerald-200 border border-emerald-500/30 font-black">
               {counts.TITULAR_ELITE}
             </span>
           </button>
@@ -209,12 +209,12 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
             onClick={() => setFilterCategory('PROMESA_INVERTIR')}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
               filterCategory === 'PROMESA_INVERTIR'
-                ? 'bg-sky-500 text-white shadow-sm shadow-sky-500/25'
-                : 'text-sky-300 hover:text-white hover:bg-white/5'
+                ? 'bg-teal-500 text-slate-950 font-black shadow-sm shadow-teal-500/25'
+                : 'text-teal-300 hover:text-white hover:bg-white/5'
             }`}
           >
             <span>💎 Promesas</span>
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-sky-950/60 text-sky-200 border border-sky-500/30 font-black">
+            <span className="text-[10px] tabular-nums px-1.5 py-0.2 rounded-full bg-teal-950/60 text-teal-200 border border-teal-500/30 font-black">
               {counts.PROMESA_INVERTIR}
             </span>
           </button>
@@ -228,7 +228,7 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
             }`}
           >
             <span>✨ Trofeos</span>
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-amber-950/60 text-amber-200 border border-amber-500/30 font-black">
+            <span className="text-[10px] tabular-nums px-1.5 py-0.2 rounded-full bg-amber-950/60 text-amber-200 border border-amber-500/30 font-black">
               {counts.TROFEO_CONSERVAR}
             </span>
           </button>
@@ -242,7 +242,7 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
             }`}
           >
             <span>🍬 Enviar al Profesor</span>
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-rose-950/60 text-rose-200 border border-rose-500/30 font-black">
+            <span className="text-[10px] tabular-nums px-1.5 py-0.2 rounded-full bg-rose-950/60 text-rose-200 border border-rose-500/30 font-black">
               {counts.CAMBIAR_CARAMELOS}
             </span>
           </button>
@@ -256,7 +256,7 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
             placeholder="Buscar por nombre o nota..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 bg-[var(--surface-inner)] border border-[var(--surface-border)] rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[var(--accent-primary)] font-medium"
+            className="w-full pl-9 pr-3 py-2 bg-[var(--surface-inner)] border border-[var(--surface-border)] rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-amber-400 font-medium"
           />
         </div>
       </div>
@@ -292,7 +292,7 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
                   {/* Top Header: Sprite + Name + Tier Badge */}
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-14 h-14 rounded-2xl bg-slate-950/60 border border-white/10 p-1 flex items-center justify-center flex-shrink-0 relative overflow-hidden shadow-inner">
+                      <div className="w-14 h-14 rounded-2xl bg-white/[0.06] border border-white/10 p-1 flex items-center justify-center flex-shrink-0 relative overflow-hidden shadow-inner">
                         <img
                           src={spriteUrl}
                           alt={pokemon.name}
@@ -311,7 +311,7 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
                       <div>
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <h4 className="font-black text-white text-base leading-tight">{pokemon.name}</h4>
-                          <span className="text-[10px] font-black text-amber-200 bg-amber-500/20 px-2 py-0.2 rounded-full border border-amber-400/30 font-mono">
+                          <span className="text-[10px] font-black text-amber-200 bg-amber-500/20 px-2 py-0.2 rounded-full border border-amber-400/30 tabular-nums">
                             Nv. {pokemon.level}
                           </span>
                         </div>
@@ -319,7 +319,7 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
                         <div className="flex items-center gap-2 text-xs text-slate-300 mt-1">
                           <span className="text-[11px] font-bold text-slate-300">{pokemon.specialty}</span>
                           <span>•</span>
-                          <span className="text-[11px] text-slate-400 font-mono flex items-center gap-1">
+                          <span className="text-[11px] text-slate-400 tabular-nums font-bold flex items-center gap-1">
                             <img src={getBerrySpriteUrl(pokemon.berry)} alt={pokemon.berry} className="w-3.5 h-3.5 object-contain" />
                             <span>{pokemon.berry}</span>
                           </span>
@@ -331,7 +331,7 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
                     <div className="text-right flex-shrink-0">
                       <div className={`px-2.5 py-1 rounded-xl text-center border ${tierStyle.badge}`}>
                         <span className="text-xs font-black block leading-none">Grado {tier}</span>
-                        <span className="text-[10px] font-mono opacity-90">{geneticScore} pts</span>
+                        <span className="text-[10px] tabular-nums font-black opacity-90">{geneticScore} pts</span>
                       </div>
                     </div>
                   </div>
@@ -403,7 +403,7 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
                   </div>
 
                   {/* Quick Nature & Subskills Strip */}
-                  <div className="bg-[#080C16]/90 border border-white/5 rounded-xl p-2 text-[10px] space-y-1 font-mono text-slate-400">
+                  <div className="bg-white/[0.04] border border-white/10 rounded-xl p-2.5 text-[10px] space-y-1 tabular-nums text-slate-400 font-medium">
                     <div className="flex items-center justify-between">
                       <span className="text-slate-400 font-sans">Naturaleza:</span>
                       <span className="font-bold text-white">

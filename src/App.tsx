@@ -352,7 +352,7 @@ export const App: React.FC = () => {
       />
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 pt-6 pb-32 sm:pb-36 lg:pb-12">
         {/* TAB 1: OPTIMIZADOR */}
         {activeTab === 'optimizer' && (
           <div className="space-y-6">

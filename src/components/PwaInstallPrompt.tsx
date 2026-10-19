@@ -212,7 +212,7 @@ export const PwaInstallPrompt: React.FC = () => {
             <div className="space-y-3.5 my-4">
               {/* Step 1 */}
               <div className="flex items-start gap-3 p-3 rounded-2xl bg-[var(--surface-inner)] border border-[var(--surface-border)]">
-                <div className="w-7 h-7 rounded-full bg-amber-500/20 text-amber-400 font-mono font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5 border border-amber-400/30">
+                <div className="w-7 h-7 rounded-full bg-amber-500/20 text-amber-400 tabular-nums font-black text-xs flex items-center justify-center flex-shrink-0 mt-0.5 border border-amber-400/30">
                   1
                 </div>
                 <div className="flex-1 text-xs text-slate-200">
@@ -230,7 +230,7 @@ export const PwaInstallPrompt: React.FC = () => {
 
               {/* Step 2 */}
               <div className="flex items-start gap-3 p-3 rounded-2xl bg-[var(--surface-inner)] border border-[var(--surface-border)]">
-                <div className="w-7 h-7 rounded-full bg-amber-500/20 text-amber-400 font-mono font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5 border border-amber-400/30">
+                <div className="w-7 h-7 rounded-full bg-amber-500/20 text-amber-400 tabular-nums font-black text-xs flex items-center justify-center flex-shrink-0 mt-0.5 border border-amber-400/30">
                   2
                 </div>
                 <div className="flex-1 text-xs text-slate-200">
@@ -248,7 +248,7 @@ export const PwaInstallPrompt: React.FC = () => {
 
               {/* Step 3 */}
               <div className="flex items-start gap-3 p-3 rounded-2xl bg-[var(--surface-inner)] border border-[var(--surface-border)]">
-                <div className="w-7 h-7 rounded-full bg-amber-500/20 text-amber-400 font-mono font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5 border border-amber-400/30">
+                <div className="w-7 h-7 rounded-full bg-amber-500/20 text-amber-400 tabular-nums font-black text-xs flex items-center justify-center flex-shrink-0 mt-0.5 border border-amber-400/30">
                   3
                 </div>
                 <div className="flex-1 text-xs text-slate-200">

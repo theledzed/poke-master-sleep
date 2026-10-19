@@ -106,7 +106,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <Icon className="w-3.5 h-3.5 stroke-[2.2]" />
                     <span>{tab.label}</span>
                     {tab.count !== undefined && (
-                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full tabular-nums font-black ${
                         isActive ? 'bg-black/20 text-white' : 'bg-black/30 text-amber-200'
                       }`}>
                         {tab.count}
@@ -169,7 +169,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <div className="relative">
                   <Icon className={`w-5 h-5 transition-transform ${isActive ? 'scale-110 stroke-[2.4]' : 'stroke-[1.8]'}`} />
                   {tab.count !== undefined && (
-                    <span className="absolute -top-1 -right-2 text-[8px] font-mono font-bold bg-[var(--accent-primary)] text-slate-950 px-1 rounded-full leading-none py-0.5">
+                    <span className="absolute -top-1 -right-2 text-[8px] tabular-nums font-black bg-[var(--accent-primary)] text-slate-950 px-1 rounded-full leading-none py-0.5">
                       {tab.count}
                     </span>
                   )}

@@ -137,7 +137,7 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
             >
               <Star className="w-3.5 h-3.5 fill-current text-amber-300" />
               <span>🎮 Mi Equipo Actual</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono ${
+              <span className={`text-[10px] px-1.5 py-0.2 rounded tabular-nums ${
                 selectedRank === -1 ? 'bg-emerald-950/40 text-emerald-100 font-black' : 'bg-white/5 text-emerald-300'
               }`}>
                 {customSavedTeamResult.totalDailyVigor.toLocaleString()}
@@ -159,11 +159,11 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
                 onClick={() => setSelectedRank(idx)}
                 className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
                   isSelected
-                    ? 'bg-[var(--accent-primary)] text-slate-950 font-black shadow-md shadow-[var(--accent-glow)]'
+                    ? 'btn-cozy-primary text-xs shadow-md'
                     : 'text-slate-300 hover:text-white hover:bg-white/5'
                 }`}
               >
-                <Trophy className={`w-3.5 h-3.5 ${isSelected ? 'text-slate-900' : 'text-slate-400'}`} />
+                <Trophy className={`w-3.5 h-3.5 ${isSelected ? 'text-amber-950' : 'text-slate-400'}`} />
                 <span>Equipo #{idx + 1}</span>
                 {isThisInGame && (
                   <span className="text-[9px] bg-emerald-500/30 text-emerald-200 border border-emerald-400/40 px-1.5 py-0.2 rounded font-black flex items-center gap-0.5">
@@ -171,8 +171,8 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
                     <span className="hidden sm:inline">En Juego</span>
                   </span>
                 )}
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-lg font-mono ${
-                  isSelected ? 'bg-black/20 text-slate-900 font-black' : 'bg-white/5 text-slate-400'
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-lg tabular-nums ${
+                  isSelected ? 'bg-black/20 text-amber-950 font-black' : 'bg-white/5 text-slate-400'
                 }`}>
                   {res.totalDailyVigor.toLocaleString()}
                   {wProj && (
@@ -189,7 +189,7 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
             onClick={onOpenSimulator}
             className="btn-cozy-secondary px-3.5 py-2 text-xs flex items-center gap-1.5 self-start sm:self-auto flex-shrink-0"
           >
-            <Swords className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
+            <Swords className="w-3.5 h-3.5 text-amber-300" />
             <span>Laboratorio (Vs)</span>
           </button>
         )}
@@ -202,15 +202,15 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
           <div>
-            <div className="flex items-center gap-2 text-[var(--accent-primary)] text-xs font-bold uppercase tracking-wider mb-1">
-              <Sparkles className="w-4 h-4 text-[var(--accent-primary)]" />
+            <div className="flex items-center gap-2 text-amber-300 text-xs font-bold uppercase tracking-wider mb-1">
+              <Sparkles className="w-4 h-4 text-amber-400" />
               <span>Vigor Diario y Rango Semanal Estimado</span>
             </div>
             <div className="flex items-baseline gap-3">
               <h2 className="text-3xl sm:text-4xl font-display font-black text-[var(--text-heading)] tracking-tight">
                 {currentResult.totalDailyVigor.toLocaleString()}
               </h2>
-              <span className="text-slate-300 font-bold text-xs">pts / día</span>
+              <span className="text-[var(--text-muted)] font-bold text-xs">pts / día</span>
             </div>
           </div>
 
@@ -224,7 +224,7 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
               />
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] uppercase font-black tracking-wider text-[var(--accent-primary)] block">
+                  <span className="text-[10px] uppercase font-black tracking-wider text-amber-300 block">
                     {isMidWeekCalibrated ? 'Predicción Calibrada en Vivo' : 'Rango Semanal Estimado'}
                   </span>
                   {isMidWeekCalibrated && (
@@ -236,11 +236,11 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
                 </div>
                 <div className="text-sm font-black text-white flex items-center gap-1.5 flex-wrap">
                   <span>{currentWeeklyProj.estadoRangoFinal.rangoActual}</span>
-                  <span className="text-xs font-mono font-normal text-slate-300">
+                  <span className="text-xs tabular-nums font-normal text-slate-300">
                     (~{currentWeeklyProj.vigorFinalSemana.toLocaleString()} pts)
                   </span>
                 </div>
-                <div className="text-[10px] text-slate-300 font-mono mt-0.5">
+                <div className="text-[10px] text-slate-300 tabular-nums mt-0.5">
                   Rango: <span className="text-white font-semibold">{currentWeeklyProj.vigorMinSemana.toLocaleString()}</span> ~ <span className="text-white font-semibold">{currentWeeklyProj.vigorMaxSemana.toLocaleString()}</span> pts
                 </div>
               </div>
@@ -252,13 +252,13 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
         <div className="mt-4 pt-3.5 border-t border-[var(--surface-border)] flex flex-wrap items-center justify-between gap-3 text-xs relative z-10">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="px-3 py-1 rounded-full bg-[var(--surface-inner)] border border-[var(--surface-border)] text-rose-300 text-[11px] font-bold flex items-center gap-1.5">
-              <span>🍒</span> Bayas: <strong className="font-mono text-white font-black">{currentResult.berryVigorDaily.toLocaleString()}</strong> ({Math.round((currentResult.berryVigorDaily / currentResult.totalDailyVigor) * 100)}%)
+              <span>🍒</span> Bayas: <strong className="tabular-nums text-white font-black">{currentResult.berryVigorDaily.toLocaleString()}</strong> ({Math.round((currentResult.berryVigorDaily / currentResult.totalDailyVigor) * 100)}%)
             </span>
-            <span className="px-3 py-1 rounded-full bg-[var(--surface-inner)] border border-[var(--surface-border)] text-sky-300 text-[11px] font-bold flex items-center gap-1.5">
-              <span>🍲</span> Cocina: <strong className="font-mono text-white font-black">{currentResult.cookingVigorDaily.toLocaleString()}</strong> ({Math.round((currentResult.cookingVigorDaily / currentResult.totalDailyVigor) * 100)}%)
+            <span className="px-3 py-1 rounded-full bg-[var(--surface-inner)] border border-[var(--surface-border)] text-emerald-300 text-[11px] font-bold flex items-center gap-1.5">
+              <span>🍲</span> Cocina: <strong className="tabular-nums text-white font-black">{currentResult.cookingVigorDaily.toLocaleString()}</strong> ({Math.round((currentResult.cookingVigorDaily / currentResult.totalDailyVigor) * 100)}%)
             </span>
             <span className="px-3 py-1 rounded-full bg-[var(--surface-inner)] border border-[var(--surface-border)] text-amber-300 text-[11px] font-bold flex items-center gap-1.5">
-              <span>⚡</span> Skill: <strong className="font-mono text-white font-black">{currentResult.skillVigorDaily.toLocaleString()}</strong> ({Math.round((currentResult.skillVigorDaily / currentResult.totalDailyVigor) * 100)}%)
+              <span>⚡</span> Skill: <strong className="tabular-nums text-white font-black">{currentResult.skillVigorDaily.toLocaleString()}</strong> ({Math.round((currentResult.skillVigorDaily / currentResult.totalDailyVigor) * 100)}%)
             </span>
           </div>
 
@@ -268,7 +268,7 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                 <span>✓ Tu Equipo Actual en Juego</span>
                 {config.currentTeam?.updatedAt && (
-                  <span className="text-[10px] text-emerald-300/80 font-mono hidden md:inline">
+                  <span className="text-[10px] text-emerald-300/80 tabular-nums hidden md:inline">
                     (Asignado {new Date(config.currentTeam.updatedAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })})
                   </span>
                 )}
@@ -374,7 +374,7 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
               Plan Culinario y Relleno de Puchero (3 Comidas al Día)
             </h3>
           </div>
-          <span className="text-xs bg-[var(--surface-inner)] border border-[var(--surface-border)] px-3.5 py-1.5 rounded-full text-slate-200 flex items-center gap-1 font-mono font-bold">
+          <span className="text-xs bg-[var(--surface-inner)] border border-[var(--surface-border)] px-3.5 py-1.5 rounded-full text-[var(--text-creamy)] flex items-center gap-1 tabular-nums font-bold">
             Capacidad: {getEffectivePotCapacity(config)}
             {config.goodCampTicket && <span className="text-amber-400 font-bold ml-1">🏕️ (+50%)</span>}
           </span>
@@ -391,13 +391,13 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
                   <span className="text-xs font-black uppercase tracking-wider text-amber-400">
                     {meal.mealName}
                   </span>
-                  <span className="text-xs font-mono font-bold text-[var(--accent-primary)]">
+                  <span className="text-xs tabular-nums font-black text-amber-300">
                     +{meal.totalMealVigor.toLocaleString()} pts
                   </span>
                 </div>
 
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-14 h-14 rounded-2xl bg-black/30 border border-white/10 p-1 flex items-center justify-center flex-shrink-0 relative overflow-hidden shadow-inner">
+                  <div className="w-14 h-14 rounded-2xl bg-white/[0.06] border border-white/10 p-1 flex items-center justify-center flex-shrink-0 relative overflow-hidden shadow-inner">
                     <img
                       src={getDishImageUrl(meal.recipe.name)}
                       alt={meal.recipe.name}
@@ -417,7 +417,7 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
                     <h4 className="font-bold text-white text-sm truncate">
                       {meal.recipe.name}
                     </h4>
-                    <span className="text-[10px] text-amber-300 font-mono font-black bg-amber-400/15 border border-amber-400/30 px-2 py-0.5 rounded-full inline-block mt-0.5">
+                    <span className="text-[10px] text-amber-300 tabular-nums font-black bg-amber-400/15 border border-amber-400/30 px-2 py-0.5 rounded-full inline-block mt-0.5">
                       Nv. {meal.recipeLevel || 1}
                     </span>
                     <p className="text-[11px] text-slate-300 line-clamp-1 mt-1">
@@ -435,7 +435,7 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
                     {Object.entries(meal.recipe.ingredients).map(([ing, count]) => (
                       <span
                         key={ing}
-                        className="text-[10px] px-2.5 py-0.5 rounded-full bg-black/25 text-slate-200 border border-white/10 flex items-center gap-1 font-mono font-bold"
+                        className="text-[10px] px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-100 border border-amber-500/20 flex items-center gap-1 tabular-nums font-bold"
                       >
                         <img
                           src={getIngredientSpriteUrl(ing)}
@@ -473,7 +473,7 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
                 )}
               </div>
 
-              <div className="mt-3 pt-2.5 border-t border-white/10 text-[10px] text-slate-400 flex items-center justify-between font-mono">
+              <div className="mt-3 pt-2.5 border-t border-white/10 text-[10px] text-[var(--text-muted)] flex items-center justify-between tabular-nums font-medium">
                 <span>Base: {meal.recipeVigor.toLocaleString()}</span>
                 <span>Relleno: {meal.fillerVigor.toLocaleString()}</span>
               </div>
@@ -501,7 +501,7 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
                     onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
                   />
                   <span className="text-slate-300">{ing}:</span>
-                  <span className="font-bold text-amber-400 font-mono">+{count}</span>
+                  <span className="font-bold text-amber-400 tabular-nums">+{count}</span>
                 </div>
               ))}
           </div>

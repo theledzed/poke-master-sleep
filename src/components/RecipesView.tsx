@@ -52,9 +52,9 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
           <div className="bg-[var(--surface-inner)] border border-[var(--surface-border)] px-4 py-2 rounded-full flex items-center gap-3 shadow-inner">
             <div className="text-xs whitespace-nowrap">
-              <span className="text-slate-400">Nivel de Plato: </span>
-              <span className="font-bold text-amber-300 font-mono">Nv. {previewLevel}</span>
-              <span className="text-emerald-400 text-[11px] ml-1.5 font-bold">(+{levelBonus}%)</span>
+              <span className="text-[var(--text-muted)]">Nivel de Plato: </span>
+              <span className="font-black text-amber-300 tabular-nums">Nv. {previewLevel}</span>
+              <span className="text-emerald-400 text-[11px] ml-1.5 font-bold tabular-nums">(+{levelBonus}%)</span>
             </div>
             <input
               type="range"
@@ -75,7 +75,7 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
                 });
                 onUpdateAllRecipeLevels(batch);
               }}
-              className="px-4 py-2 rounded-full bg-gradient-to-r from-blue-600 via-sky-500 to-blue-600 hover:from-blue-500 hover:to-sky-400 text-white text-xs font-black uppercase tracking-wider shadow-md shadow-sky-500/25 active:scale-95 transition-all flex items-center justify-center gap-1.5"
+              className="btn-cozy-primary px-4 py-2 text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all"
               title={`Guardar Nv. ${previewLevel} en Supabase para las ${filteredRecipes.length} recetas mostradas`}
             >
               <Sparkles className="w-3.5 h-3.5" />
@@ -86,14 +86,14 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
       </div>
 
       {/* Tabs & Search */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 poke-card p-3.5">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 poke-card p-3.5 rounded-3xl">
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => setSelectedType('all')}
             className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-wider transition-all ${
               selectedType === 'all'
-                ? 'bg-gradient-to-r from-blue-600 via-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/25'
-                : 'bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 font-bold'
+                ? 'btn-cozy-primary shadow-md'
+                : 'bg-[var(--surface-inner)] hover:bg-white/10 text-[var(--text-muted)] border border-[var(--surface-border)] font-bold'
             }`}
           >
             Todos ({RECIPES.length})
@@ -102,8 +102,8 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
             onClick={() => setSelectedType('curry')}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-black uppercase tracking-wider transition-all ${
               selectedType === 'curry'
-                ? 'bg-gradient-to-r from-blue-700 to-indigo-600 text-white shadow-md shadow-blue-700/20'
-                : 'bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 font-bold'
+                ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-amber-950 font-black shadow-md border-b-2 border-amber-800'
+                : 'bg-[var(--surface-inner)] hover:bg-white/10 text-[var(--text-muted)] border border-[var(--surface-border)] font-bold'
             }`}
           >
             <Soup className="w-3.5 h-3.5" /> Curris (25)
@@ -112,8 +112,8 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
             onClick={() => setSelectedType('salad')}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-black uppercase tracking-wider transition-all ${
               selectedType === 'salad'
-                ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/20'
-                : 'bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 font-bold'
+                ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-emerald-950 font-black shadow-md border-b-2 border-emerald-800'
+                : 'bg-[var(--surface-inner)] hover:bg-white/10 text-[var(--text-muted)] border border-[var(--surface-border)] font-bold'
             }`}
           >
             <Salad className="w-3.5 h-3.5" /> Ensaladas (26)
@@ -122,8 +122,8 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
             onClick={() => setSelectedType('dessert')}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-black uppercase tracking-wider transition-all ${
               selectedType === 'dessert'
-                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                : 'bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 font-bold'
+                ? 'bg-gradient-to-r from-pink-500 to-rose-400 text-rose-950 font-black shadow-md border-b-2 border-rose-800'
+                : 'bg-[var(--surface-inner)] hover:bg-white/10 text-[var(--text-muted)] border border-[var(--surface-border)] font-bold'
             }`}
           >
             <Coffee className="w-3.5 h-3.5" /> Postres (27)
@@ -137,7 +137,7 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
             placeholder="Buscar receta o ingrediente..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full sm:w-64 pl-10 pr-3 py-2 bg-white/5 border border-white/10 rounded-full text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-sky-400 font-medium"
+            className="w-full sm:w-64 pl-10 pr-3 py-2 bg-white/5 border border-white/10 rounded-full text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-amber-400 font-medium"
           />
         </div>
       </div>
@@ -151,11 +151,11 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
           return (
             <div
               key={recipe.id}
-              className="poke-card pokeball-watermark p-5 rounded-3xl flex flex-col justify-between transition-all duration-200 group relative overflow-hidden"
+              className="cozy-card pokeball-watermark p-5 rounded-3xl flex flex-col justify-between transition-all duration-200 group relative overflow-hidden"
             >
               <div>
                 <div className="flex items-start gap-3 mb-2.5">
-                  <div className="w-14 h-14 rounded-xl bg-slate-950/80 border border-slate-800 p-1 flex items-center justify-center flex-shrink-0 relative overflow-hidden group-hover:scale-105 transition-transform">
+                  <div className="w-14 h-14 rounded-2xl bg-white/[0.06] border border-white/10 p-1 flex items-center justify-center flex-shrink-0 relative overflow-hidden group-hover:scale-105 transition-transform shadow-inner">
                     <img
                       src={getDishImageUrl(recipe.name)}
                       alt={recipe.name}
@@ -175,16 +175,16 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-1">
                       <div>
-                        <h4 className="font-bold text-white text-sm truncate group-hover:text-sky-300 transition-colors">
+                        <h4 className="font-black text-[var(--text-heading)] text-sm truncate group-hover:text-amber-200 transition-colors">
                           {recipe.name}
                         </h4>
                         {onUpdateRecipeLevel && (
                           <div className="flex items-center gap-1.5 mt-1">
-                            <span className="text-[10px] text-slate-400 font-mono">Mi Nivel:</span>
+                            <span className="text-[10px] text-[var(--text-muted)] font-medium">Mi Nivel:</span>
                             <select
                               value={config?.recipeLevels?.[recipe.name] || 1}
                               onChange={(e) => onUpdateRecipeLevel(recipe.name, parseInt(e.target.value, 10))}
-                              className="bg-slate-950 border border-slate-700 text-sky-300 font-bold text-xs rounded px-1.5 py-0.5 focus:ring-1 focus:ring-sky-400 focus:outline-none"
+                              className="bg-[var(--surface-inner)] border border-[var(--surface-border)] text-amber-300 font-black text-xs rounded-lg px-2 py-0.5 focus:ring-1 focus:ring-amber-400 focus:outline-none tabular-nums"
                               title="Guardar tu nivel de esta receta"
                             >
                               {Array.from({ length: 65 }, (_, idx) => idx + 1).map(lvl => (
@@ -197,18 +197,18 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
                         )}
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <div className="text-xs font-mono font-bold text-sky-300">
+                        <div className="text-xs tabular-nums font-black text-amber-300">
                           {scaledVigor.toLocaleString()} pts
                         </div>
                         {previewLevel > 1 && (
-                          <div className="text-[10px] text-slate-500">
+                          <div className="text-[10px] text-[var(--text-muted)] tabular-nums">
                             Base: {recipe.baseVigor.toLocaleString()}
                           </div>
                         )}
                       </div>
                     </div>
 
-                    <p className="text-[11px] text-slate-400 mt-1 line-clamp-2">
+                    <p className="text-[11px] text-[var(--text-muted)] mt-1 line-clamp-2">
                       {recipe.description}
                     </p>
                   </div>
@@ -216,15 +216,15 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
 
                 {/* Ingredients list */}
                 <div className="space-y-1.5 mb-3">
-                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                  <div className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-wider flex items-center justify-between">
                     <span>Ingredientes</span>
-                    <span>Total: {totalIngs}</span>
+                    <span className="tabular-nums font-bold">Total: {totalIngs}</span>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {Object.entries(recipe.ingredients).map(([ing, count]) => (
                       <span
                         key={ing}
-                        className="text-[11px] px-2 py-0.5 rounded bg-slate-800 border border-slate-700/80 text-slate-200 flex items-center gap-1.5 shadow-sm"
+                        className="text-[11px] px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-100 flex items-center gap-1.5 shadow-sm"
                       >
                         <img
                           src={getIngredientSpriteUrl(ing)}
@@ -233,19 +233,19 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
                           onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
                         />
                         <span>{ing}</span>
-                        <span className="text-amber-400 font-bold ml-0.5">×{count}</span>
+                        <span className="text-amber-400 font-black tabular-nums ml-0.5">×{count}</span>
                       </span>
                     ))}
                   </div>
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-slate-800 text-[10px] text-slate-400 flex items-center justify-between">
+              <div className="pt-2 border-t border-[var(--surface-border)] text-[10px] text-[var(--text-muted)] flex items-center justify-between">
                 <span className="flex items-center gap-1">
                   <span>{recipe.type === 'curry' ? '🍲' : recipe.type === 'salad' ? '🥗' : '☕'}</span>
-                  <span className="capitalize">{recipe.type === 'curry' ? 'Guisos y Curris' : recipe.type === 'salad' ? 'Ensaladas' : 'Postres y Bebidas'}</span>
+                  <span className="capitalize font-medium">{recipe.type === 'curry' ? 'Guisos y Curris' : recipe.type === 'salad' ? 'Ensaladas' : 'Postres y Bebidas'}</span>
                 </span>
-                <span className="bg-slate-800/80 px-2 py-0.5 rounded text-slate-300 font-mono">
+                <span className="bg-white/[0.06] px-2.5 py-0.5 rounded-full text-[var(--text-creamy)] tabular-nums font-bold">
                   Puchero mín: {totalIngs}
                 </span>
               </div>
@@ -255,12 +255,12 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
       </div>
 
       {/* Table of all Ingredients Base Vigor */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 my-8">
-        <h3 className="font-bold text-white text-base mb-3 flex items-center gap-2">
+      <div className="cozy-card p-5 my-8 rounded-3xl">
+        <h3 className="font-black text-[var(--text-heading)] text-base mb-3 flex items-center gap-2">
           <span>🌾</span>
           <span>Tabla Oficial de Vigor de Ingredientes (Items Oficiales)</span>
         </h3>
-        <p className="text-xs text-slate-400 mb-4">
+        <p className="text-xs text-[var(--text-muted)] mb-4">
           Cuando el puchero tiene espacios libres, los ingredientes sobrantes se suman como relleno. Aquí tienes el valor por unidad:
         </p>
 
@@ -270,7 +270,7 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
             .map(([name, meta]) => (
               <div
                 key={name}
-                className="bg-slate-950/70 border border-slate-800 hover:border-slate-700 rounded-xl p-2 flex items-center justify-between text-xs transition-colors"
+                className="bg-white/[0.06] border border-white/10 hover:border-amber-400/30 rounded-2xl p-2.5 flex items-center justify-between text-xs transition-colors"
               >
                 <div className="flex items-center gap-1.5 min-w-0 mr-1">
                   <img
@@ -279,9 +279,9 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
                     className="w-4 h-4 object-contain flex-shrink-0"
                     onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
                   />
-                  <span className="text-slate-300 font-medium truncate">{name}</span>
+                  <span className="text-[var(--text-creamy)] font-medium truncate">{name}</span>
                 </div>
-                <span className="font-bold font-mono text-amber-400 flex-shrink-0">
+                <span className="font-black tabular-nums text-amber-300 flex-shrink-0">
                   {meta.vigor}
                 </span>
               </div>

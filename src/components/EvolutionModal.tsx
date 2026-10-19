@@ -174,11 +174,11 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
             <div className="sm:col-span-5 bg-slate-950/70 border border-slate-800 rounded-2xl p-3.5 space-y-2.5 relative overflow-hidden shadow-inner">
               <div className="flex items-center justify-between text-[11px] font-bold text-slate-400 border-b border-slate-800/80 pb-1.5">
                 <span>Forma Actual</span>
-                <span className="font-mono text-slate-300">Nv. {pokemon.level}</span>
+                <span className="tabular-nums font-bold text-slate-300">Nv. {pokemon.level}</span>
               </div>
 
               <div className="flex items-center gap-3">
-                <div className="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-800 p-1 flex items-center justify-center flex-shrink-0 relative overflow-hidden">
+                <div className="w-16 h-16 rounded-2xl bg-white/[0.06] border border-white/10 p-1 flex items-center justify-center flex-shrink-0 relative overflow-hidden">
                   <img
                     src={currentArtworkUrl}
                     alt={pokemon.name}
@@ -189,57 +189,57 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
                   />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="font-black text-sm text-white truncate">{pokemon.name}</h4>
+                  <h4 className="font-black text-sm text-[var(--text-heading)] truncate">{pokemon.name}</h4>
                   <p className="text-[11px] text-slate-400 truncate">{pokemon.specialty}</p>
-                  <p className="text-[11px] font-mono text-sky-300 font-semibold">{preview.frequencyStrBefore}</p>
+                  <p className="text-[11px] tabular-nums text-amber-300 font-bold">{preview.frequencyStrBefore}</p>
                 </div>
               </div>
 
               {/* Current Stats List */}
               <div className="space-y-1.5 text-xs pt-1">
-                <div className="flex items-center justify-between bg-slate-900/60 px-2 py-1 rounded-lg">
+                <div className="flex items-center justify-between bg-white/[0.04] px-2 py-1 rounded-lg">
                   <span className="text-slate-400 text-[11px]">Habilidad:</span>
                   <span className="font-bold text-slate-200 truncate max-w-[140px] text-right">
                     {pokemon.mainSkillName || 'Habilidad'} (Nv. {preview.skillLevelBefore})
                   </span>
                 </div>
-                <div className="flex items-center justify-between bg-slate-900/60 px-2 py-1 rounded-lg">
+                <div className="flex items-center justify-between bg-white/[0.04] px-2 py-1 rounded-lg">
                   <span className="text-slate-400 text-[11px]">Inventario:</span>
-                  <span className="font-bold font-mono text-slate-200">{preview.carryLimitBefore} slots</span>
+                  <span className="font-bold tabular-nums text-slate-200">{preview.carryLimitBefore} slots</span>
                 </div>
-                <div className="flex items-center justify-between bg-slate-900/60 px-2 py-1 rounded-lg">
+                <div className="flex items-center justify-between bg-white/[0.04] px-2 py-1 rounded-lg">
                   <span className="text-slate-400 text-[11px]">Puntos Ayuda (PA):</span>
-                  <span className="font-bold font-mono text-slate-200">{preview.rpBefore}</span>
+                  <span className="font-bold tabular-nums text-slate-200">{preview.rpBefore}</span>
                 </div>
               </div>
             </div>
 
             {/* Center Transformation Pillar */}
             <div className="sm:col-span-1 flex sm:flex-col items-center justify-center gap-1.5 py-1 sm:py-0">
-              <div className="w-8 h-8 rounded-full bg-sky-500/20 border border-sky-400/40 flex items-center justify-center shadow-md shadow-sky-500/10">
-                <ArrowRight className="w-4 h-4 text-sky-300 transform sm:rotate-0 rotate-90" />
+              <div className="w-8 h-8 rounded-full bg-amber-500/20 border border-amber-400/40 flex items-center justify-center shadow-md shadow-amber-500/10">
+                <ArrowRight className="w-4 h-4 text-amber-300 transform sm:rotate-0 rotate-90" />
               </div>
             </div>
 
             {/* Right Card: Evolved Stage */}
             <div
-              className={`sm:col-span-5 bg-gradient-to-br from-[#0d2a4d]/90 via-[#0a203a]/90 to-[#08182d]/90 border border-sky-400/50 rounded-2xl p-3.5 space-y-2.5 relative overflow-hidden shadow-lg shadow-sky-500/10 transition-all ${
+              className={`sm:col-span-5 bg-gradient-to-br from-amber-500/10 via-[var(--surface-card)] to-[var(--surface-inner)] border border-amber-400/40 rounded-2xl p-3.5 space-y-2.5 relative overflow-hidden shadow-lg shadow-amber-500/10 transition-all ${
                 isEvolvingAnimation ? 'ring-4 ring-amber-400 scale-[1.02] duration-300' : ''
               }`}
             >
               {/* Subtle Aura */}
-              <div className="absolute -top-10 -right-10 w-24 h-24 bg-sky-400/20 rounded-full blur-xl pointer-events-none" />
+              <div className="absolute -top-10 -right-10 w-24 h-24 bg-amber-400/15 rounded-full blur-xl pointer-events-none" />
 
-              <div className="flex items-center justify-between text-[11px] font-bold text-sky-300 border-b border-sky-400/20 pb-1.5">
+              <div className="flex items-center justify-between text-[11px] font-bold text-amber-300 border-b border-amber-400/20 pb-1.5">
                 <span className="flex items-center gap-1">
                   <Dna className="w-3.5 h-3.5 text-amber-300" />
                   <span>Tras Evolucionar</span>
                 </span>
-                <span className="font-mono text-emerald-400 font-black">Nv. {pokemon.level}</span>
+                <span className="tabular-nums text-emerald-400 font-black">Nv. {pokemon.level}</span>
               </div>
 
               <div className="flex items-center gap-3">
-                <div className="w-16 h-16 rounded-2xl bg-sky-950/80 border border-sky-400/40 p-1 flex items-center justify-center flex-shrink-0 relative overflow-hidden shadow-md">
+                <div className="w-16 h-16 rounded-2xl bg-white/[0.06] border border-amber-400/40 p-1 flex items-center justify-center flex-shrink-0 relative overflow-hidden shadow-md">
                   <img
                     src={targetArtworkUrl}
                     alt={targetMaster.name}
@@ -255,11 +255,11 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
                   )}
                 </div>
                 <div className="min-w-0">
-                  <h4 className="font-black text-sm text-emerald-300 truncate flex items-center gap-1">
+                  <h4 className="font-black text-sm text-[var(--text-heading)] truncate flex items-center gap-1">
                     <span>{targetMaster.name}</span>
                   </h4>
-                  <p className="text-[11px] text-sky-200 truncate">{targetMaster.specialty}</p>
-                  <p className="text-[11px] font-mono text-emerald-400 font-black flex items-center gap-1">
+                  <p className="text-[11px] text-slate-300 truncate">{targetMaster.specialty}</p>
+                  <p className="text-[11px] tabular-nums text-emerald-400 font-black flex items-center gap-1">
                     <span>{preview.frequencyStrAfter}</span>
                     <span className="text-[10px] text-emerald-300 font-bold bg-emerald-500/20 px-1 rounded">
                       ⚡ +{preview.speedGainPercent}%
@@ -279,14 +279,14 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
                 </div>
                 <div className="flex items-center justify-between bg-[var(--surface-inner)] border border-[var(--surface-border)] px-2 py-1 rounded-lg">
                   <span className="text-slate-300 text-[11px]">Inventario:</span>
-                  <span className="font-bold font-mono text-emerald-300 flex items-center gap-1">
+                  <span className="font-bold tabular-nums text-emerald-300 flex items-center gap-1">
                     <span>{preview.carryLimitAfter} slots</span>
                     <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-1 rounded font-black">+5</span>
                   </span>
                 </div>
                 <div className="flex items-center justify-between bg-[var(--surface-inner)] border border-[var(--surface-border)] px-2 py-1 rounded-lg">
                   <span className="text-slate-300 text-[11px]">Puntos Ayuda (PA):</span>
-                  <span className="font-bold font-mono text-emerald-300 flex items-center gap-1">
+                  <span className="font-bold tabular-nums text-emerald-300 flex items-center gap-1">
                     <span>~{preview.rpAfter}</span>
                     <span className="text-[9px] text-emerald-400 font-semibold">+{preview.rpGain}</span>
                   </span>
@@ -304,7 +304,7 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
               <div>
                 <div className="font-bold text-white flex items-center gap-1.5">
                   <span>Ganancia estimada para Snorlax:</span>
-                  <span className="text-emerald-400 font-black font-mono">
+                  <span className="text-emerald-400 font-black tabular-nums">
                     +{preview.dailyVigorGain.toLocaleString()} vigor/día
                   </span>
                 </div>
