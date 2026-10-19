@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { Pokemon, Specialty, IngredientSlot, Subskill } from '../types/pokemon';
 import { BERRIES, INGREDIENTS, NATURES, KNOWN_SUBSKILLS, parseNature, CANONICAL_BERRIES } from '../data/gameData';
 import { parseFrequency } from '../services/csvParser';
@@ -93,6 +94,16 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
   const isEditing = Boolean(pokemonToEdit);
   const [isScanModalOpen, setIsScanModalOpen] = useState(false);
   const [wasAutoFilled, setWasAutoFilled] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isOpen]);
 
   const [name, setName] = useState('');
   const [isShiny, setIsShiny] = useState(false);
@@ -486,7 +497,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
   const slot2Cand = masterSlots?.slot2;
   const slot3Cand = masterSlots?.slot3;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xl overflow-y-auto">
       <div className="glass-dreamy rounded-[32px] border border-white/15 w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl relative my-auto overflow-hidden">
         {/* Header */}
@@ -1372,6 +1383,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
           onScanSuccess={applyPreFill}
         />
       )}
-    </div>
+    </div>,
+    document.body
   );
 };

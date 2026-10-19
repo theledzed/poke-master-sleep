@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   Dna,
@@ -62,6 +63,16 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
     setTargetImgError(false);
   }, [pokemon.name, targetMaster?.name, spriteStyle]);
 
+  useEffect(() => {
+    if (isOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isOpen]);
+
   if (!targetMaster || !preview) {
     return null;
   }
@@ -90,7 +101,7 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
   const berryIconUrl = getBerrySpriteUrl(targetMaster.berry);
   const skillIconUrl = getMainSkillIconUrl(targetMaster.mainSkill);
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-200">
       <div className="relative w-full max-w-2xl cozy-card border border-[var(--surface-border)] rounded-3xl shadow-2xl overflow-hidden text-white flex flex-col max-h-[92vh]">
         {/* Glowing Top Ambient Header */}
@@ -350,6 +361,7 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

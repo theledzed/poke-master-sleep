@@ -269,11 +269,16 @@ export function normalizeOcrPokemonData(raw: RawOcrData): PreFilledPokemonData {
  * Primary function: Takes a screenshot image and scans it via serverless API or direct Gemini
  */
 export async function scanPokemonScreenshot(
-  imageFile: File | Blob,
+  imageInput: File | Blob | (File | Blob)[],
   customApiKey?: string
 ): Promise<PreFilledPokemonData> {
-  // 1. Compress image in browser for ultra-fast upload (<200KB)
-  const base64Data = await compressScreenshot(imageFile);
+  const files = Array.isArray(imageInput) ? imageInput : [imageInput];
+  if (files.length === 0) {
+    throw new Error('No se proporcionó ninguna imagen.');
+  }
+
+  // 1. Compress all images concurrently in browser (<200KB each)
+  const base64List = await Promise.all(files.map((f) => compressScreenshot(f)));
 
   // 2. Check for custom API key in argument or localStorage
   const savedApiKey =
@@ -288,7 +293,8 @@ export async function scanPokemonScreenshot(
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        imageBase64: base64Data,
+        imageBase64: base64List[0],
+        imagesBase64: base64List,
         mimeType: 'image/jpeg',
         apiKey: savedApiKey
       })
@@ -306,7 +312,7 @@ export async function scanPokemonScreenshot(
     // If serverless reports missing API key and we have a client key, fallback to direct client call
     if (errJson.error === 'MISSING_API_KEY') {
       if (savedApiKey) {
-        return await callGeminiDirectly(base64Data, savedApiKey);
+        return await callGeminiDirectly(base64List, savedApiKey);
       }
       throw new Error(
         'Se requiere una API Key de Google AI Studio (Gemini Flash). Puedes configurarla en el botón de ajustes del escáner.'
@@ -319,7 +325,7 @@ export async function scanPokemonScreenshot(
   } catch (err: any) {
     // If the server route returned an error or 404, but we have a saved client API key, try direct client call
     if (savedApiKey) {
-      return await callGeminiDirectly(base64Data, savedApiKey);
+      return await callGeminiDirectly(base64List, savedApiKey);
     }
     throw err;
   }
@@ -330,11 +336,13 @@ export async function scanPokemonScreenshot(
 /**
  * Fallback direct client call to Google AI Studio if running on static hosting without serverless functions
  */
-async function callGeminiDirectly(base64Data: string, apiKey: string): Promise<PreFilledPokemonData> {
-  const cleanBase64 = base64Data.replace(/^data:image\/[a-zA-Z]+;base64,/, '');
+async function callGeminiDirectly(base64Input: string | string[], apiKey: string): Promise<PreFilledPokemonData> {
+  const rawList = Array.isArray(base64Input) ? base64Input : [base64Input];
+  const cleanImages = rawList.map((b) => b.replace(/^data:image\/[a-zA-Z]+;base64,/, ''));
 
   const systemPrompt = `You are an expert OCR vision AI specialized in extracting data from "Pokémon Sleep" mobile screenshots.
-Analyze the provided screenshot of a Pokémon summary screen and extract all fields into strict JSON format with no markdown wrappers or codeblocks.
+You may be provided with 1 or 2 screenshots of the same Pokémon (e.g. top section with Level/RP/Nature and a second scrolled section showing all 5 Subskills and 3 Ingredient slots).
+Combine and synthesize all visible information across all provided screenshots to create a single complete JSON representation of the Pokémon.
 
 Expected JSON Schema:
 {
@@ -416,12 +424,12 @@ Output strictly valid JSON.`;
               {
                 parts: [
                   { text: systemPrompt },
-                  {
+                  ...cleanImages.map((data) => ({
                     inline_data: {
                       mime_type: 'image/jpeg',
-                      data: cleanBase64
+                      data
                     }
-                  }
+                  }))
                 ]
               }
             ],

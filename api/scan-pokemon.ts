@@ -20,10 +20,16 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const { imageBase64, mimeType = 'image/jpeg', apiKey: userApiKey } = req.body || {};
+    const { imageBase64, imagesBase64, mimeType = 'image/jpeg', apiKey: userApiKey } = req.body || {};
 
-    if (!imageBase64) {
-      return res.status(400).json({ error: 'Falta la imagen en base64 (imageBase64).' });
+    const rawImages: string[] = Array.isArray(imagesBase64) && imagesBase64.length > 0
+      ? imagesBase64
+      : imageBase64
+      ? [imageBase64]
+      : [];
+
+    if (rawImages.length === 0) {
+      return res.status(400).json({ error: 'Falta la imagen en base64 (imageBase64 o imagesBase64).' });
     }
 
     // Determine API Key: Environment variable or client-provided key
@@ -41,11 +47,12 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    // Clean base64 string if it contains data prefix
-    const cleanBase64 = imageBase64.replace(/^data:image\/[a-zA-Z]+;base64,/, '');
+    // Clean base64 strings
+    const cleanImages = rawImages.map(img => img.replace(/^data:image\/[a-zA-Z]+;base64,/, ''));
 
     const systemPrompt = `You are an expert OCR vision AI specialized in extracting data from "Pokémon Sleep" mobile screenshots.
-Analyze the provided screenshot of a Pokémon summary screen and extract all fields into strict JSON format with no markdown wrappers or codeblocks.
+You may be provided with 1 or 2 screenshots of the same Pokémon (e.g. top section with Level/RP/Nature and a second scrolled section showing all 5 Subskills and 3 Ingredient slots).
+Combine and synthesize all visible information across all provided screenshots to create a single complete JSON representation of the Pokémon.
 
 Expected JSON Schema:
 {
@@ -143,12 +150,12 @@ Output strictly valid JSON.`;
                 {
                   parts: [
                     { text: systemPrompt },
-                    {
+                    ...cleanImages.map((data) => ({
                       inline_data: {
                         mime_type: mimeType,
-                        data: cleanBase64
+                        data
                       }
-                    }
+                    }))
                   ]
                 }
               ],
