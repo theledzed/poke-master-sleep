@@ -99,96 +99,149 @@ export const WeatherBackground: React.FC<WeatherBackgroundProps> = ({
     }
   }, []);
 
-  // Weather atmosphere styles
+  // Weather atmosphere styles (Dreamy Sleep Aurora Mesh Aesthetic)
   const weatherConfig = useMemo(() => {
     switch (activeWeather) {
       case 'morning':
         return {
-          label: 'Mañana Fresca',
+          label: 'Amanecer Pastel',
           icon: Sun,
-          iconColor: 'text-amber-400',
-          bgGradient: 'from-[#0A2640] via-[#0E3C5D] to-[#081829]',
-          ambientRays:
-            'radial-gradient(ellipse 90% 70% at 50% -10%, rgba(56, 189, 248, 0.35), transparent 70%), radial-gradient(circle 600px at 85% 15%, rgba(251, 191, 36, 0.22), transparent), radial-gradient(circle 500px at 15% 40%, rgba(16, 185, 129, 0.12), transparent)',
-          particleColor: 'bg-amber-200/60'
+          iconColor: 'text-amber-200',
+          bgGradient: 'from-[#1A1638] via-[#3B1B3A] to-[#25122B]',
+          orbs: [
+            { bg: 'bg-pink-400/20', size: 'w-96 h-96', pos: '-top-20 -left-20', delay: '0s' },
+            { bg: 'bg-amber-300/18', size: 'w-[420px] h-[420px]', pos: 'top-10 -right-20', delay: '2s' },
+            { bg: 'bg-purple-400/20', size: 'w-80 h-80', pos: 'bottom-40 left-1/3', delay: '4s' }
+          ],
+          starColor: 'text-pink-200/70',
+          dotColor: 'bg-amber-200/60'
         };
       case 'afternoon':
         return {
-          label: 'Atardecer Dorado',
+          label: 'Crepúsculo Dorado',
           icon: Sunset,
-          iconColor: 'text-amber-300',
-          bgGradient: 'from-[#23141F] via-[#2F1B2A] to-[#130B14]',
-          ambientRays:
-            'radial-gradient(ellipse 90% 70% at 50% -10%, rgba(245, 158, 11, 0.32), transparent 70%), radial-gradient(circle 600px at 85% 20%, rgba(239, 68, 68, 0.20), transparent), radial-gradient(circle 450px at 15% 50%, rgba(251, 191, 36, 0.15), transparent)',
-          particleColor: 'bg-orange-300/50'
+          iconColor: 'text-orange-200',
+          bgGradient: 'from-[#1B1032] via-[#3F1735] to-[#250D24]',
+          orbs: [
+            { bg: 'bg-orange-400/20', size: 'w-[420px] h-[420px]', pos: '-top-20 -right-20', delay: '0s' },
+            { bg: 'bg-rose-500/18', size: 'w-96 h-96', pos: 'top-1/4 -left-20', delay: '2s' },
+            { bg: 'bg-purple-500/18', size: 'w-80 h-80', pos: 'bottom-20 right-1/4', delay: '4s' }
+          ],
+          starColor: 'text-orange-200/70',
+          dotColor: 'bg-orange-200/60'
         };
       case 'rain':
         return {
           label: 'Lluvia Serena',
           icon: CloudRain,
-          iconColor: 'text-emerald-300',
-          bgGradient: 'from-[#142026] via-[#1a2930] to-[#10191f]',
-          ambientRays:
-            'radial-gradient(ellipse 90% 70% at 50% -10%, rgba(52, 211, 153, 0.18), transparent 70%), radial-gradient(circle 600px at 20% 30%, rgba(251, 191, 36, 0.08), transparent)',
-          particleColor: 'bg-emerald-100/60'
+          iconColor: 'text-cyan-200',
+          bgGradient: 'from-[#06111C] via-[#0D2633] to-[#05151F]',
+          orbs: [
+            { bg: 'bg-teal-400/18', size: 'w-96 h-96', pos: '-top-10 -left-10', delay: '0s' },
+            { bg: 'bg-cyan-500/16', size: 'w-[400px] h-[400px]', pos: 'top-1/3 -right-20', delay: '2s' },
+            { bg: 'bg-blue-600/15', size: 'w-80 h-80', pos: 'bottom-20 left-1/4', delay: '4s' }
+          ],
+          starColor: 'text-cyan-200/70',
+          dotColor: 'bg-cyan-200/60'
         };
       case 'night':
       default:
         return {
-          label: 'Noche Estrellada',
+          label: 'Noche Mágica',
           icon: Moon,
-          iconColor: 'text-amber-200',
-          bgGradient: 'from-[#0e1322] via-[#141b33] to-[#0a0e1a]',
-          ambientRays:
-            'radial-gradient(ellipse 90% 70% at 50% -10%, rgba(167, 139, 250, 0.20), transparent 70%), radial-gradient(circle 600px at 85% 15%, rgba(251, 191, 36, 0.12), transparent)',
-          particleColor: 'bg-amber-100/80'
+          iconColor: 'text-purple-200',
+          bgGradient: 'from-[#0A0D1E] via-[#1B1842] to-[#120F2D]',
+          orbs: [
+            { bg: 'bg-purple-600/22', size: 'w-[460px] h-[460px]', pos: '-top-20 left-1/4', delay: '0s' },
+            { bg: 'bg-pink-500/16', size: 'w-96 h-96', pos: 'top-1/3 -right-20', delay: '2s' },
+            { bg: 'bg-indigo-400/18', size: 'w-96 h-96', pos: 'bottom-10 -left-10', delay: '4s' }
+          ],
+          starColor: 'text-purple-200/80',
+          dotColor: 'bg-indigo-100/70'
         };
     }
   }, [activeWeather]);
 
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden transition-all duration-1000 ease-in-out">
-      {/* Background Gradient */}
+      {/* Background Deep Atmospheric Gradient */}
       <div
         className={`absolute inset-0 bg-gradient-to-b ${weatherConfig.bgGradient} transition-all duration-1000`}
-        style={{ backgroundImage: weatherConfig.ambientRays }}
       />
 
-      {/* Atmospheric Particles */}
+      {/* Floating Aurora Light Orbs (Mesh Gradient Simulation) */}
+      <div className="absolute inset-0 overflow-hidden">
+        {weatherConfig.orbs.map((orb, idx) => (
+          <div
+            key={idx}
+            className={`absolute ${orb.size} ${orb.pos} ${orb.bg} rounded-full blur-[100px] pointer-events-none transition-all duration-1000 animate-pulse`}
+            style={{
+              animationDuration: `${7 + idx * 2}s`,
+              animationDelay: orb.delay
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Atmospheric Particles & 4-Point Stars (✦) */}
       {activeWeather === 'rain' ? (
         /* Gentle soft rain mist */
-        <div className="absolute inset-0 opacity-20">
+        <div className="absolute inset-0 opacity-25">
           <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <pattern id="rain-pattern" width="80" height="100" patternUnits="userSpaceOnUse">
-                <line x1="10" y1="0" x2="6" y2="20" stroke="#ffffff" strokeWidth="0.8" strokeOpacity="0.35" />
-                <line x1="50" y1="35" x2="46" y2="55" stroke="#ffffff" strokeWidth="0.8" strokeOpacity="0.3" />
-                <line x1="30" y1="70" x2="26" y2="90" stroke="#ffffff" strokeWidth="0.8" strokeOpacity="0.25" />
+                <line x1="10" y1="0" x2="6" y2="20" stroke="#7DD3FC" strokeWidth="0.8" strokeOpacity="0.4" />
+                <line x1="50" y1="35" x2="46" y2="55" stroke="#A5F3FC" strokeWidth="0.8" strokeOpacity="0.35" />
+                <line x1="30" y1="70" x2="26" y2="90" stroke="#7DD3FC" strokeWidth="0.8" strokeOpacity="0.3" />
               </pattern>
             </defs>
             <rect width="100%" height="100%" fill="url(#rain-pattern)" />
           </svg>
         </div>
       ) : (
-        /* Stars / Floating Sunbeams */
+        /* Dreamy Stars & 4-Point Sparkles (✦) */
         <div className="absolute inset-0">
+          {/* Delicate 4-point Sparkles */}
           {[
-            { top: '12%', left: '18%', size: 'w-1 h-1', dur: 'duration-700' },
-            { top: '22%', left: '75%', size: 'w-1.5 h-1.5', dur: 'duration-1000' },
-            { top: '35%', left: '42%', size: 'w-1 h-1', dur: 'duration-500' },
-            { top: '48%', left: '88%', size: 'w-1 h-1', dur: 'duration-800' },
-            { top: '65%', left: '25%', size: 'w-1.5 h-1.5', dur: 'duration-1200' },
-            { top: '78%', left: '60%', size: 'w-1 h-1', dur: 'duration-600' },
-            { top: '18%', left: '55%', size: 'w-2 h-2', dur: 'duration-1000' }
-          ].map((s, idx) => (
+            { top: '10%', left: '20%', size: 'text-xs', delay: '0.2s', dur: '3.5s' },
+            { top: '18%', left: '78%', size: 'text-sm', delay: '1.2s', dur: '4s' },
+            { top: '32%', left: '48%', size: 'text-xs', delay: '2.1s', dur: '3s' },
+            { top: '45%', left: '88%', size: 'text-xs', delay: '0.8s', dur: '4.5s' },
+            { top: '62%', left: '15%', size: 'text-sm', delay: '1.7s', dur: '3.8s' },
+            { top: '75%', left: '65%', size: 'text-xs', delay: '2.5s', dur: '4.2s' },
+            { top: '85%', left: '30%', size: 'text-xs', delay: '0.5s', dur: '3.2s' }
+          ].map((sparkle, idx) => (
             <div
-              key={idx}
-              className={`absolute ${s.size} rounded-full ${weatherConfig.particleColor} blur-[0.5px] animate-pulse`}
+              key={`sparkle-${idx}`}
+              className={`absolute select-none font-bold ${sparkle.size} ${weatherConfig.starColor} drop-shadow-[0_0_8px_rgba(255,255,255,0.6)] animate-pulse`}
               style={{
-                top: s.top,
-                left: s.left,
-                animationDelay: `${idx * 0.4}s`,
-                animationDuration: `${2 + (idx % 3)}s`
+                top: sparkle.top,
+                left: sparkle.left,
+                animationDelay: sparkle.delay,
+                animationDuration: sparkle.dur
+              }}
+            >
+              ✦
+            </div>
+          ))}
+
+          {/* Soft Twinkling Light Dots */}
+          {[
+            { top: '14%', left: '35%', size: 'w-1 h-1' },
+            { top: '24%', left: '62%', size: 'w-1.5 h-1.5' },
+            { top: '38%', left: '12%', size: 'w-1 h-1' },
+            { top: '52%', left: '72%', size: 'w-1 h-1' },
+            { top: '68%', left: '84%', size: 'w-1.5 h-1.5' },
+            { top: '80%', left: '45%', size: 'w-1 h-1' }
+          ].map((dot, idx) => (
+            <div
+              key={`dot-${idx}`}
+              className={`absolute ${dot.size} rounded-full ${weatherConfig.dotColor} blur-[0.5px] animate-pulse`}
+              style={{
+                top: dot.top,
+                left: dot.left,
+                animationDelay: `${idx * 0.6}s`,
+                animationDuration: `${2.5 + (idx % 3)}s`
               }}
             />
           ))}

@@ -3,85 +3,86 @@
 @tailwind utilities;
 
 /* ==========================================================================
-   COZY ATMOSPHERIC THEME ENGINE (Pokémon Sleep & Field Journal Aesthetic)
+   DREAMY SLEEP & ETHEREAL GLASSMORPHISM THEME ENGINE
+   (Calm, Headspace, Loona, Moonlit Wellness Aesthetic)
    ========================================================================== */
 
 :root,
+[data-theme-weather="night"] {
+  --bg-app-top: #0A0D1E;
+  --bg-app-bottom: #1B1842;
+  --surface-card: rgba(28, 25, 66, 0.45);
+  --surface-card-hover: rgba(38, 34, 88, 0.55);
+  --surface-card-glass: rgba(255, 255, 255, 0.08);
+  --surface-inner: rgba(255, 255, 255, 0.05);
+  --surface-border: rgba(255, 255, 255, 0.09);
+  --border-specular: rgba(255, 255, 255, 0.22);
+  --accent-primary: #C4B5FD;
+  --accent-secondary: #FBCFE8;
+  --accent-glow: rgba(196, 181, 253, 0.25);
+  --text-heading: #FFFFFF;
+  --text-creamy: #F3E8FF;
+  --card-shadow: 0 20px 50px -10px rgba(8, 10, 30, 0.55), 0 0 0 1px var(--surface-border);
+  --sky-glow: radial-gradient(ellipse 90% 70% at 50% -10%, rgba(139, 92, 246, 0.25), transparent 70%), radial-gradient(circle 500px at 85% 15%, rgba(236, 72, 153, 0.18), transparent), radial-gradient(circle 500px at 15% 35%, rgba(96, 165, 250, 0.16), transparent);
+}
+
 [data-theme-weather="morning"] {
-  --bg-app-top: #122438;
-  --bg-app-bottom: #1c324b;
-  --surface-card: rgba(26, 44, 64, 0.88);
-  --surface-card-hover: rgba(34, 58, 84, 0.94);
-  --surface-card-glass: rgba(22, 38, 56, 0.65);
-  --surface-inner: rgba(15, 26, 38, 0.45);
-  --surface-border: rgba(251, 191, 36, 0.18);
-  --border-specular: rgba(251, 191, 36, 0.38);
-  --accent-primary: #FBBF24;
-  --accent-secondary: #34D399;
-  --accent-glow: rgba(251, 191, 36, 0.25);
-  --text-heading: #FFFDF7;
-  --text-creamy: #F3E8D2;
-  --card-shadow: 0 10px 28px -6px rgba(8, 20, 32, 0.45), 0 0 0 1px var(--surface-border);
-  --sky-glow: radial-gradient(ellipse 90% 65% at 50% -10%, rgba(251, 191, 36, 0.25), transparent 70%);
+  --bg-app-top: #1A1638;
+  --bg-app-bottom: #3B1B3A;
+  --surface-card: rgba(48, 26, 58, 0.42);
+  --surface-card-hover: rgba(62, 34, 76, 0.52);
+  --surface-card-glass: rgba(255, 255, 255, 0.09);
+  --surface-inner: rgba(255, 255, 255, 0.06);
+  --surface-border: rgba(255, 255, 255, 0.10);
+  --border-specular: rgba(255, 255, 255, 0.25);
+  --accent-primary: #FDE68A;
+  --accent-secondary: #F472B6;
+  --accent-glow: rgba(253, 230, 138, 0.25);
+  --text-heading: #FFFDF9;
+  --text-creamy: #FDF2F8;
+  --card-shadow: 0 20px 50px -10px rgba(26, 10, 28, 0.50), 0 0 0 1px var(--surface-border);
+  --sky-glow: radial-gradient(ellipse 90% 70% at 50% -10%, rgba(244, 114, 182, 0.22), transparent 70%), radial-gradient(circle 500px at 85% 15%, rgba(251, 146, 60, 0.18), transparent), radial-gradient(circle 500px at 15% 35%, rgba(196, 181, 253, 0.18), transparent);
 }
 
 [data-theme-weather="afternoon"] {
-  --bg-app-top: #281827;
-  --bg-app-bottom: #3a1e33;
-  --surface-card: rgba(54, 30, 50, 0.88);
-  --surface-card-hover: rgba(68, 38, 64, 0.94);
-  --surface-card-glass: rgba(46, 24, 42, 0.65);
-  --surface-inner: rgba(30, 14, 28, 0.45);
-  --surface-border: rgba(251, 146, 60, 0.22);
-  --border-specular: rgba(251, 146, 60, 0.42);
-  --accent-primary: #FB923C;
+  --bg-app-top: #1B1032;
+  --bg-app-bottom: #3F1735;
+  --surface-card: rgba(45, 20, 52, 0.42);
+  --surface-card-hover: rgba(58, 26, 68, 0.52);
+  --surface-card-glass: rgba(255, 255, 255, 0.08);
+  --surface-inner: rgba(255, 255, 255, 0.05);
+  --surface-border: rgba(255, 255, 255, 0.09);
+  --border-specular: rgba(255, 255, 255, 0.22);
+  --accent-primary: #FDBA74;
   --accent-secondary: #F472B6;
-  --accent-glow: rgba(251, 146, 60, 0.28);
+  --accent-glow: rgba(253, 186, 116, 0.25);
   --text-heading: #FFFBF5;
   --text-creamy: #FEEED8;
-  --card-shadow: 0 10px 28px -6px rgba(32, 12, 26, 0.50), 0 0 0 1px var(--surface-border);
-  --sky-glow: radial-gradient(ellipse 90% 65% at 50% -10%, rgba(251, 146, 60, 0.28), transparent 70%);
-}
-
-[data-theme-weather="night"] {
-  --bg-app-top: #0e1322;
-  --bg-app-bottom: #161c33;
-  --surface-card: rgba(24, 29, 52, 0.90);
-  --surface-card-hover: rgba(33, 40, 70, 0.95);
-  --surface-card-glass: rgba(18, 22, 42, 0.68);
-  --surface-inner: rgba(10, 13, 24, 0.50);
-  --surface-border: rgba(167, 139, 250, 0.18);
-  --border-specular: rgba(167, 139, 250, 0.38);
-  --accent-primary: #A78BFA;
-  --accent-secondary: #FDE047;
-  --accent-glow: rgba(167, 139, 250, 0.25);
-  --text-heading: #FAF5FF;
-  --text-creamy: #EDE9FE;
-  --card-shadow: 0 10px 28px -6px rgba(6, 8, 20, 0.55), 0 0 0 1px var(--surface-border);
-  --sky-glow: radial-gradient(ellipse 90% 65% at 50% -10%, rgba(167, 139, 250, 0.22), transparent 70%);
+  --card-shadow: 0 20px 50px -10px rgba(24, 8, 22, 0.50), 0 0 0 1px var(--surface-border);
+  --sky-glow: radial-gradient(ellipse 90% 70% at 50% -10%, rgba(251, 146, 60, 0.22), transparent 70%), radial-gradient(circle 500px at 85% 20%, rgba(244, 63, 94, 0.18), transparent);
 }
 
 [data-theme-weather="rain"] {
-  --bg-app-top: #142026;
-  --bg-app-bottom: #1a2930;
-  --surface-card: rgba(28, 44, 52, 0.88);
-  --surface-card-hover: rgba(36, 56, 66, 0.94);
-  --surface-card-glass: rgba(22, 36, 42, 0.65);
-  --surface-inner: rgba(14, 24, 28, 0.50);
-  --surface-border: rgba(52, 211, 153, 0.16);
-  --border-specular: rgba(52, 211, 153, 0.32);
-  --accent-primary: #34D399;
-  --accent-secondary: #FBBF24;
-  --accent-glow: rgba(52, 211, 153, 0.20);
-  --text-heading: #F7FDF9;
-  --text-creamy: #D1FAE5;
-  --card-shadow: 0 10px 28px -6px rgba(6, 16, 20, 0.50), 0 0 0 1px var(--surface-border);
-  --sky-glow: radial-gradient(ellipse 90% 65% at 50% -10%, rgba(52, 211, 153, 0.18), transparent 70%);
+  --bg-app-top: #06111C;
+  --bg-app-bottom: #0D2633;
+  --surface-card: rgba(12, 34, 46, 0.45);
+  --surface-card-hover: rgba(18, 46, 62, 0.55);
+  --surface-card-glass: rgba(255, 255, 255, 0.08);
+  --surface-inner: rgba(255, 255, 255, 0.05);
+  --surface-border: rgba(255, 255, 255, 0.08);
+  --border-specular: rgba(255, 255, 255, 0.20);
+  --accent-primary: #5EEAD4;
+  --accent-secondary: #93C5FD;
+  --accent-glow: rgba(94, 234, 212, 0.22);
+  --text-heading: #F0FDFA;
+  --text-creamy: #CCFBF1;
+  --card-shadow: 0 20px 50px -10px rgba(4, 12, 18, 0.55), 0 0 0 1px var(--surface-border);
+  --sky-glow: radial-gradient(ellipse 90% 70% at 50% -10%, rgba(56, 189, 248, 0.20), transparent 70%), radial-gradient(circle 500px at 85% 20%, rgba(52, 211, 153, 0.15), transparent);
 }
 
 @layer base {
   body {
-    @apply text-slate-100 font-sans antialiased min-h-screen selection:bg-amber-400 selection:text-slate-900;
+    @apply text-slate-100 font-sans antialiased min-h-screen selection:bg-purple-300 selection:text-indigo-950;
     background-color: var(--bg-app-top);
     background-image: var(--sky-glow), linear-gradient(180deg, var(--bg-app-top) 0%, var(--bg-app-bottom) 100%);
     background-attachment: fixed;
@@ -99,87 +100,108 @@
 }
 
 /* ==========================================================================
-   COZY UI COMPONENTS (Tactile, Soft 3D, Field Journal Aesthetic)
+   DREAMY UI COMPONENTS (Frosted Cloud Glass, Luminous Pearl Pills)
    ========================================================================== */
 
-/* Authentic Pokemon Cozy Field Card */
+/* Dreamy Frosted Cloud Glass Card */
+.glass-dreamy,
 .cozy-card,
 .poke-card {
   background: var(--surface-card);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--surface-border);
   box-shadow: var(--card-shadow);
-  border-radius: 1.25rem;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 1.75rem; /* 28px */
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.glass-dreamy:hover,
 .cozy-card:hover,
 .poke-card:hover {
   background: var(--surface-card-hover);
   border-color: var(--border-specular);
-  box-shadow: 0 14px 34px -6px rgba(0, 0, 0, 0.45), 0 0 0 1px var(--border-specular);
+  box-shadow: 0 24px 60px -10px rgba(0, 0, 0, 0.55), 0 0 0 1px var(--border-specular);
 }
 
-/* Squishy 3D Push Button (Nintendo Cozy Style: Mango & Honey 3D) */
+/* Luminous Pearl Pill Button ("Start tracking / Good Night" Style) */
+.btn-dreamy-pearl,
 .btn-cozy-primary {
-  @apply relative inline-flex items-center justify-center font-display font-black tracking-wide transition-all select-none;
-  background: linear-gradient(180deg, #FBBF24 0%, #F59E0B 45%, #EA580C 100%);
-  color: #431407;
-  border-radius: 1rem;
-  border-bottom: 4px solid #9A3412;
-  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.35);
+  @apply relative inline-flex items-center justify-center font-display font-bold tracking-wide transition-all select-none rounded-full;
+  background: #FFFFFF;
+  color: #1E1B4B;
+  box-shadow: 0 0 25px rgba(255, 255, 255, 0.35), 0 4px 16px rgba(8, 10, 30, 0.25);
 }
 
+.btn-dreamy-pearl:hover,
 .btn-cozy-primary:hover {
-  filter: brightness(1.08);
+  background: #F8FAFC;
+  box-shadow: 0 0 35px rgba(255, 255, 255, 0.55), 0 6px 20px rgba(8, 10, 30, 0.3);
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(217, 119, 6, 0.45);
 }
 
+.btn-dreamy-pearl:active,
 .btn-cozy-primary:active {
-  transform: translateY(2px);
-  border-bottom-width: 1px;
-  box-shadow: 0 2px 6px rgba(217, 119, 6, 0.25);
+  transform: scale(0.97);
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.25);
 }
 
-/* Secondary Frosted Pill Button */
-.btn-cozy-secondary {
-  @apply relative inline-flex items-center justify-center font-display font-bold tracking-wide transition-all select-none;
-  background: var(--surface-card-glass);
-  border: 1px solid var(--surface-border);
-  border-bottom: 2px solid rgba(0, 0, 0, 0.3);
-  color: #f1f5f9;
-  border-radius: 9999px;
-  backdrop-filter: blur(8px);
+/* Dreamy Pastel Aurora Pill Button */
+.btn-dreamy-pastel {
+  @apply relative inline-flex items-center justify-center font-display font-bold tracking-wide transition-all select-none rounded-full;
+  background: linear-gradient(135deg, #E0E7FF 0%, #EDE9FE 50%, #FCE7F3 100%);
+  color: #1E1B4B;
+  box-shadow: 0 0 22px rgba(196, 181, 253, 0.35);
 }
 
-.btn-cozy-secondary:hover {
-  background: var(--surface-card-hover);
-  border-color: var(--border-specular);
+.btn-dreamy-pastel:hover {
+  filter: brightness(1.05);
+  box-shadow: 0 0 32px rgba(196, 181, 253, 0.5);
   transform: translateY(-1px);
 }
 
+.btn-dreamy-pastel:active {
+  transform: scale(0.97);
+}
+
+/* Frosted Ghost Pill Button */
+.btn-dreamy-ghost,
+.btn-cozy-secondary {
+  @apply relative inline-flex items-center justify-center font-display font-bold tracking-wide transition-all select-none rounded-full;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #FFFFFF;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.btn-dreamy-ghost:hover,
+.btn-cozy-secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+.btn-dreamy-ghost:active,
 .btn-cozy-secondary:active {
-  transform: translateY(1px);
-  border-bottom-width: 1px;
+  transform: scale(0.97);
 }
 
-/* Pokéball SVG Watermark Utility */
+/* Subtle Dreamy Watermark */
 .pokeball-watermark {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' opacity='0.04' fill='%23ffffff'%3E%3Ccircle cx='50' cy='50' r='46' stroke='%23ffffff' stroke-width='6' fill='none'/%3E%3Cpath d='M4 50h34M62 50h34' stroke='%23ffffff' stroke-width='6'/%3E%3Ccircle cx='50' cy='50' r='14' stroke='%23ffffff' stroke-width='6' fill='none'/%3E%3Ccircle cx='50' cy='50' r='6' fill='%23ffffff'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' opacity='0.03' fill='%23ffffff'%3E%3Ccircle cx='50' cy='50' r='46' stroke='%23ffffff' stroke-width='4' fill='none'/%3E%3Cpath d='M4 50h34M62 50h34' stroke='%23ffffff' stroke-width='4'/%3E%3Ccircle cx='50' cy='50' r='14' stroke='%23ffffff' stroke-width='4' fill='none'/%3E%3Ccircle cx='50' cy='50' r='6' fill='%23ffffff'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right -10px bottom -10px;
-  background-size: 110px 110px;
+  background-position: right -15px bottom -15px;
+  background-size: 130px 130px;
 }
 
-/* Custom Cozy Scrollbars */
+/* Custom Ethereal Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.15);
 }
 ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.15);

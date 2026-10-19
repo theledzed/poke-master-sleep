@@ -222,9 +222,9 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
   const pastDaysCount = timelineDias.filter(d => d.esPasado).length;
 
   return (
-    <div className="cozy-card pokeball-watermark p-5 sm:p-6 space-y-6 relative overflow-hidden border border-[var(--surface-border)]">
+    <div className="glass-dreamy pokeball-watermark p-5 sm:p-6 rounded-[28px] space-y-6 relative overflow-hidden border border-white/10 shadow-xl">
       {/* Top Header & Calibration Status */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--surface-border)] pb-4 relative z-10">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-4 relative z-10">
         <div>
           <div className="flex items-center gap-2 text-[var(--accent-primary)] text-xs font-bold uppercase tracking-wider mb-1">
             <Trophy className="w-4 h-4 text-[var(--accent-primary)]" />
@@ -242,7 +242,7 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
         {/* Quick Calibration Action Pill */}
         <div className="flex items-center gap-2 self-start md:self-auto">
           {isCalibrated ? (
-            <div className="flex items-center gap-1.5 bg-[var(--surface-inner)] border border-emerald-400/40 p-1.5 pl-3 rounded-2xl shadow-md">
+            <div className="flex items-center gap-1.5 bg-white/[0.06] backdrop-blur-md border border-emerald-400/40 p-1.5 pl-3 rounded-full shadow-md">
               <div className="flex items-center gap-1.5 text-xs">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 <span className="font-bold text-emerald-300 text-xs">
@@ -256,7 +256,7 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
               <button
                 type="button"
                 onClick={() => setIsDrawerOpen(!isDrawerOpen)}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 text-xs font-bold transition-all border border-emerald-400/30"
+                className="flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 text-xs font-bold transition-all border border-emerald-400/30"
                 title="Modificar puntos actuales en pantalla"
               >
                 <Edit3 className="w-3 h-3" />
@@ -266,7 +266,7 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
               <button
                 type="button"
                 onClick={handleResetCalibration}
-                className="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all"
+                className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all"
                 title="Volver a proyección teórica de toda la semana"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
@@ -276,9 +276,9 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
             <button
               type="button"
               onClick={() => setIsDrawerOpen(true)}
-              className="btn-cozy-primary px-4 py-2 text-xs flex items-center gap-2 cursor-pointer shadow-md"
+              className="btn-dreamy-pearl px-5 py-2.5 text-xs flex items-center gap-2 cursor-pointer shadow-lg"
             >
-              <Zap className="w-3.5 h-3.5" />
+              <Zap className="w-3.5 h-3.5 text-amber-500" />
               <span>Ajustar a Hoy en Juego 🎮</span>
             </button>
           )}
@@ -360,7 +360,7 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
       )}
 
       {/* Main Hero Card: Rango Estimado + Previsión para el Domingo */}
-      <div className="cozy-card pokeball-watermark p-5 sm:p-6 rounded-3xl relative overflow-hidden border border-[var(--surface-border)] shadow-xl space-y-5">
+      <div className="glass-dreamy pokeball-watermark p-5 sm:p-6 rounded-[28px] relative overflow-hidden border border-white/10 shadow-2xl space-y-5">
         {/* Soft atmospheric ambient glow */}
         <div className="absolute top-0 right-0 w-80 h-80 bg-[var(--accent-glow)] rounded-full blur-3xl pointer-events-none" />
 
@@ -370,19 +370,19 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
             <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider border ${
               isCalibrated
                 ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/30 shadow-sm'
-                : 'bg-[var(--surface-inner)] text-[var(--accent-primary)] border-[var(--surface-border)]'
+                : 'bg-white/[0.06] text-[var(--accent-primary)] border-white/10'
             }`}>
               {isCalibrated
                 ? '🟢 PREDICCIÓN CALIBRADA EN VIVO'
                 : 'PROYECCIÓN ESTIMADA DE LA SEMANA'}
             </span>
-            <span className="text-xs text-[var(--text-creamy)] tabular-nums bg-[var(--surface-inner)] border border-[var(--surface-border)] px-3 py-0.5 rounded-full font-bold">
+            <span className="text-xs text-[var(--text-creamy)] tabular-nums bg-white/[0.06] border border-white/10 px-3 py-0.5 rounded-full font-bold">
               🏝️ Isla: <span className="text-white capitalize font-black">{islaId.replace('_', ' ')}</span>
             </span>
           </div>
 
           {isCalibrated && (
-            <span className="text-[11px] text-emerald-300 tabular-nums bg-emerald-950/60 border border-emerald-400/30 px-2.5 py-0.5 rounded-full font-medium">
+            <span className="text-[11px] text-emerald-300 tabular-nums bg-emerald-950/60 border border-emerald-400/30 px-3 py-0.5 rounded-full font-medium">
               Actualizado: {formatUpdateDate(config.midWeekProgress?.updatedAt)}
             </span>
           )}
@@ -391,11 +391,46 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
         {/* Primary Hero Display: Pokeball + Main Expected Rank + Points */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
           <div className="flex items-center gap-4">
-            <img
-              src={getRankPokeballUrl(estadoRangoFinal.rangoActual)}
-              alt={estadoRangoFinal.rangoActual}
-              className="w-14 h-14 sm:w-16 sm:h-16 object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.6)] flex-shrink-0"
-            />
+            {/* Luminous Glowing Dot Ring Arc & Sacred Altar Halo */}
+            <div className="relative flex items-center justify-center flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24">
+              {/* Pulsing ambient glow */}
+              <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-amber-400/20 via-purple-500/20 to-sky-400/20 blur-md animate-pulse" />
+              {/* Dotted Celestial SVG Ring */}
+              <svg className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none" viewBox="0 0 100 100">
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="44"
+                  fill="none"
+                  stroke="rgba(255, 255, 255, 0.12)"
+                  strokeWidth="2"
+                />
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="44"
+                  fill="none"
+                  stroke="url(#celestial-gold-grad)"
+                  strokeWidth="3"
+                  strokeDasharray="4 6"
+                  strokeLinecap="round"
+                  className="animate-[spin_45s_linear_infinite]"
+                />
+                <defs>
+                  <linearGradient id="celestial-gold-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#FDE047" />
+                    <stop offset="50%" stopColor="#C084FC" />
+                    <stop offset="100%" stopColor="#38BDF8" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <img
+                src={getRankPokeballUrl(estadoRangoFinal.rangoActual)}
+                alt={estadoRangoFinal.rangoActual}
+                className="w-12 h-12 sm:w-14 sm:h-14 object-contain drop-shadow-[0_6px_16px_rgba(0,0,0,0.6)] relative z-10"
+              />
+            </div>
+
             <div>
               <div className="flex items-baseline gap-2">
                 <h2 className="text-3xl sm:text-4xl font-display font-black text-[var(--text-heading)] tracking-tight">
@@ -412,7 +447,7 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
           </div>
 
           {/* Distance to next rank badge */}
-          <div className="bg-[var(--surface-inner)] border border-[var(--surface-border)] rounded-2xl px-4 py-2.5 self-start sm:self-auto text-left sm:text-right shadow-inner">
+          <div className="bg-white/[0.05] backdrop-blur-md border border-white/10 rounded-2xl px-4 py-2.5 self-start sm:self-auto text-left sm:text-right shadow-inner">
             <span className="text-[10px] text-[var(--text-muted)] uppercase font-black tracking-wider block">
               {estadoRangoFinal.siguienteRango ? 'Próximo Rango' : 'Techo de la Isla'}
             </span>
@@ -425,7 +460,7 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
         </div>
 
         {/* PREVISIÓN DE SNORLAX (Cozy 3-Scenario Cards) */}
-        <div className="relative z-10 rounded-3xl bg-[var(--surface-inner)] border border-[var(--surface-border)] p-4 sm:p-5 shadow-inner">
+        <div className="relative z-10 rounded-[24px] bg-white/[0.04] backdrop-blur-md border border-white/10 p-4 sm:p-5 shadow-inner">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-amber-400" />

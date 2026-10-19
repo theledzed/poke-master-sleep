@@ -437,6 +437,9 @@ export const App: React.FC = () => {
         )}
       </main>
 
+      {/* Atmospheric Bottom Gradient Curtain (Prevents text clipping under mobile floating dock) */}
+      <div className="lg:hidden fixed bottom-0 inset-x-0 h-28 bg-gradient-to-t from-[var(--bg-app-bottom)] via-[var(--bg-app-bottom)]/80 to-transparent pointer-events-none z-40" />
+
       {/* Add / Edit Pokemon Modal */}
       <PokemonModal
         isOpen={isModalOpen}

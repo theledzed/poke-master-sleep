@@ -80,38 +80,69 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
 
   return (
     <>
-      {/* COMPACT CAMP SUMMARY BAR (Cozy Field Journal Header with Campsite Diorama) */}
-      <div className="cozy-card p-3.5 sm:p-4 rounded-3xl relative overflow-hidden">
-        {/* Campsite Diorama SVG Silhouette Background */}
-        <div className="absolute right-0 bottom-0 h-full w-72 sm:w-96 pointer-events-none select-none opacity-[0.07] text-amber-200 overflow-hidden">
-          <svg viewBox="0 0 400 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full object-cover">
-            {/* Rolling Hills */}
-            <path d="M0 120 Q 90 70 210 95 T 400 80 L 400 120 L 0 120 Z" fill="currentColor" opacity="0.6" />
-            <path d="M70 120 Q 180 50 290 80 T 400 65 L 400 120 L 70 120 Z" fill="currentColor" opacity="0.4" />
-            {/* Pine Trees */}
-            <path d="M340 75 L350 95 L330 95 Z M340 65 L348 80 L332 80 Z M340 55 L346 68 L334 68 Z" fill="currentColor" />
-            <path d="M365 78 L373 95 L357 95 Z M365 69 L371 82 L359 82 Z" fill="currentColor" />
-            <path d="M310 82 L318 98 L302 98 Z M310 73 L316 85 L304 85 Z" fill="currentColor" />
-            {/* Cozy Tent */}
-            <path d="M230 98 L252 62 L274 98 Z" fill="currentColor" />
-            <path d="M252 62 L252 98 L262 98 Z" fill="#000" opacity="0.3" />
-            <path d="M246 98 L252 75 L258 98 Z" fill="#000" opacity="0.5" />
-            {/* Campfire */}
-            <path d="M210 97 L216 93 L222 97 L216 95 Z" fill="currentColor" />
-            <circle cx="216" cy="90" r="4" fill="#F59E0B" opacity="0.8" />
-            <circle cx="216" cy="88" r="2" fill="#FDE68A" />
-            {/* Stars & Moon */}
-            <circle cx="370" cy="30" r="1.5" fill="currentColor" />
-            <circle cx="340" cy="22" r="1" fill="currentColor" />
-            <circle cx="280" cy="35" r="1.2" fill="currentColor" />
-            <path d="M305 20 A 7 7 0 0 0 312 27 A 8 8 0 1 1 305 20 Z" fill="currentColor" opacity="0.7" />
+      {/* COMPACT CAMP SUMMARY BAR (Dreamy Ethereal Island Header with Moonlit Scene) */}
+      <div className="glass-dreamy p-4 sm:p-5 rounded-[28px] relative overflow-hidden border border-white/10 shadow-[0_20px_50px_rgba(8,10,30,0.45)]">
+        {/* Dreamy Ambient Light Glow */}
+        <div className="absolute -top-10 -right-10 w-64 h-64 bg-[var(--accent-glow)] rounded-full blur-3xl pointer-events-none opacity-40" />
+
+        {/* Ethereal Night / Moonlit Scene SVG in Layers (Good Night 22:30 Style) */}
+        <div className="absolute right-0 bottom-0 h-full w-80 sm:w-[440px] pointer-events-none select-none overflow-hidden opacity-30 text-purple-200">
+          <svg viewBox="0 0 440 140" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full object-cover">
+            <defs>
+              <filter id="dreamy-moon-glow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="4" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+              <linearGradient id="hill-grad-1" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#C4B5FD" stopOpacity="0.4" />
+                <stop offset="100%" stopColor="#4C1D95" stopOpacity="0.1" />
+              </linearGradient>
+              <linearGradient id="hill-grad-2" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#DDD6FE" stopOpacity="0.25" />
+                <stop offset="100%" stopColor="#1E1B4B" stopOpacity="0.05" />
+              </linearGradient>
+            </defs>
+
+            {/* Distant Soft Rolling Hills */}
+            <path d="M0 140 Q 110 75 240 100 T 440 85 L 440 140 L 0 140 Z" fill="url(#hill-grad-1)" />
+            <path d="M80 140 Q 200 60 320 90 T 440 70 L 440 140 L 80 140 Z" fill="url(#hill-grad-2)" />
+
+            {/* Glowing Luminous Crescent Moon */}
+            <g transform="translate(350, 18)" filter="url(#dreamy-moon-glow)">
+              <circle cx="16" cy="16" r="14" fill="#FFFFFF" opacity="0.12" />
+              <path
+                d="M 18,3 A 14,14 0 0,0 29,18 A 15,15 0 1,1 18,3 Z"
+                fill="#FFFDF7"
+                opacity="0.9"
+              />
+            </g>
+
+            {/* Soft Floating Cloud Silhouettes */}
+            <path
+              d="M 230 48 Q 240 40 252 44 Q 262 38 274 44 Q 284 42 290 50 Q 295 56 290 62 L 225 62 Q 220 56 230 48 Z"
+              fill="#FFFFFF"
+              opacity="0.18"
+            />
+            <path
+              d="M 310 52 Q 320 45 330 49 Q 340 44 350 50 Q 358 48 364 55 Q 368 60 364 66 L 305 66 Q 300 60 310 52 Z"
+              fill="#FFFFFF"
+              opacity="0.12"
+            />
+
+            {/* 4-Point Stars (✦) and Delicate Twinkles */}
+            <text x="315" y="26" fill="#FFFFFF" fontSize="12" opacity="0.8">✦</text>
+            <text x="270" y="38" fill="#FDE68A" fontSize="9" opacity="0.75">✦</text>
+            <text x="395" y="45" fill="#FBCFE8" fontSize="11" opacity="0.8">✦</text>
+            <circle cx="295" cy="22" r="1" fill="#FFFFFF" opacity="0.7" />
+            <circle cx="340" cy="42" r="1.2" fill="#FFFFFF" opacity="0.8" />
+            <circle cx="245" cy="30" r="1" fill="#FFFFFF" opacity="0.6" />
           </svg>
         </div>
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 relative z-10">
           {/* Snorlax Island & Conditions summary */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[var(--surface-inner)] border border-[var(--surface-border)] flex items-center justify-center text-xl flex-shrink-0 shadow-inner">
+            <div className="w-11 h-11 rounded-full bg-white/[0.08] border border-white/15 backdrop-blur-md flex items-center justify-center text-xl flex-shrink-0 shadow-[0_0_15px_rgba(255,255,255,0.15)]">
               <span>⛺</span>
             </div>
 
@@ -120,11 +151,11 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
                 <span className="font-display font-bold text-[var(--text-heading)] text-sm sm:text-base tracking-tight truncate">
                   {currentIsland.name}
                 </span>
-                <span className="text-[10px] font-bold px-2 py-0.2 rounded-full bg-[var(--surface-inner)] text-[var(--accent-primary)] border border-[var(--surface-border)]">
+                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-white/[0.08] text-[var(--accent-primary)] border border-white/10 backdrop-blur-md">
                   +{config.areaBonus || 0}% Zona
                 </span>
                 {config.goodCampTicket && (
-                  <span className="text-[10px] font-bold px-2 py-0.2 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-200 border border-amber-300/30 backdrop-blur-md">
                     🏕️ Pase
                   </span>
                 )}
@@ -132,17 +163,17 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
 
               {/* Badges: Menu + Pot + 3 Berries */}
               <div className="flex items-center gap-2 text-xs text-slate-300 mt-1 flex-wrap">
-                <span className="flex items-center gap-1 font-semibold text-slate-200 bg-[var(--surface-inner)] px-2.5 py-0.5 rounded-lg border border-[var(--surface-border)]">
+                <span className="flex items-center gap-1 font-semibold text-slate-100 bg-white/[0.06] backdrop-blur-md px-3 py-0.5 rounded-full border border-white/10">
                   <span>{dishEmoji}</span>
                   <span>{dishLabel}</span>
                 </span>
 
-                <span className="tabular-nums text-[var(--text-creamy)] font-bold bg-[var(--surface-inner)] px-2.5 py-0.5 rounded-lg border border-[var(--surface-border)]">
-                  Olla: <strong className="text-amber-300 tabular-nums">{effectivePot}</strong>
+                <span className="tabular-nums text-[var(--text-creamy)] font-bold bg-white/[0.06] backdrop-blur-md px-3 py-0.5 rounded-full border border-white/10">
+                  Olla: <strong className="text-amber-200 tabular-nums">{effectivePot}</strong>
                 </span>
 
-                {/* 3 Berries */}
-                <div className="flex items-center gap-1.5 bg-[var(--surface-inner)] px-2 py-0.5 rounded-lg border border-[var(--surface-border)]">
+                {/* 3 Berries in soft translucent pill */}
+                <div className="flex items-center gap-1.5 bg-white/[0.06] backdrop-blur-md px-2.5 py-0.5 rounded-full border border-white/10">
                   {config.favoriteBerries.map((b, idx) => (
                     <img
                       key={idx}
@@ -157,14 +188,14 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
             </div>
           </div>
 
-          {/* Quick Action Buttons */}
-          <div className="flex items-center gap-2 self-end md:self-auto flex-shrink-0">
+          {/* Quick Action Buttons (Dreamy Luminous Pearl & Frosted Ghost Pills) */}
+          <div className="flex items-center gap-2.5 self-end md:self-auto flex-shrink-0">
             <button
               onClick={() => {
                 setStep(1);
                 setIsStepperOpen(true);
               }}
-              className="btn-cozy-secondary px-3.5 py-2 text-xs flex items-center gap-1.5"
+              className="btn-dreamy-ghost px-4 py-2 text-xs flex items-center gap-1.5 rounded-full shadow-sm"
               title="Abrir asistente de configuración semanal de Snorlax"
             >
               <Settings2 className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
@@ -174,9 +205,9 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
             <button
               onClick={onRunOptimizer}
               disabled={isCalculating}
-              className="btn-cozy-primary px-5 py-2 text-xs flex items-center gap-1.5 shadow-md active:scale-95 disabled:opacity-50"
+              className="btn-dreamy-pearl px-5 py-2.5 text-xs flex items-center gap-1.5 rounded-full disabled:opacity-50"
             >
-              <Sparkles className={`w-3.5 h-3.5 stroke-[2.5] ${isCalculating ? 'animate-spin' : ''}`} />
+              <Sparkles className={`w-3.5 h-3.5 stroke-[2.2] text-indigo-950 ${isCalculating ? 'animate-spin' : ''}`} />
               <span>{isCalculating ? 'Calculando...' : 'Optimizar'}</span>
             </button>
           </div>

@@ -57,7 +57,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-[var(--surface-card)]/90 backdrop-blur-md border-b border-[var(--surface-border)] shadow-md transition-colors duration-500">
+      <header className="sticky top-0 z-40 bg-indigo-950/40 backdrop-blur-2xl border-b border-white/10 shadow-lg transition-colors duration-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-14 sm:h-16">
             {/* Logo & Snorlax Sleep Master Title */}
@@ -66,7 +66,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={() => setActiveTab('optimizer')}
             >
               {/* Iconic Pokéball Graphic */}
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-slate-900 border border-white/10 flex items-center justify-center p-0.5 shadow-md group-hover:scale-105 transition-transform relative overflow-hidden flex-shrink-0">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-2xl bg-indigo-950/80 border border-white/15 flex items-center justify-center p-0.5 shadow-md group-hover:scale-105 transition-transform relative overflow-hidden flex-shrink-0">
                 <svg viewBox="0 0 100 100" className="w-7 h-7 drop-shadow-md">
                   <circle cx="50" cy="50" r="48" fill="#1e293b" stroke="#0f172a" strokeWidth="4" />
                   <path d="M 2,50 A 48,48 0 0,1 98,50 Z" fill="#EE1515" />
@@ -89,7 +89,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
 
             {/* Desktop Navigation Pills */}
-            <nav className="hidden lg:flex items-center gap-1.5 bg-[var(--surface-inner)] p-1.5 rounded-full border border-[var(--surface-border)] shadow-inner">
+            <nav className="hidden lg:flex items-center gap-1.5 bg-white/[0.06] backdrop-blur-2xl p-1.5 rounded-full border border-white/10 shadow-inner">
               {tabs.map(tab => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
@@ -99,7 +99,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     onClick={() => setActiveTab(tab.id)}
                     className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-display font-bold transition-all ${
                       isActive
-                        ? 'btn-cozy-primary scale-[1.02]'
+                        ? 'btn-dreamy-pearl scale-[1.02]'
                         : 'text-slate-300 hover:text-white hover:bg-white/10'
                     }`}
                   >
@@ -141,7 +141,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
               {/* Mobile/Desktop Pokemon Count Pill */}
               <div className="hidden xs:flex items-center">
-                <span className="text-xs font-display font-bold px-2.5 py-1 rounded-full bg-[var(--surface-inner)] text-[var(--accent-primary)] border border-[var(--surface-border)] shadow-sm whitespace-nowrap">
+                <span className="text-xs font-display font-bold px-3 py-1 rounded-full bg-white/[0.06] text-white border border-white/10 shadow-sm whitespace-nowrap">
                   {pokemonCount} 🐾
                 </span>
               </div>
@@ -150,8 +150,8 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </header>
 
-      {/* Cozy Mobile Bottom Navigation Dock (Floating Island, Fitts' law 44px+ touch targets) */}
-      <nav className="lg:hidden fixed bottom-3 left-3 right-3 z-50 max-w-md mx-auto bg-[var(--surface-card)]/95 backdrop-blur-2xl rounded-2xl border border-[var(--surface-border)] p-1.5 shadow-2xl safe-area-pb transition-all">
+      {/* Dreamy Mobile Bottom Navigation Dock (Floating Frosted Island, rounded-full) */}
+      <nav className="lg:hidden fixed bottom-4 left-4 right-4 z-50 max-w-md mx-auto bg-indigo-950/75 backdrop-blur-2xl rounded-full border border-white/15 p-2 shadow-2xl safe-area-pb transition-all">
         <div className="grid grid-cols-4 gap-1 items-center">
           {tabs.map(tab => {
             const Icon = tab.icon;
@@ -160,9 +160,9 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex flex-col items-center justify-center min-h-[46px] py-1 px-1 rounded-xl transition-all select-none ${
+                className={`flex flex-col items-center justify-center min-h-[46px] py-1 px-1 rounded-full transition-all select-none ${
                   isActive
-                    ? 'bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] font-display font-bold border border-[var(--border-specular)] shadow-sm scale-[1.02]'
+                    ? 'bg-white/20 text-white font-display font-bold border border-white/25 shadow-md scale-[1.02]'
                     : 'text-slate-400 hover:text-slate-200 active:scale-95'
                 }`}
               >
