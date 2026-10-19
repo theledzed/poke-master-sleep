@@ -466,7 +466,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 items-center">
                 {/* Recommended Score */}
-                <div className="bg-[var(--surface-inner)] p-4 rounded-2xl border border-[var(--surface-border)] shadow-inner">
+                <div className="bg-white/[0.03] p-4 rounded-2xl transition-colors">
                   <div className="flex items-center justify-between gap-1 mb-1">
                     <span className="text-[11px] text-purple-200 font-bold flex items-center gap-1 uppercase tracking-wider">
                       <Trophy className="w-3.5 h-3.5" /> Recomendado
@@ -491,13 +491,13 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                 </div>
 
                 {/* Custom Team Score */}
-                <div className="bg-[var(--surface-inner)] p-4 rounded-2xl border border-[var(--surface-border)] shadow-inner">
+                <div className="bg-white/[0.03] p-4 rounded-2xl transition-colors">
                   <div className="flex items-center justify-between gap-1 mb-1">
                     <span className="text-[11px] text-slate-200 font-bold flex items-center gap-1 uppercase tracking-wider">
                       <span>⭐</span> Tu Equipo
                     </span>
                     {customWeeklyProj && (
-                      <span className="text-[9px] bg-[var(--surface-inner)] text-slate-200 font-bold px-2 py-0.5 rounded-full border border-white/10 truncate">
+                      <span className="text-[9px] bg-white/10 text-slate-200 font-bold px-2 py-0.5 rounded-full border border-white/10 truncate">
                         🏅 {customWeeklyProj.estadoRangoFinal.rangoActual}
                       </span>
                     )}
@@ -516,10 +516,10 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                 </div>
 
                 {/* Difference Badge */}
-                <div className={`p-4 rounded-2xl border col-span-2 sm:col-span-1 flex flex-col justify-center shadow-inner ${
+                <div className={`p-4 rounded-2xl col-span-2 sm:col-span-1 flex flex-col justify-center shadow-inner ${
                   comparisonDiff.diffTotal >= 0
-                    ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
-                    : 'bg-rose-500/15 border-rose-500/30 text-rose-300'
+                    ? 'bg-emerald-500/15 ring-1 ring-emerald-400/30 text-emerald-300'
+                    : 'bg-rose-500/15 ring-1 ring-rose-400/30 text-rose-300'
                 }`}>
                   <span className="text-[10px] uppercase font-bold tracking-wider flex items-center gap-1">
                     {comparisonDiff.diffTotal >= 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
@@ -683,7 +683,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
 
       {/* Custom Team Meals & Production Breakdown */}
       {customEvaluation && (
-        <div className="cozy-card p-5 sm:p-6 border border-[var(--surface-border)] shadow-xl">
+        <div className="glass-dreamy p-5 sm:p-6 rounded-[32px] border border-white/10 shadow-xl">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Utensils className="w-5 h-5 text-purple-300" />
@@ -691,7 +691,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                 Plan Culinario y Relleno de {activeCustomTeamIndex === 0 ? 'Mi Equipo 1' : 'Mi Equipo 2'}
               </h3>
             </div>
-            <span className="text-xs bg-[var(--surface-inner)] border border-[var(--surface-border)] px-3 py-1 rounded-full text-[var(--text-creamy)] tabular-nums">
+            <span className="text-xs bg-white/10 border border-white/10 px-3 py-1 rounded-full text-white tabular-nums">
               Vigor Cocina: <strong className="text-white font-black tabular-nums">{customEvaluation.cookingVigorDaily.toLocaleString()}</strong> pts/día
             </span>
           </div>
@@ -700,7 +700,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
             {customEvaluation.meals.map((meal) => (
               <div
                 key={meal.mealIndex}
-                className="cozy-card border border-[var(--surface-border)] rounded-2xl p-4 flex flex-col justify-between shadow-md"
+                className="bg-white/[0.03] hover:bg-white/[0.06] rounded-2xl p-4 flex flex-col justify-between transition-all"
               >
                 <div>
                   <div className="flex items-center justify-between mb-2">

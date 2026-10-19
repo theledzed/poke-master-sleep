@@ -388,13 +388,13 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
 
               {/* Specialty & Berry */}
               <div className="grid grid-cols-2 gap-2 mb-3">
-                <div className="bg-[var(--surface-inner)] border border-[var(--surface-border)] p-2.5 rounded-xl">
+                <div className="bg-white/[0.04] p-2.5 rounded-2xl">
                   <span className="text-[9px] uppercase font-black text-slate-400 block mb-1">Especialidad</span>
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded-md inline-block ${specialtyBadge.bg} ${specialtyBadge.text} border ${specialtyBadge.border}`}>
+                  <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full inline-block ${specialtyBadge.bg} ${specialtyBadge.text}`}>
                     {pokemon.specialty}
                   </span>
                 </div>
-                <div className="bg-[var(--surface-inner)] border border-[var(--surface-border)] p-2.5 rounded-xl">
+                <div className="bg-white/[0.04] p-2.5 rounded-2xl">
                   <span className="text-[9px] uppercase font-black text-slate-400 block mb-1">Baya ({berryMultiplier}x)</span>
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-200">
                     <img src={getBerrySpriteUrl(pokemon.berry)} alt={pokemon.berry} className="w-4 h-4 object-contain" />
@@ -405,7 +405,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
               </div>
 
               {/* Habilidad Principal */}
-              <div className="bg-[var(--surface-inner)] border border-[var(--surface-border)] p-2.5 rounded-xl mb-3">
+              <div className="bg-white/[0.04] p-2.5 rounded-2xl mb-3">
                 <span className="text-[9px] uppercase font-black text-slate-400 block mb-1">Habilidad Principal</span>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-xs font-bold text-white">
@@ -421,14 +421,14 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
                     )}
                     <span>{mainSkill}</span>
                   </div>
-                  <span className={`text-[9px] font-black px-2 py-0.5 rounded ${mainSkillMeta.badgeBg} ${mainSkillMeta.badgeText}`}>
+                  <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${mainSkillMeta.badgeBg} ${mainSkillMeta.badgeText}`}>
                     Skill
                   </span>
                 </div>
               </div>
 
               {/* Subhabilidades */}
-              <div className="bg-[var(--surface-inner)] border border-[var(--surface-border)] p-2.5 rounded-xl mb-3">
+              <div className="bg-white/[0.04] p-2.5 rounded-2xl mb-3">
                 <span className="text-[9px] uppercase font-black text-slate-400 block mb-1.5">
                   Subhabilidades (Nv 10 / 25 / 50 / 75 / 100)
                 </span>
@@ -436,20 +436,20 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
                   {pokemon.subskills.map((sub, idx) => {
                     const tierStyles = {
                       'gold': sub.enabled
-                        ? 'bg-purple-500/20 text-purple-100 border-purple-400/40 font-black'
-                        : 'bg-slate-900/50 text-slate-500 border-slate-800 line-through',
+                        ? 'bg-purple-500/20 text-purple-100 ring-1 ring-purple-400/40 font-black'
+                        : 'bg-white/[0.03] text-slate-500 line-through',
                       'blue': sub.enabled
-                        ? 'bg-indigo-500/20 text-indigo-200 border-indigo-400/50 font-bold'
-                        : 'bg-slate-900/50 text-slate-500 border-slate-800 line-through',
+                        ? 'bg-indigo-500/20 text-indigo-200 ring-1 ring-indigo-400/40 font-bold'
+                        : 'bg-white/[0.03] text-slate-500 line-through',
                       'white': sub.enabled
-                        ? 'bg-slate-800 text-slate-200 border-slate-700 font-semibold'
-                        : 'bg-slate-900/50 text-slate-500 border-slate-800 line-through'
+                        ? 'bg-white/10 text-slate-200 font-semibold'
+                        : 'bg-white/[0.03] text-slate-500 line-through'
                     }[sub.tier];
 
                     return (
                       <span
                         key={idx}
-                        className={`text-[10px] px-2.5 py-0.5 rounded-full border flex items-center gap-1 ${tierStyles}`}
+                        className={`text-[10px] px-2.5 py-0.5 rounded-full flex items-center gap-1 ${tierStyles}`}
                         title={`${sub.description} (${sub.enabled ? 'Activa' : `Desbloquea a Nv. ${sub.unlockLevel}`})`}
                       >
                         {!sub.enabled && <Lock className="w-2.5 h-2.5 text-slate-500" />}
@@ -462,7 +462,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
               </div>
 
               {/* Ingredientes Timeline */}
-              <div className="bg-[var(--surface-inner)] border border-[var(--surface-border)] p-2.5 rounded-xl mb-3">
+              <div className="bg-white/[0.04] p-2.5 rounded-2xl mb-3">
                 <span className="text-[9px] uppercase font-black text-slate-400 block mb-1.5">
                   Ingredientes por Nivel
                 </span>
@@ -470,10 +470,10 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
                   {pokemon.ingredients.map((ing, idx) => (
                     <div
                       key={idx}
-                      className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs ${
+                      className={`flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs ${
                         ing.enabled
-                          ? 'bg-white/[0.05] border border-[var(--surface-border)] text-white'
-                          : 'bg-slate-900/40 border border-dashed border-slate-800 text-slate-500'
+                          ? 'bg-white/[0.06] text-white shadow-sm'
+                          : 'bg-white/[0.02] text-slate-500'
                       }`}
                     >
                       <div className="flex items-center gap-2">
@@ -495,13 +495,13 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
 
               {/* Notes if present */}
               {pokemon.notes && (
-                <div className="bg-white/5 border border-white/10 p-2.5 rounded-xl text-xs text-slate-300 italic mb-4">
+                <div className="bg-white/[0.04] p-2.5 rounded-xl text-xs text-slate-300 italic mb-4">
                   "{pokemon.notes}"
                 </div>
               )}
 
               {/* Actions footer */}
-              <div className="flex items-center justify-between gap-2 pt-2 border-t border-[var(--surface-border)]">
+              <div className="flex items-center justify-between gap-2 pt-2 border-t border-white/10">
                 {canPokemonEvolve(pokemon.name) && onEvolve && (
                   <button
                     onClick={() => {
@@ -727,7 +727,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
           </div>
 
           {/* Habilidad Principal */}
-          <div className="mb-2.5 flex items-center justify-between bg-white/[0.04] backdrop-blur-md border border-white/5 px-3 py-1.5 rounded-full">
+          <div className="mb-2.5 flex items-center justify-between bg-white/[0.04] backdrop-blur-md px-3 py-1.5 rounded-full">
             <span className="text-[9px] uppercase tracking-wider text-slate-400 font-bold font-display">Habilidad</span>
             <div className="flex items-center gap-1.5">
               <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1.5 shadow-sm ${mainSkillMeta.badgeBg} ${mainSkillMeta.badgeText}`}>
@@ -750,7 +750,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
           </div>
 
           {/* Ingredientes Activos */}
-          <div className="mb-3 bg-white/[0.04] backdrop-blur-md border border-white/5 p-2.5 rounded-2xl">
+          <div className="mb-3 bg-white/[0.04] backdrop-blur-md p-2.5 rounded-2xl">
             <div className="text-[9px] uppercase font-bold font-display text-slate-400 tracking-wider mb-1.5 flex items-center justify-between">
               <span>Ingredientes</span>
               <span className="text-[9px] text-slate-400 font-semibold tabular-nums">Nv 1 / 30 / 60</span>
@@ -796,7 +796,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
           </div>
 
           {/* Subhabilidades */}
-          <div className="mb-2 bg-white/[0.04] backdrop-blur-md border border-white/5 p-2.5 rounded-2xl">
+          <div className="mb-2 bg-white/[0.04] backdrop-blur-md p-2.5 rounded-2xl">
             <div className="text-[9px] uppercase font-bold font-display text-slate-400 tracking-wider mb-1.5">
               Subhabilidades
             </div>
@@ -804,10 +804,10 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
               {pokemon.subskills.map((sub, idx) => {
                 const tierStyles = {
                   'gold': sub.enabled
-                    ? 'bg-purple-500/20 text-purple-100 border border-purple-300/30 font-bold shadow-sm'
+                    ? 'bg-purple-500/20 text-purple-100 ring-1 ring-purple-300/30 font-bold shadow-sm'
                     : 'bg-white/[0.03] text-slate-500 line-through',
                   'blue': sub.enabled
-                    ? 'bg-indigo-500/20 text-indigo-200 border border-indigo-400/30 font-bold shadow-sm'
+                    ? 'bg-indigo-500/20 text-indigo-200 ring-1 ring-indigo-400/30 font-bold shadow-sm'
                     : 'bg-white/[0.03] text-slate-500 line-through',
                   'white': sub.enabled
                     ? 'bg-white/10 text-slate-200 font-semibold'
@@ -833,7 +833,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
 
           {/* Sinergia / Estrategia footer note if present */}
           {pokemon.notes && (
-            <div className="mt-2 pt-2 border-t border-[var(--surface-border)] text-[10px] text-slate-300 italic line-clamp-2">
+            <div className="mt-2.5 pt-2 text-[10px] text-slate-300 italic line-clamp-2">
               "{pokemon.notes}"
             </div>
           )}

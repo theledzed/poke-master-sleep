@@ -478,7 +478,7 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
           {/* 3 Scenarios Cards: Mínimo / Esperado / Máximo */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
             {/* Scenario 1: Tranquilo */}
-            <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/10 flex flex-col justify-between">
+            <div className="p-3.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] flex flex-col justify-between transition-all">
               <div>
                 <div className="flex items-center justify-between gap-1 mb-1">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center gap-1">
@@ -502,7 +502,7 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
             </div>
 
             {/* Scenario 2: Esperado / Promedio (Hero Card) */}
-            <div className="p-4 rounded-3xl bg-gradient-to-b from-purple-500/25 via-[var(--surface-card)] to-[var(--surface-inner)] border-2 border-purple-400/60 flex flex-col justify-between shadow-xl shadow-purple-500/15 sm:-translate-y-1 relative overflow-hidden group">
+            <div className="p-4 rounded-3xl bg-gradient-to-b from-purple-500/20 via-white/[0.06] to-white/[0.03] ring-1 ring-purple-300/40 flex flex-col justify-between shadow-xl shadow-purple-500/15 sm:-translate-y-1 relative overflow-hidden group transition-all">
               <div className="absolute top-0 right-0 w-24 h-24 bg-purple-400/10 rounded-full blur-xl pointer-events-none" />
               <div className="relative z-10">
                 <div className="flex items-center justify-between gap-1 mb-1.5">
@@ -533,7 +533,7 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
             </div>
 
             {/* Scenario 3: Con Riquísimo */}
-            <div className="p-3.5 rounded-2xl bg-purple-500/10 border border-purple-400/30 flex flex-col justify-between">
+            <div className="p-3.5 rounded-2xl bg-purple-500/10 hover:bg-purple-500/15 flex flex-col justify-between transition-all">
               <div>
                 <div className="flex items-center justify-between gap-1 mb-1">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-purple-300 flex items-center gap-1">
@@ -636,77 +636,79 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
           </div>
         </div>
 
-        {/* Expanded 7-day grid */}
+        {/* Expanded 7-day grid inside Unified Glass Sheet */}
         {isTimelineExpanded && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 sm:gap-3">
-            {timelineDias
-              .filter(dia => !(hidePastDays && dia.esPasado))
-              .map((dia) => {
-                const rankTheme = getRankTheme(dia.rangoAlcanzado);
+          <div className="bg-white/[0.04] backdrop-blur-xl rounded-[32px] p-3.5 sm:p-5 border border-white/10 shadow-inner">
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 sm:gap-3">
+              {timelineDias
+                .filter(dia => !(hidePastDays && dia.esPasado))
+                .map((dia) => {
+                  const rankTheme = getRankTheme(dia.rangoAlcanzado);
 
-                return (
-                  <div
-                    key={dia.diaIdx}
-                    className={`rounded-2xl p-3.5 flex flex-col justify-between border transition-all shadow-md relative overflow-hidden group ${
-                      dia.esDomingo
-                        ? 'bg-gradient-to-b from-purple-500/20 via-[var(--surface-inner)] to-[var(--surface-inner)] border-2 border-purple-400/70 shadow-md shadow-purple-500/10'
-                        : dia.esHoy
-                        ? 'bg-gradient-to-b from-emerald-500/15 via-[var(--surface-inner)] to-[var(--surface-inner)] border-2 border-emerald-400/80 ring-2 ring-emerald-400/20 shadow-lg shadow-emerald-500/20'
-                        : dia.esPasado
-                        ? 'bg-white/[0.03] border-white/10 opacity-75'
-                        : 'bg-[var(--surface-inner)] border-[var(--surface-border)] hover:border-white/20'
-                    }`}
-                  >
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className={`text-xs font-bold ${
-                          dia.esDomingo ? 'text-purple-200' : dia.esHoy ? 'text-emerald-300 font-black' : dia.esPasado ? 'text-[var(--text-muted)]' : 'text-slate-200'
-                        }`}>
-                          {dia.diaNombre}
+                  return (
+                    <div
+                      key={dia.diaIdx}
+                      className={`rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between transition-all ${
+                        dia.esDomingo
+                          ? 'bg-purple-500/15 ring-1 ring-purple-400/30 shadow-md shadow-purple-500/10'
+                          : dia.esHoy
+                          ? 'bg-emerald-500/15 ring-1 ring-emerald-400/30 shadow-lg shadow-emerald-500/15'
+                          : dia.esPasado
+                          ? 'bg-white/[0.02] opacity-60'
+                          : 'bg-white/[0.03] hover:bg-white/[0.06]'
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className={`text-xs font-bold ${
+                            dia.esDomingo ? 'text-purple-200' : dia.esHoy ? 'text-emerald-300 font-black' : dia.esPasado ? 'text-[var(--text-muted)]' : 'text-slate-200'
+                          }`}>
+                            {dia.diaNombre}
+                          </span>
+                          {dia.esDomingo && (
+                            <span className="text-[9px] bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-2 py-0.2 rounded-full font-black uppercase tracking-wider shadow-sm">
+                              2x Olla
+                            </span>
+                          )}
+                          {dia.esHoy && (
+                            <span className="text-[9px] bg-emerald-400 text-emerald-950 px-2 py-0.2 rounded-full font-black uppercase tracking-wider shadow-sm">
+                              Hoy
+                            </span>
+                          )}
+                          {dia.esPasado && (
+                            <span className="text-[9px] bg-emerald-500/15 text-emerald-200 px-1.5 py-0.2 rounded-full font-bold flex items-center gap-1 shadow-sm">
+                              <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400" />
+                              <span>Hecho</span>
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Vigor Ganado Hoy */}
+                        <div className={`text-[11px] tabular-nums font-black ${dia.esPasado ? 'text-[var(--text-muted)]' : 'text-white'}`}>
+                          +{dia.vigorGanadoDia.toLocaleString()} pts
+                        </div>
+
+                        {/* Vigor Acumulado Fin Dia */}
+                        <div className="text-[10px] text-[var(--text-muted)] tabular-nums mt-0.5 font-medium">
+                          Total: {dia.vigorAcumuladoFinDia.toLocaleString()}
+                        </div>
+                      </div>
+
+                      {/* Rango al final del día (Clean floating badge without dividing border) */}
+                      <div className="mt-2.5 pt-1 flex items-center justify-center gap-1.5">
+                        <img
+                          src={getRankPokeballUrl(dia.rangoAlcanzado)}
+                          alt={dia.rangoAlcanzado}
+                          className="w-4 h-4 object-contain flex-shrink-0"
+                        />
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border truncate uppercase tracking-wider ${rankTheme.pillBg}`}>
+                          {dia.rangoAlcanzado}
                         </span>
-                        {dia.esDomingo && (
-                          <span className="text-[9px] bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-2.5 py-0.5 rounded-full font-black uppercase tracking-wider shadow-sm">
-                            2x Olla
-                          </span>
-                        )}
-                        {dia.esHoy && (
-                          <span className="text-[9px] bg-emerald-400 text-emerald-950 px-2 py-0.5 rounded-full font-black uppercase tracking-wider shadow-sm">
-                            Hoy
-                          </span>
-                        )}
-                        {dia.esPasado && (
-                          <span className="text-[9px] bg-emerald-500/15 text-emerald-200 border border-emerald-500/30 px-1.5 py-0.5 rounded-full font-bold flex items-center gap-1 shadow-sm">
-                            <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400" />
-                            <span>Hecho</span>
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Vigor Ganado Hoy */}
-                      <div className={`text-[11px] tabular-nums font-black ${dia.esPasado ? 'text-[var(--text-muted)]' : 'text-white'}`}>
-                        +{dia.vigorGanadoDia.toLocaleString()} pts
-                      </div>
-
-                      {/* Vigor Acumulado Fin Dia */}
-                      <div className="text-[10px] text-[var(--text-muted)] tabular-nums mt-0.5 font-medium">
-                        Total: {dia.vigorAcumuladoFinDia.toLocaleString()}
                       </div>
                     </div>
-
-                    {/* Rango al final del día */}
-                    <div className="mt-3 pt-2 border-t border-[var(--surface-border)] flex items-center justify-center gap-1.5">
-                      <img
-                        src={getRankPokeballUrl(dia.rangoAlcanzado)}
-                        alt={dia.rangoAlcanzado}
-                        className="w-4 h-4 object-contain flex-shrink-0"
-                      />
-                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border truncate uppercase tracking-wider ${rankTheme.pillBg}`}>
-                        {dia.rangoAlcanzado}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+            </div>
           </div>
         )}
       </div>
@@ -714,113 +716,117 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
       {/* Production rhythm & island objectives (Cozy Field Cards) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
         {/* Card 1: Energía del Campamento (Cocina & Olla) */}
-        <div className="cozy-card p-4 sm:p-5 rounded-2xl border border-[var(--surface-border)]">
-          <div className="flex items-center gap-2 mb-3">
-            <TrendingUp className="w-4 h-4 text-purple-300" />
-            <h5 className="text-xs font-display font-bold text-[var(--text-heading)] uppercase tracking-wider">
-              Energía del Campamento (Cocina & Olla)
-            </h5>
-          </div>
-
-          <div className="space-y-2.5 text-xs text-slate-300">
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-[var(--surface-inner)] border border-[var(--surface-border)]">
-              <div>
-                <span className="font-bold text-white">Lunes a Sábado:</span>
-                <span className="block text-[11px] text-slate-400">Puchero estándar ({config.potSize} ingr.)</span>
-              </div>
-              <span className="tabular-nums font-bold text-white">
-                ~{vigorDiaNormal.toLocaleString()} pts/día
-              </span>
+        <div className="glass-dreamy p-4 sm:p-5 rounded-[28px] border border-white/10 shadow-lg flex flex-col justify-between">
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <TrendingUp className="w-4 h-4 text-purple-300" />
+              <h5 className="text-xs font-display font-bold text-[var(--text-heading)] uppercase tracking-wider">
+                Energía del Campamento (Cocina & Olla)
+              </h5>
             </div>
 
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-purple-500/10 border border-purple-400/30">
-              <div>
-                <span className="font-black text-purple-200">Súper Domingo:</span>
-                <span className="block text-[11px] text-purple-200/80">
-                  Puchero doble ({config.goodCampTicket ? '118 ingr.' : `${config.potSize * 2} ingr.`}) y más ¡Riquísimo!
+            <div className="space-y-2.5 text-xs text-slate-300">
+              <div className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] transition-colors">
+                <div>
+                  <span className="font-bold text-white">Lunes a Sábado:</span>
+                  <span className="block text-[11px] text-slate-400">Puchero estándar ({config.potSize} ingr.)</span>
+                </div>
+                <span className="tabular-nums font-bold text-white">
+                  ~{vigorDiaNormal.toLocaleString()} pts/día
                 </span>
               </div>
-              <span className="tabular-nums font-black text-white">
-                ~{vigorDiaDomingo.toLocaleString()} pts
-              </span>
-            </div>
 
-            <div className="text-[11px] text-[var(--text-creamy)] pt-1 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-purple-300 flex-shrink-0" />
-              <span>
-                El domingo aporta <strong className="text-purple-200 font-bold">{Math.round((vigorDiaDomingo / (vigorDiaNormal * 6 + vigorDiaDomingo)) * 100)}%</strong> del vigor total de la semana gracias al puchero doble.
-              </span>
+              <div className="flex items-center justify-between p-3 rounded-2xl bg-purple-500/10 hover:bg-purple-500/15 transition-colors">
+                <div>
+                  <span className="font-black text-purple-200">Súper Domingo:</span>
+                  <span className="block text-[11px] text-purple-200/80">
+                    Puchero doble ({config.goodCampTicket ? '118 ingr.' : `${config.potSize * 2} ingr.`}) y más ¡Riquísimo!
+                  </span>
+                </div>
+                <span className="tabular-nums font-black text-white">
+                  ~{vigorDiaDomingo.toLocaleString()} pts
+                </span>
+              </div>
+
+              <div className="text-[11px] text-[var(--text-creamy)] pt-1 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-purple-300 flex-shrink-0" />
+                <span>
+                  El domingo aporta <strong className="text-purple-200 font-bold">{Math.round((vigorDiaDomingo / (vigorDiaNormal * 6 + vigorDiaDomingo)) * 100)}%</strong> del vigor total de la semana gracias al puchero doble.
+                </span>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Card 2: Recompensas Semanales de la Isla */}
-        <div className="cozy-card p-4 sm:p-5 rounded-2xl border border-[var(--surface-border)]">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Award className="w-4 h-4 text-purple-300" />
-              <h5 className="text-xs font-display font-bold text-[var(--text-heading)] uppercase tracking-wider">
-                Recompensas Semanales de la Isla
-              </h5>
+        <div className="glass-dreamy p-4 sm:p-5 rounded-[28px] border border-white/10 shadow-lg flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Award className="w-4 h-4 text-purple-300" />
+                <h5 className="text-xs font-display font-bold text-[var(--text-heading)] uppercase tracking-wider">
+                  Recompensas Semanales de la Isla
+                </h5>
+              </div>
             </div>
-          </div>
 
-          <div className="space-y-2">
-            {/* Incienso Semanal */}
-            {(() => {
-              const hitoIncienso = hitosClave.find(h => h.indiceRango === 17); // Máster 3
-              return (
-                <div className="flex items-center justify-between p-2.5 px-3 rounded-2xl bg-[var(--surface-inner)] border border-[var(--surface-border)] text-xs">
-                  <div className="flex items-center gap-2">
-                    {hitoIncienso?.alcanzable ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                    ) : (
-                      <Clock className="w-4 h-4 text-slate-500 flex-shrink-0" />
-                    )}
-                    <div>
-                      <span className="font-bold text-white">Incienso Semanal (Máster 3)</span>
-                      <span className="block text-[10px] text-[var(--text-muted)]">Recompensa fija de la isla</span>
+            <div className="space-y-2">
+              {/* Incienso Semanal */}
+              {(() => {
+                const hitoIncienso = hitosClave.find(h => h.indiceRango === 17); // Máster 3
+                return (
+                  <div className="flex items-center justify-between p-2.5 px-3 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] transition-colors text-xs">
+                    <div className="flex items-center gap-2">
+                      {hitoIncienso?.alcanzable ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                      ) : (
+                        <Clock className="w-4 h-4 text-slate-500 flex-shrink-0" />
+                      )}
+                      <div>
+                        <span className="font-bold text-white">Incienso Semanal (Máster 3)</span>
+                        <span className="block text-[10px] text-[var(--text-muted)]">Recompensa fija de la isla</span>
+                      </div>
                     </div>
+                    <span className={`tabular-nums font-bold text-xs ${hitoIncienso?.alcanzable ? 'text-emerald-400' : 'text-slate-400'}`}>
+                      {hitoIncienso?.alcanzable ? `Alcanzado el ${hitoIncienso.diaAlcanzado}` : `Faltan ${hitoIncienso?.vigorFaltante?.toLocaleString()} pts`}
+                    </span>
                   </div>
-                  <span className={`tabular-nums font-bold text-xs ${hitoIncienso?.alcanzable ? 'text-emerald-400' : 'text-slate-400'}`}>
-                    {hitoIncienso?.alcanzable ? `Alcanzado el ${hitoIncienso.diaAlcanzado}` : `Faltan ${hitoIncienso?.vigorFaltante?.toLocaleString()} pts`}
-                  </span>
-                </div>
-              );
-            })()}
+                );
+              })()}
 
-            {/* Rango Final */}
-            <div className="flex items-center justify-between p-2.5 px-3 rounded-2xl bg-[var(--surface-inner)] border border-[var(--surface-border)] text-xs">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-purple-300 flex-shrink-0" />
-                <div>
-                  <span className="font-bold text-white">Rango Proyectado</span>
-                  <span className="block text-[10px] text-[var(--text-muted)]">Al cerrar el Domingo</span>
+              {/* Rango Final */}
+              <div className="flex items-center justify-between p-2.5 px-3 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] transition-colors text-xs">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-purple-300 flex-shrink-0" />
+                  <div>
+                    <span className="font-bold text-white">Rango Proyectado</span>
+                    <span className="block text-[10px] text-[var(--text-muted)]">Al cerrar el Domingo</span>
+                  </div>
                 </div>
+                <span className="tabular-nums font-black text-white text-xs">
+                  {estadoRangoFinal.rangoActual}
+                </span>
               </div>
-              <span className="tabular-nums font-black text-white text-xs">
-                {estadoRangoFinal.rangoActual}
-              </span>
-            </div>
 
-            {/* Siguiente Escalón */}
-            <div className="flex items-center justify-between p-2.5 px-3 rounded-2xl bg-[var(--surface-inner)] border border-[var(--surface-border)] text-xs">
-              <div className="flex items-center gap-2">
-                <Target className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                <div>
-                  <span className="font-bold text-slate-200">
-                    {estadoRangoFinal.siguienteRango ? `Hacia ${estadoRangoFinal.siguienteRango}` : 'Techo de la Isla'}
-                  </span>
-                  <span className="block text-[10px] text-[var(--text-muted)]">
-                    {estadoRangoFinal.siguienteRango ? 'Vigor pendiente' : 'Máximo posible'}
-                  </span>
+              {/* Siguiente Escalón */}
+              <div className="flex items-center justify-between p-2.5 px-3 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] transition-colors text-xs">
+                <div className="flex items-center gap-2">
+                  <Target className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                  <div>
+                    <span className="font-bold text-slate-200">
+                      {estadoRangoFinal.siguienteRango ? `Hacia ${estadoRangoFinal.siguienteRango}` : 'Techo de la Isla'}
+                    </span>
+                    <span className="block text-[10px] text-[var(--text-muted)]">
+                      {estadoRangoFinal.siguienteRango ? 'Vigor pendiente' : 'Máximo posible'}
+                    </span>
+                  </div>
                 </div>
+                <span className="tabular-nums font-bold text-slate-300 text-xs">
+                  {estadoRangoFinal.siguienteRango
+                    ? `Faltan ${estadoRangoFinal.vigorFaltanteSiguiente.toLocaleString()} pts`
+                    : 'Completado'}
+                </span>
               </div>
-              <span className="tabular-nums font-bold text-slate-300 text-xs">
-                {estadoRangoFinal.siguienteRango
-                  ? `Faltan ${estadoRangoFinal.vigorFaltanteSiguiente.toLocaleString()} pts`
-                  : 'Completado'}
-              </span>
             </div>
           </div>
         </div>

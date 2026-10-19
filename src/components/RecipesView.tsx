@@ -184,7 +184,7 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
                             <select
                               value={config?.recipeLevels?.[recipe.name] || 1}
                               onChange={(e) => onUpdateRecipeLevel(recipe.name, parseInt(e.target.value, 10))}
-                              className="bg-[var(--surface-inner)] border border-[var(--surface-border)] text-white font-black text-xs rounded-lg px-2 py-0.5 focus:ring-1 focus:ring-purple-400 focus:outline-none tabular-nums"
+                              className="bg-white/10 border border-white/10 text-white font-black text-xs rounded-lg px-2 py-0.5 focus:ring-1 focus:ring-purple-400 focus:outline-none tabular-nums"
                               title="Guardar tu nivel de esta receta"
                             >
                               {Array.from({ length: 65 }, (_, idx) => idx + 1).map(lvl => (
@@ -244,7 +244,7 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-[var(--surface-border)] text-[10px] text-[var(--text-muted)] flex items-center justify-between">
+              <div className="pt-2 text-[10px] text-[var(--text-muted)] flex items-center justify-between">
                 <span className="flex items-center gap-1">
                   <span>{recipe.type === 'curry' ? '🍲' : recipe.type === 'salad' ? '🥗' : '☕'}</span>
                   <span className="capitalize font-medium">{recipe.type === 'curry' ? 'Guisos y Curris' : recipe.type === 'salad' ? 'Ensaladas' : 'Postres y Bebidas'}</span>
@@ -274,7 +274,7 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
             .map(([name, meta]) => (
               <div
                 key={name}
-                className="bg-white/[0.06] border border-white/10 hover:border-purple-400/30 rounded-2xl p-2.5 flex items-center justify-between text-xs transition-colors"
+                className="bg-white/[0.04] hover:bg-white/[0.08] rounded-2xl p-2.5 flex items-center justify-between text-xs transition-colors"
               >
                 <div className="flex items-center gap-1.5 min-w-0 mr-1">
                   <img
