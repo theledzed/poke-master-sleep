@@ -156,21 +156,25 @@ export function getPokemonArtworkUrl(
   style: SpriteStyle = 'showdown',
   isShiny: boolean = false
 ): string {
+  let dexId: number | null = null;
+  if (typeof nameOrId === 'number') {
+    dexId = nameOrId;
+  } else {
+    dexId = getPokemonDexId(nameOrId);
+  }
+
   if (style === 'sleep') {
+    // If shiny, local /images/avatar/portrait only contains normal non-shiny portraits.
+    // For shiny Pokemon in sleep mode, show the official high-resolution 3D Shiny model from Pokemon HOME!
+    if (isShiny && dexId) {
+      return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/shiny/${dexId}.png`;
+    }
     const cleanName = typeof nameOrId === 'string'
       ? nameOrId.toLowerCase().replace(/[^a-z0-9]/g, '')
       : '';
     if (cleanName) {
       return `/images/avatar/portrait/${cleanName}.png`;
     }
-  }
-
-  let dexId: number | null = null;
-
-  if (typeof nameOrId === 'number') {
-    dexId = nameOrId;
-  } else {
-    dexId = getPokemonDexId(nameOrId);
   }
 
   // If dexId is missing, NEVER default to Pikachu (#25)!
@@ -202,6 +206,12 @@ export function getPokemonArtworkUrl(
  * Returns local high-res Pokémon Sleep avatar portrait if available, with Showdown animated GIF as fallback
  */
 export function getPokemonAvatarUrl(name: string, isShiny: boolean = false): string {
+  if (isShiny) {
+    const dexId = getPokemonDexId(name);
+    if (dexId) {
+      return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/shiny/${dexId}.png`;
+    }
+  }
   const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
   return `/images/avatar/portrait/${cleanName}.png`;
 }
@@ -1113,13 +1123,13 @@ export function isSpecialPokemon(pokemonOrName: any): boolean {
   return false;
 }
 
-// Official PokeAPI Pokéball item sprites for Snorlax Rank tiers
+// High-resolution vector Pokéball SVG sprites for Snorlax Rank tiers
 export const POKEBALL_SPRITES = {
-  pokeBall: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png',
-  greatBall: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/great-ball.png',
-  ultraBall: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/ultra-ball.png',
-  masterBall: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/master-ball.png',
-  dreamBall: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/dream-ball.png'
+  pokeBall: '/images/pokeballs/poke-ball.svg',
+  greatBall: '/images/pokeballs/great-ball.svg',
+  ultraBall: '/images/pokeballs/ultra-ball.svg',
+  masterBall: '/images/pokeballs/master-ball.svg',
+  dreamBall: '/images/pokeballs/master-ball.svg'
 } as const;
 
 export function getRankPokeballUrl(rankName: string): string {

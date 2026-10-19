@@ -104,17 +104,17 @@ export const WeatherBackground: React.FC<WeatherBackgroundProps> = ({
     switch (activeWeather) {
       case 'morning':
         return {
-          label: 'Amanecer Pastel',
+          label: 'Amanecer Azul',
           icon: Sun,
-          iconColor: 'text-pink-200',
-          bgGradient: 'from-[#1A1638] via-[#3B1B3A] to-[#25122B]',
+          iconColor: 'text-sky-200',
+          bgGradient: 'from-[#0B1C33] via-[#132D4E] to-[#0E2038]',
           orbs: [
-            { bg: 'bg-pink-400/20', size: 'w-96 h-96', pos: '-top-20 -left-20', delay: '0s' },
-            { bg: 'bg-indigo-300/18', size: 'w-[420px] h-[420px]', pos: 'top-10 -right-20', delay: '2s' },
-            { bg: 'bg-purple-400/20', size: 'w-80 h-80', pos: 'bottom-40 left-1/3', delay: '4s' }
+            { bg: 'bg-sky-400/22', size: 'w-96 h-96', pos: '-top-20 -left-20', delay: '0s' },
+            { bg: 'bg-blue-300/20', size: 'w-[420px] h-[420px]', pos: 'top-10 -right-20', delay: '2s' },
+            { bg: 'bg-cyan-400/18', size: 'w-80 h-80', pos: 'bottom-40 left-1/3', delay: '4s' }
           ],
-          starColor: 'text-pink-200/80',
-          dotColor: 'bg-pink-100/60'
+          starColor: 'text-sky-200/80',
+          dotColor: 'bg-sky-100/60'
         };
       case 'afternoon':
         return {
@@ -134,15 +134,15 @@ export const WeatherBackground: React.FC<WeatherBackgroundProps> = ({
         return {
           label: 'Lluvia Serena',
           icon: CloudRain,
-          iconColor: 'text-cyan-200',
-          bgGradient: 'from-[#06111C] via-[#0D2633] to-[#05151F]',
+          iconColor: 'text-sky-200',
+          bgGradient: 'from-[#0A0D1E] via-[#1B1842] to-[#120F2D]',
           orbs: [
-            { bg: 'bg-teal-400/18', size: 'w-96 h-96', pos: '-top-10 -left-10', delay: '0s' },
-            { bg: 'bg-cyan-500/16', size: 'w-[400px] h-[400px]', pos: 'top-1/3 -right-20', delay: '2s' },
+            { bg: 'bg-indigo-500/18', size: 'w-96 h-96', pos: '-top-10 -left-10', delay: '0s' },
+            { bg: 'bg-purple-600/16', size: 'w-[400px] h-[400px]', pos: 'top-1/3 -right-20', delay: '2s' },
             { bg: 'bg-blue-600/15', size: 'w-80 h-80', pos: 'bottom-20 left-1/4', delay: '4s' }
           ],
-          starColor: 'text-cyan-200/70',
-          dotColor: 'bg-cyan-200/60'
+          starColor: 'text-sky-200/70',
+          dotColor: 'bg-sky-200/60'
         };
       case 'night':
       default:
@@ -183,7 +183,7 @@ export const WeatherBackground: React.FC<WeatherBackgroundProps> = ({
         ))}
       </div>
 
-      {/* Atmospheric Particles: Ethereal Falling Rain or Floating Breeze Stardust */}
+      {/* Atmospheric Particles: Ethereal Falling Rain or Floating Clouds/Stars */}
       {activeWeather === 'rain' ? (
         /* Gentle soft falling ethereal drizzle */
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -214,6 +214,43 @@ export const WeatherBackground: React.FC<WeatherBackgroundProps> = ({
                 animationDuration: drop.dur
               }}
             />
+          ))}
+        </div>
+      ) : activeWeather === 'morning' ? (
+        /* Crisp Sky Blue Morning with Soft Drifting Clouds & Ethereal Sunbeams */
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {/* Subtle Morning Sunbeams */}
+          <div
+            className="morning-sunbeam absolute -top-28 right-8 w-[450px] h-[680px] bg-gradient-to-b from-sky-200/20 via-sky-300/8 to-transparent rounded-full blur-3xl pointer-events-none"
+            style={{ ['--beam-rot' as any]: '-14deg' }}
+          />
+          <div
+            className="morning-sunbeam absolute -top-20 right-1/4 w-[340px] h-[580px] bg-gradient-to-b from-blue-200/15 via-white/5 to-transparent rounded-full blur-3xl pointer-events-none"
+            style={{ ['--beam-rot' as any]: '-8deg', animationDelay: '3.5s' }}
+          />
+
+          {/* Drifting Morning Clouds */}
+          {[
+            { top: '8%', width: 220, dur: '45s', delay: '0s', opacity: 'opacity-25' },
+            { top: '22%', width: 310, dur: '62s', delay: '-18s', opacity: 'opacity-20' },
+            { top: '42%', width: 190, dur: '38s', delay: '-8s', opacity: 'opacity-15' },
+            { top: '65%', width: 270, dur: '54s', delay: '-26s', opacity: 'opacity-20' },
+            { top: '82%', width: 330, dur: '70s', delay: '-35s', opacity: 'opacity-15' },
+          ].map((cloud, idx) => (
+            <div
+              key={`cloud-${idx}`}
+              className={`morning-cloud ${cloud.opacity}`}
+              style={{
+                top: cloud.top,
+                animationDuration: cloud.dur,
+                animationDelay: cloud.delay,
+                width: `${cloud.width}px`
+              }}
+            >
+              <svg viewBox="0 0 100 45" className="w-full h-auto fill-sky-100/40 filter drop-shadow-sm blur-[0.5px]">
+                <path d="M 20,38 C 11,38 4,31 4,22 C 4,14 10,8 18,8 C 20,3 26,0 33,0 C 42,0 49,5 51,12 C 54,10 58,9 62,9 C 71,9 78,16 78,25 C 84,25 89,30 89,36 C 89,41 84,45 78,45 L 20,45 Z" />
+              </svg>
+            </div>
           ))}
         </div>
       ) : (

@@ -164,7 +164,11 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
 
             {/* Soft Circular Halo with Centered Animated Sprite & Floating Tier Gem */}
             <div className="relative mx-auto my-0.5 flex-shrink-0">
-              <div className="w-[66px] h-[66px] rounded-full bg-gradient-to-b from-white/15 to-white/[0.03] p-1.5 flex items-center justify-center relative overflow-hidden group-hover:scale-105 transition-transform shadow-inner">
+              <div className={`w-[66px] h-[66px] rounded-full p-1.5 flex items-center justify-center relative overflow-hidden group-hover:scale-105 transition-transform shadow-inner ${
+                isShiny
+                  ? 'bg-gradient-to-tr from-amber-400/25 via-pink-400/20 to-purple-400/25 ring-2 ring-amber-300/40 shadow-amber-400/20 shadow-md'
+                  : 'bg-gradient-to-b from-white/15 to-white/[0.03]'
+              }`}>
                 <div
                   className="absolute inset-0 opacity-25 rounded-full blur-xs"
                   style={{ backgroundColor: typeTheme.glow }}
@@ -344,7 +348,11 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
 
               {/* Header with animated sprite */}
               <div className="flex items-center gap-3.5 mb-4">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-b from-white/15 to-white/[0.03] p-1.5 flex items-center justify-center flex-shrink-0 shadow-inner ring-1 ring-white/10 overflow-hidden">
+                <div className={`w-16 h-16 rounded-full p-1.5 flex items-center justify-center flex-shrink-0 shadow-inner overflow-hidden ${
+                  isShiny
+                    ? 'bg-gradient-to-tr from-amber-400/25 via-pink-400/20 to-purple-400/25 ring-2 ring-amber-300/40 shadow-amber-400/20 shadow-md'
+                    : 'bg-gradient-to-b from-white/15 to-white/[0.03] ring-1 ring-white/10'
+                }`}>
                   <img
                     src={!imageError ? primarySpriteUrl : fallbackSpriteUrl}
                     alt={pokemon.name}
@@ -639,7 +647,11 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
           <div className="flex items-center gap-3.5 mb-3 relative z-10">
             {/* Sprite with Soft Circular Halo & Floating Tier Gem */}
             <div className="relative flex-shrink-0">
-              <div className="w-[74px] h-[74px] rounded-full bg-gradient-to-b from-white/15 to-white/[0.03] p-1.5 flex items-center justify-center relative flex-shrink-0 group-hover:scale-105 transition-transform shadow-inner overflow-hidden">
+              <div className={`w-[74px] h-[74px] rounded-full p-1.5 flex items-center justify-center relative flex-shrink-0 group-hover:scale-105 transition-transform shadow-inner overflow-hidden ${
+                isShiny
+                  ? 'bg-gradient-to-tr from-amber-400/25 via-pink-400/20 to-purple-400/25 ring-2 ring-amber-300/40 shadow-amber-400/20 shadow-md'
+                  : 'bg-gradient-to-b from-white/15 to-white/[0.03]'
+              }`}>
                 <div
                   className="absolute inset-0 opacity-25 rounded-full blur-sm"
                   style={{ backgroundColor: typeTheme.glow }}

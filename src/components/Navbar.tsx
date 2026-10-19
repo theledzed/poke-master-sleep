@@ -92,7 +92,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-indigo-950/40 backdrop-blur-2xl border-b border-white/10 shadow-lg transition-colors duration-500">
+      <header className="sticky top-0 z-40 bg-indigo-950/40 backdrop-blur-2xl border-b border-white/10 shadow-lg transition-colors duration-500 pt-[env(safe-area-inset-top,0px)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-14 sm:h-16">
             {/* Logo & Snorlax Sleep Master Title */}
@@ -196,7 +196,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       </header>
 
       {/* Dreamy Mobile Bottom Navigation Dock with Sliding Focus Capsule */}
-      <nav className="lg:hidden fixed bottom-4 left-4 right-4 z-50 max-w-md mx-auto bg-indigo-950/80 backdrop-blur-2xl rounded-full border border-white/15 p-1.5 shadow-2xl safe-area-pb">
+      <nav className="lg:hidden fixed bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] left-4 right-4 z-50 max-w-md mx-auto bg-indigo-950/80 backdrop-blur-2xl rounded-full border border-white/15 p-1.5 shadow-2xl">
         <div className="relative grid grid-cols-4 items-center">
           {/* Sliding Pill Indicator for Active Tab (Smooth Glide Physics) */}
           {effectiveActiveIndex >= 0 && (

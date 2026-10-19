@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <linearGradient id="ubBlack" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="50%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+    <linearGradient id="ubGold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="50%" stop-color="#eab308"/>
+      <stop offset="100%" stop-color="#ca8a04"/>
+    </linearGradient>
+    <linearGradient id="ubWhite" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="70%" stop-color="#f1f5f9"/>
+      <stop offset="100%" stop-color="#cbd5e1"/>
+    </linearGradient>
+    <filter id="ubShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <g filter="url(#ubShadow)">
+    <!-- Base Outer Ring -->
+    <circle cx="50" cy="50" r="46" fill="#0f172a"/>
+    <!-- Top Black Shell -->
+    <path d="M 4,50 A 46,46 0 0,1 96,50 Z" fill="url(#ubBlack)"/>
+    <!-- Yellow Ultra Horn Stripes (H-pattern / curved wings) -->
+    <path d="M 24,14 Q 38,10 50,16 Q 62,10 76,14 Q 72,28 66,46 L 56,46 Q 60,30 64,20 Q 50,16 36,20 Q 40,30 44,46 L 34,46 Q 28,28 24,14 Z" fill="url(#ubGold)"/>
+    <!-- Bottom White Shell -->
+    <path d="M 4,50 A 46,46 0 0,0 96,50 Z" fill="url(#ubWhite)"/>
+    <!-- Glossy Highlight -->
+    <path d="M 14,34 A 40,40 0 0,1 68,14 A 42,42 0 0,0 14,34 Z" fill="#ffffff" opacity="0.25"/>
+    <!-- Center Band -->
+    <rect x="4" y="46" width="92" height="8" fill="#0f172a"/>
+    <!-- Button Rim -->
+    <circle cx="50" cy="50" r="14" fill="#0f172a"/>
+    <!-- Button Ring -->
+    <circle cx="50" cy="50" r="10" fill="url(#ubWhite)"/>
+    <!-- Button Core -->
+    <circle cx="50" cy="50" r="6" fill="#fef08a" stroke="#ca8a04" stroke-width="1"/>
+    <circle cx="48" cy="48" r="2" fill="#ffffff"/>
+  </g>
+</svg>

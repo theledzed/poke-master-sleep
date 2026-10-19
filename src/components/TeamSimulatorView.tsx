@@ -753,7 +753,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                             <select
                               value={meal.recipeLevel || 1}
                               onChange={(e) => onUpdateRecipeLevel(meal.recipe.name, parseInt(e.target.value, 10))}
-                              className="bg-[var(--surface-inner)] border border-[var(--surface-border)] text-white font-bold text-xs rounded-lg px-1.5 py-0.5 focus:ring-1 focus:ring-white/40 focus:outline-none tabular-nums"
+                              className="bg-white/10 text-white font-bold text-xs rounded-lg px-2 py-0.5 focus:ring-1 focus:ring-white/40 focus:outline-none tabular-nums border-none shadow-inner"
                               title="Ajustar el nivel real de esta receta en tu juego"
                             >
                               {Array.from({ length: 65 }, (_, idx) => idx + 1).map(lvl => (
@@ -839,12 +839,12 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                   )}
                 </div>
 
-                <div className="mt-3 pt-2 border-t border-[var(--surface-border)] text-[10px] text-[var(--text-muted)] flex flex-col gap-1 tabular-nums">
+                <div className="mt-3 pt-2.5 border-t border-white/5 text-[10px] text-[var(--text-muted)] flex flex-col gap-1.5 tabular-nums">
                   <div className="flex items-center justify-between text-[var(--text-muted)]">
                     <span>Receta (Nv.{meal.recipeLevel || 1}): {meal.recipeVigor.toLocaleString()}</span>
                     <span>Relleno: {meal.fillerVigor.toLocaleString()}</span>
                   </div>
-                  <div className="flex items-center justify-between text-slate-300 pt-1 border-t border-white/10">
+                  <div className="flex items-center justify-between text-slate-300">
                     <span className="text-[var(--text-muted)]">Total en olla:</span>
                     <span className="text-white font-semibold">{(meal.recipeVigor + meal.fillerVigor).toLocaleString()} pts</span>
                   </div>

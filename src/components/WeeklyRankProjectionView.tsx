@@ -176,7 +176,7 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
           border: 'border-violet-400/50',
           glow: 'shadow-violet-500/15 shadow-xl',
           badge: 'bg-gradient-to-r from-violet-500 to-indigo-500 text-white font-black',
-          pillBg: 'bg-violet-500/20 text-violet-200 border-violet-400/30'
+          pillBg: 'bg-violet-500/25 text-violet-100 font-bold'
         };
       }
       return {
@@ -185,7 +185,7 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
         border: 'border-purple-400/40',
         glow: 'shadow-purple-500/15 shadow-lg',
         badge: 'bg-purple-400 text-slate-950 font-black',
-        pillBg: 'bg-purple-500/20 text-purple-200 border-purple-400/30'
+        pillBg: 'bg-purple-500/25 text-purple-100 font-bold'
       };
     }
     if (rango.startsWith('Ultra')) {
@@ -195,7 +195,7 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
         border: 'border-emerald-500/40',
         glow: 'shadow-emerald-500/10 shadow-md',
         badge: 'bg-emerald-500 text-white font-bold',
-        pillBg: 'bg-emerald-500/20 text-emerald-200 border-emerald-400/30'
+        pillBg: 'bg-emerald-500/20 text-emerald-100 font-bold'
       };
     }
     if (rango.startsWith('Súper')) {
@@ -205,7 +205,7 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
         border: 'border-indigo-500/40',
         glow: 'shadow-indigo-500/10 shadow-md',
         badge: 'bg-indigo-500 text-white font-bold',
-        pillBg: 'bg-indigo-500/15 text-indigo-200 border-indigo-500/30'
+        pillBg: 'bg-indigo-500/20 text-indigo-100 font-bold'
       };
     }
     return {
@@ -214,7 +214,7 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
       border: 'border-slate-700',
       glow: '',
       badge: 'bg-slate-700 text-white font-semibold',
-      pillBg: 'bg-slate-800 text-slate-300 border-slate-700'
+      pillBg: 'bg-white/10 text-slate-200 font-bold'
     };
   };
 
@@ -460,7 +460,7 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
         </div>
 
         {/* PREVISIÓN DE SNORLAX (Cozy 3-Scenario Cards) */}
-        <div className="relative z-10 rounded-[24px] bg-white/[0.04] backdrop-blur-md border border-white/10 p-4 sm:p-5 shadow-inner">
+        <div className="relative z-10 rounded-[24px] bg-white/[0.04] backdrop-blur-md p-4 sm:p-5 shadow-inner">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-purple-300" />
@@ -638,7 +638,7 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
 
         {/* Expanded 7-day grid inside Unified Glass Sheet */}
         {isTimelineExpanded && (
-          <div className="bg-white/[0.04] backdrop-blur-xl rounded-[32px] p-3.5 sm:p-5 border border-white/10 shadow-inner">
+          <div className="bg-white/[0.03] backdrop-blur-xl rounded-[32px] p-3.5 sm:p-5 shadow-inner">
             <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 sm:gap-3">
               {timelineDias
                 .filter(dia => !(hidePastDays && dia.esPasado))
@@ -701,7 +701,7 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
                           alt={dia.rangoAlcanzado}
                           className="w-4 h-4 object-contain flex-shrink-0"
                         />
-                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border truncate uppercase tracking-wider ${rankTheme.pillBg}`}>
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full truncate uppercase tracking-wider ${rankTheme.pillBg}`}>
                           {dia.rangoAlcanzado}
                         </span>
                       </div>
