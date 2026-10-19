@@ -269,7 +269,25 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filteredResults.map((audit) => {
-            const { pokemon, geneticScore, tier, verdict, verdictLabel, verdictBadgeColor, pros, cons, recommendation } = audit;
+            const {
+              pokemon,
+              geneticScore,
+              currentPowerScore,
+              ceilingScore,
+              tier,
+              verdict,
+              verdictLabel,
+              verdictBadgeColor,
+              pros,
+              cons,
+              recommendation,
+              mintCandidate,
+              subskillSeedTarget,
+              favoredIslands,
+              recipeSynergyNote,
+              isHybridBerrySpecialist,
+              isMonoIngredient
+            } = audit;
             const tierStyle = getTierColor(tier);
             const isShiny = pokemon.notes?.toLowerCase().includes('shiny') || pokemon.notes?.toLowerCase().includes('variocolor');
             const spriteUrl = getPokemonArtworkUrl(pokemon.name, spriteStyle, isShiny);
@@ -290,7 +308,7 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
               >
                 <div>
                   {/* Top Header: Sprite + Name + Tier Badge */}
-                  <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="flex items-start justify-between gap-3 mb-2.5">
                     <div className="flex items-center gap-3">
                       <div className="w-14 h-14 rounded-2xl bg-white/[0.06] border border-white/10 p-1 flex items-center justify-center flex-shrink-0 relative overflow-hidden shadow-inner">
                         <img
@@ -324,6 +342,33 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
                             <span>{pokemon.berry}</span>
                           </span>
                         </div>
+
+                        {/* Ingredientes Activos / Desbloqueables */}
+                        {pokemon.ingredients && pokemon.ingredients.length > 0 && (
+                          <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                            {pokemon.ingredients.map((ing, idx) => {
+                              const isUnlocked = pokemon.level >= (ing.unlockLevel || (idx === 0 ? 1 : idx === 1 ? 30 : 60));
+                              return (
+                                <span
+                                  key={idx}
+                                  className={`inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-lg border tabular-nums ${
+                                    isUnlocked
+                                      ? 'bg-amber-500/15 border-amber-400/35 text-amber-200 font-bold'
+                                      : 'bg-white/[0.03] border-white/10 text-slate-500 opacity-60'
+                                  }`}
+                                  title={`${ing.name} x${ing.count} (Nv. ${ing.unlockLevel || (idx === 0 ? 1 : idx === 1 ? 30 : 60)})${isUnlocked ? ' - Activo' : ' - Bloqueado'}`}
+                                >
+                                  <img
+                                    src={getIngredientSpriteUrl(ing.name)}
+                                    alt={ing.name}
+                                    className={`w-3 h-3 object-contain ${!isUnlocked ? 'grayscale' : ''}`}
+                                  />
+                                  <span>{ing.count}</span>
+                                </span>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -336,12 +381,81 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
                     </div>
                   </div>
 
-                  {/* Verdict Status Pill */}
-                  <div className="mb-3">
+                  {/* Verdict Status Pill & Pro Action Badges */}
+                  <div className="flex flex-wrap items-center gap-1.5 mb-2.5">
                     <span className={`text-[11px] font-black px-3 py-1 rounded-full uppercase tracking-wider inline-flex items-center gap-1.5 border shadow-sm ${verdictBadgeColor}`}>
                       <span>{verdictLabel}</span>
                     </span>
+
+                    {isHybridBerrySpecialist && (
+                      <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-200 border border-amber-400/40 inline-flex items-center gap-1">
+                        ⚡ Híbrido Bayas
+                      </span>
+                    )}
+
+                    {isMonoIngredient && (
+                      <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-200 border border-sky-400/40 inline-flex items-center gap-1">
+                        🥣 Mono-Ingrediente
+                      </span>
+                    )}
+
+                    {mintCandidate && (
+                      <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-200 border border-emerald-400/40 inline-flex items-center gap-1" title="Menta Neutra recomendada para neutralizar la penalización de su naturaleza">
+                        🌿 Menta Neutra
+                      </span>
+                    )}
+
+                    {subskillSeedTarget && (
+                      <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-200 border border-teal-400/40 inline-flex items-center gap-1" title={`Candidato para Semilla de Habilidad Secundaria: ${subskillSeedTarget}`}>
+                        🌱 Semilla ({subskillSeedTarget})
+                      </span>
+                    )}
                   </div>
+
+                  {/* Dual-axis power meters */}
+                  <div className="grid grid-cols-2 gap-2 mb-3 p-2 rounded-xl bg-black/25 border border-white/5">
+                    <div className="flex flex-col">
+                      <div className="flex items-center justify-between text-[10px] mb-1">
+                        <span className="text-slate-300 font-bold flex items-center gap-1">
+                          <Zap className="w-3 h-3 text-amber-400" /> Poder Hoy
+                        </span>
+                        <span className="font-black text-amber-300 tabular-nums">
+                          {currentPowerScore}<span className="text-[9px] text-slate-500 font-normal">/100</span>
+                        </span>
+                      </div>
+                      <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-amber-500 to-emerald-400 rounded-full transition-all duration-500"
+                          style={{ width: `${Math.min(100, Math.max(5, currentPowerScore))}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col">
+                      <div className="flex items-center justify-between text-[10px] mb-1">
+                        <span className="text-slate-300 font-bold flex items-center gap-1">
+                          <TrendingUp className="w-3 h-3 text-purple-400" /> Techo Nv. 50
+                        </span>
+                        <span className="font-black text-purple-300 tabular-nums">
+                          {ceilingScore}<span className="text-[9px] text-slate-500 font-normal">/100</span>
+                        </span>
+                      </div>
+                      <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-purple-500 to-indigo-400 rounded-full transition-all duration-500"
+                          style={{ width: `${Math.min(100, Math.max(5, ceilingScore))}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Sinergia Culinaria Detectada */}
+                  {recipeSynergyNote && (
+                    <div className="mb-3 px-2.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-400/25 flex items-center gap-2 text-xs text-amber-200">
+                      <span className="text-sm">👨‍🍳</span>
+                      <span className="text-[11px] font-semibold">{recipeSynergyNote}</span>
+                    </div>
+                  )}
 
                   {/* Recommendation Callout Box */}
                   <div className={`p-3 rounded-2xl mb-3 text-xs leading-relaxed border ${
@@ -427,6 +541,15 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
                         {pokemon.subskills.slice(0, 3).map(s => s.name).join(' • ') || 'Sin subskills'}
                       </span>
                     </div>
+
+                    {favoredIslands && favoredIslands.length > 0 && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-400 font-sans">Islas clave:</span>
+                        <span className="text-indigo-200 font-bold truncate max-w-[200px]" title={favoredIslands.join(', ')}>
+                          🏝️ {favoredIslands.slice(0, 2).join(', ')}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
