@@ -1,8 +1,8 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
-function ocrServerMiddleware() {
+function ocrServerMiddleware(env: Record<string, string>) {
   return {
     name: 'ocr-server-middleware',
     configureServer(server: any) {
@@ -19,6 +19,8 @@ function ocrServerMiddleware() {
 
               const apiKey =
                 userApiKey ||
+                env.GEMINI_API_KEY ||
+                env.VITE_GEMINI_API_KEY ||
                 process.env.GEMINI_API_KEY ||
                 process.env.VITE_GEMINI_API_KEY ||
                 process.env.GOOGLE_API_KEY;
@@ -121,12 +123,14 @@ Output strictly valid JSON.`;
   };
 }
 
-export default defineConfig({
-  envPrefix: ['VITE_', 'SUPABASE_'],
-  plugins: [
-    react(),
-    ocrServerMiddleware(),
-    VitePWA({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  return {
+    envPrefix: ['VITE_', 'SUPABASE_'],
+    plugins: [
+      react(),
+      ocrServerMiddleware(env),
+      VitePWA({
       registerType: 'prompt',
       includeAssets: ['favicon.ico', 'favicon.svg', 'apple-touch-icon.png'],
       manifest: {
@@ -166,4 +170,5 @@ export default defineConfig({
       }
     })
   ]
+  };
 });
