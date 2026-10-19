@@ -763,27 +763,36 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                     </div>
                   </div>
 
-                  {/* Recipe Ingredients */}
-                  <div className="mb-2">
-                    <div className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-1">
-                      Ingredientes Receta ({Object.values(meal.recipe.ingredients).reduce((a, b) => a + b, 0)})
+                  {/* Recipe Ingredients (Icon Sprites with Floating Quantity Badges) */}
+                  <div className="mb-3">
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+                      <span>Ingredientes Receta</span>
+                      <span className="text-[10px] text-purple-200/80 font-bold tabular-nums">
+                        Total: {Object.values(meal.recipe.ingredients).reduce((a, b) => a + b, 0)}
+                      </span>
                     </div>
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-2">
                       {Object.entries(meal.recipe.ingredients).map(([ing, count]) => (
-                        <span
+                        <div
                           key={ing}
-                          className="text-[10px] px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-100 border border-amber-500/20 flex items-center gap-1 tabular-nums font-bold"
+                          className="relative group/ing inline-flex items-center justify-center cursor-help"
+                          title={`${ing} ×${count}`}
                         >
-                          <img
-                            src={getIngredientSpriteUrl(ing)}
-                            alt={ing}
-                            className="w-3.5 h-3.5 object-contain"
-                          />
-                          <span>{ing} ×{count}</span>
-                        </span>
+                          <div className="w-9 h-9 rounded-xl bg-white/[0.08] backdrop-blur-md p-1.5 flex items-center justify-center transition-transform hover:scale-110 shadow-sm">
+                            <img
+                              src={getIngredientSpriteUrl(ing)}
+                              alt={ing}
+                              className="w-full h-full object-contain filter drop-shadow-sm"
+                              onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                            />
+                          </div>
+                          <span className="absolute -top-1.5 -right-1.5 bg-indigo-950/90 text-white font-black text-[9px] px-1.5 py-0.2 rounded-full border border-white/20 shadow-md tabular-nums select-none">
+                            ×{count}
+                          </span>
+                        </div>
                       ))}
                       {Object.keys(meal.recipe.ingredients).length === 0 && (
-                        <span className="text-[10px] text-slate-500 italic">Sin receta completada (Plato Mixto)</span>
+                        <span className="text-[10px] text-slate-400 italic">Sin receta completada (Plato Mixto)</span>
                       )}
                     </div>
                   </div>
@@ -791,22 +800,31 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                   {/* Filler */}
                   {meal.fillerIngredients.length > 0 && (
                     <div>
-                      <div className="text-[10px] font-bold text-amber-300 uppercase tracking-wider mb-1">
-                        Relleno (+{meal.fillerVigor.toLocaleString()} pts)
+                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+                        <span>Relleno Adicional</span>
+                        <span className="text-[10px] text-amber-200/90 font-bold tabular-nums">
+                          +{meal.fillerVigor.toLocaleString()} pts
+                        </span>
                       </div>
-                      <div className="flex flex-wrap gap-1">
+                      <div className="flex flex-wrap gap-2">
                         {meal.fillerIngredients.map((fill) => (
-                          <span
+                          <div
                             key={fill.name}
-                            className="text-[10px] px-2 py-0.5 rounded-full bg-amber-400/15 border border-amber-400/30 text-amber-300 flex items-center gap-1 font-medium"
+                            className="relative group/ing inline-flex items-center justify-center cursor-help"
+                            title={`Relleno: ${fill.name} (+${fill.count})`}
                           >
-                            <img
-                              src={getIngredientSpriteUrl(fill.name)}
-                              alt={fill.name}
-                              className="w-3.5 h-3.5 object-contain"
-                            />
-                            <span>+{fill.name} ×{fill.count}</span>
-                          </span>
+                            <div className="w-9 h-9 rounded-xl bg-purple-500/10 backdrop-blur-md p-1.5 flex items-center justify-center transition-transform hover:scale-110 shadow-sm">
+                              <img
+                                src={getIngredientSpriteUrl(fill.name)}
+                                alt={fill.name}
+                                className="w-full h-full object-contain filter drop-shadow-sm"
+                                onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                              />
+                            </div>
+                            <span className="absolute -top-1.5 -right-1.5 bg-purple-900/90 text-purple-200 font-black text-[9px] px-1.5 py-0.2 rounded-full border border-purple-400/30 shadow-md tabular-nums select-none">
+                              +{fill.count}
+                            </span>
+                          </div>
                         ))}
                       </div>
                     </div>

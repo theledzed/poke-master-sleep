@@ -142,17 +142,17 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
           )}
 
           {/* LEFT COLUMN: Identity & Animated Sprite on Soft Halo */}
-          <div className="w-[126px] sm:w-[134px] flex-shrink-0 flex flex-col justify-between pr-2 border-r border-[var(--surface-border)] relative z-10">
+          <div className="w-[126px] sm:w-[134px] flex-shrink-0 flex flex-col justify-between pr-2 relative z-10">
             {/* Top row: Slot / Shiny / Specialty */}
             <div className="flex items-center justify-between gap-1">
               <div className="flex items-center gap-1">
                 {slotIndex !== undefined && (
-                  <span className="text-[9px] tabular-nums font-black text-[var(--accent-primary)] bg-white/10 px-1.5 py-0.2 rounded-full">
+                  <span className="text-[9px] tabular-nums font-black text-purple-200 bg-white/10 px-1.5 py-0.2 rounded-full">
                     #{slotIndex + 1}
                   </span>
                 )}
                 {isShiny && (
-                  <span className="text-[8px] font-black text-amber-300 bg-amber-400/20 px-1.5 py-0.2 rounded-full flex items-center gap-0.5">
+                  <span className="text-[8px] font-black text-amber-200 bg-amber-400/20 px-1.5 py-0.2 rounded-full flex items-center gap-0.5">
                     <Sparkles className="w-2 h-2" />
                   </span>
                 )}
@@ -164,7 +164,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
 
             {/* Soft Circular Halo with Centered Animated Sprite & Floating Tier Gem */}
             <div className="relative mx-auto my-0.5 flex-shrink-0">
-              <div className="w-[66px] h-[66px] rounded-full bg-gradient-to-b from-white/15 to-white/[0.03] p-1.5 flex items-center justify-center relative overflow-hidden group-hover:scale-105 transition-transform shadow-inner ring-1 ring-white/10">
+              <div className="w-[66px] h-[66px] rounded-full bg-gradient-to-b from-white/15 to-white/[0.03] p-1.5 flex items-center justify-center relative overflow-hidden group-hover:scale-105 transition-transform shadow-inner">
                 <div
                   className="absolute inset-0 opacity-25 rounded-full blur-xs"
                   style={{ backgroundColor: typeTheme.glow }}
@@ -192,14 +192,14 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
                 )}
               </div>
 
-              {/* Floating Tier Gem Badge on upper corner */}
+              {/* Floating Tier Gem Badge on upper corner (Celestial Dreamy Palette) */}
               <span
                 className={`absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full font-display font-black text-[9px] shadow-md border border-white/20 select-none z-20 ${
-                  genetic.score >= 88 ? 'bg-gradient-to-r from-violet-500 to-indigo-500 text-white' :
-                  genetic.score >= 76 ? 'bg-gradient-to-r from-amber-400 to-yellow-400 text-slate-950' :
-                  genetic.score >= 64 ? 'bg-gradient-to-r from-emerald-400 to-teal-500 text-slate-950' :
-                  genetic.score >= 50 ? 'bg-gradient-to-r from-blue-400 to-sky-500 text-slate-950' :
-                  'bg-slate-700 text-slate-200'
+                  genetic.score >= 88 ? 'bg-gradient-to-r from-fuchsia-500 to-violet-500 text-white shadow-purple-500/30' :
+                  genetic.score >= 76 ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-indigo-500/30' :
+                  genetic.score >= 64 ? 'bg-gradient-to-r from-teal-400 to-cyan-500 text-slate-950' :
+                  genetic.score >= 50 ? 'bg-gradient-to-r from-slate-500 to-indigo-900/60 text-slate-200' :
+                  'bg-slate-800 text-slate-400'
                 }`}
                 title={`Genética: ${genetic.score} pts`}
               >
@@ -209,13 +209,13 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
 
             {/* Clean Name + Level & PA text */}
             <div className="text-center">
-              <h4 className="font-display font-bold text-white text-xs tracking-tight truncate group-hover:text-[var(--accent-primary)] transition-colors">
+              <h4 className="font-display font-bold text-white text-xs tracking-tight truncate group-hover:text-purple-200 transition-colors">
                 {pokemon.name}
               </h4>
               <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-300 font-semibold tabular-nums mt-0.5">
-                <span className="text-emerald-300 font-bold">Nv.{pokemon.level}</span>
+                <span className="text-purple-200 font-bold">Nv.{pokemon.level}</span>
                 <span className="text-slate-500">•</span>
-                <span className="text-[var(--accent-primary)] font-bold">PA {pokemon.rp.toLocaleString()}</span>
+                <span className="text-white font-bold">PA {pokemon.rp.toLocaleString()}</span>
               </div>
             </div>
           </div>
@@ -639,7 +639,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
           <div className="flex items-center gap-3.5 mb-3 relative z-10">
             {/* Sprite with Soft Circular Halo & Floating Tier Gem */}
             <div className="relative flex-shrink-0">
-              <div className="w-[74px] h-[74px] rounded-full bg-gradient-to-b from-white/15 to-white/[0.03] p-1.5 flex items-center justify-center relative flex-shrink-0 group-hover:scale-105 transition-transform shadow-inner ring-1 ring-white/10 overflow-hidden">
+              <div className="w-[74px] h-[74px] rounded-full bg-gradient-to-b from-white/15 to-white/[0.03] p-1.5 flex items-center justify-center relative flex-shrink-0 group-hover:scale-105 transition-transform shadow-inner overflow-hidden">
                 <div
                   className="absolute inset-0 opacity-25 rounded-full blur-sm"
                   style={{ backgroundColor: typeTheme.glow }}
@@ -664,14 +664,14 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
                 )}
               </div>
 
-              {/* Floating Tier Gem Badge */}
+              {/* Floating Tier Gem Badge (Celestial Dreamy Palette) */}
               <span
                 className={`absolute -top-1 -right-1 px-2 py-0.5 rounded-full font-display font-black text-[9px] shadow-md border border-white/20 select-none z-20 ${
-                  genetic.score >= 88 ? 'bg-gradient-to-r from-violet-500 to-indigo-500 text-white' :
-                  genetic.score >= 76 ? 'bg-gradient-to-r from-amber-400 to-yellow-400 text-slate-950' :
-                  genetic.score >= 64 ? 'bg-gradient-to-r from-emerald-400 to-teal-500 text-slate-950' :
-                  genetic.score >= 50 ? 'bg-gradient-to-r from-blue-400 to-sky-500 text-slate-950' :
-                  'bg-slate-700 text-slate-200'
+                  genetic.score >= 88 ? 'bg-gradient-to-r from-fuchsia-500 to-violet-500 text-white shadow-purple-500/30' :
+                  genetic.score >= 76 ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-indigo-500/30' :
+                  genetic.score >= 64 ? 'bg-gradient-to-r from-teal-400 to-cyan-500 text-slate-950 font-black' :
+                  genetic.score >= 50 ? 'bg-gradient-to-r from-slate-500 to-indigo-900/60 text-slate-200' :
+                  'bg-slate-800 text-slate-400'
                 }`}
                 title={`Genética: ${genetic.score} pts`}
               >
@@ -682,10 +682,10 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
             {/* Name & Stats */}
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap mb-1">
-                <h3 className="font-display font-bold text-white text-base tracking-tight truncate group-hover:text-[var(--accent-primary)] transition-colors">
+                <h3 className="font-display font-bold text-white text-base tracking-tight truncate group-hover:text-purple-200 transition-colors">
                   {pokemon.name}
                 </h3>
-                <span className="text-[10px] font-bold text-emerald-300 bg-emerald-500/20 px-2 py-0.2 rounded-full flex-shrink-0">
+                <span className="text-[10px] font-bold text-purple-200 bg-purple-500/20 px-2 py-0.2 rounded-full flex-shrink-0">
                   Nv. {pokemon.level}
                 </span>
               </div>

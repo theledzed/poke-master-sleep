@@ -242,10 +242,10 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
         {/* Quick Calibration Action Pill */}
         <div className="flex items-center gap-2 self-start md:self-auto">
           {isCalibrated ? (
-            <div className="flex items-center gap-1.5 bg-white/[0.06] backdrop-blur-md border border-emerald-400/40 p-1.5 pl-3 rounded-full shadow-md">
+            <div className="flex items-center gap-1.5 bg-white/[0.06] backdrop-blur-md border border-purple-400/40 p-1.5 pl-3 rounded-full shadow-md">
               <div className="flex items-center gap-1.5 text-xs">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="font-bold text-emerald-300 text-xs">
+                <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
+                <span className="font-bold text-purple-200 text-xs">
                   {config.midWeekProgress?.currentVigor.toLocaleString()} pts
                 </span>
                 <span className="text-[10px] text-slate-300">
@@ -256,7 +256,7 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
               <button
                 type="button"
                 onClick={() => setIsDrawerOpen(!isDrawerOpen)}
-                className="flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 text-xs font-bold transition-all border border-emerald-400/30"
+                className="flex items-center gap-1 px-3 py-1 rounded-full bg-purple-500/20 hover:bg-purple-500/30 text-purple-200 text-xs font-bold transition-all border border-purple-400/30"
                 title="Modificar puntos actuales en pantalla"
               >
                 <Edit3 className="w-3 h-3" />
@@ -369,11 +369,11 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
           <div className="flex items-center gap-2 flex-wrap">
             <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider border ${
               isCalibrated
-                ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/30 shadow-sm'
-                : 'bg-white/[0.06] text-[var(--accent-primary)] border-white/10'
+                ? 'bg-purple-500/20 text-purple-200 border-purple-400/30 shadow-sm'
+                : 'bg-white/[0.06] text-purple-200 border-white/10'
             }`}>
               {isCalibrated
-                ? '🟢 PREDICCIÓN CALIBRADA EN VIVO'
+                ? '🟣 PREDICCIÓN CALIBRADA EN VIVO'
                 : 'PROYECCIÓN ESTIMADA DE LA SEMANA'}
             </span>
             <span className="text-xs text-[var(--text-creamy)] tabular-nums bg-white/[0.06] border border-white/10 px-3 py-0.5 rounded-full font-bold">
@@ -382,7 +382,7 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
           </div>
 
           {isCalibrated && (
-            <span className="text-[11px] text-emerald-300 tabular-nums bg-emerald-950/60 border border-emerald-400/30 px-3 py-0.5 rounded-full font-medium">
+            <span className="text-[11px] text-purple-200 tabular-nums bg-purple-950/60 border border-purple-400/30 px-3 py-0.5 rounded-full font-medium">
               Actualizado: {formatUpdateDate(config.midWeekProgress?.updatedAt)}
             </span>
           )}

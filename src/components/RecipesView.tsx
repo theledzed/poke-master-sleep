@@ -220,21 +220,25 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
                     <span>Ingredientes</span>
                     <span className="tabular-nums font-bold">Total: {totalIngs}</span>
                   </div>
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-2">
                     {Object.entries(recipe.ingredients).map(([ing, count]) => (
-                      <span
+                      <div
                         key={ing}
-                        className="text-[11px] px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-100 flex items-center gap-1.5 shadow-sm"
+                        className="relative group/ing inline-flex items-center justify-center cursor-help"
+                        title={`${ing} ×${count}`}
                       >
-                        <img
-                          src={getIngredientSpriteUrl(ing)}
-                          alt={ing}
-                          className="w-3.5 h-3.5 object-contain flex-shrink-0"
-                          onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
-                        />
-                        <span>{ing}</span>
-                        <span className="text-amber-400 font-black tabular-nums ml-0.5">×{count}</span>
-                      </span>
+                        <div className="w-8 h-8 rounded-xl bg-white/[0.08] backdrop-blur-md p-1 flex items-center justify-center transition-transform hover:scale-110 shadow-sm">
+                          <img
+                            src={getIngredientSpriteUrl(ing)}
+                            alt={ing}
+                            className="w-full h-full object-contain filter drop-shadow-sm"
+                            onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                          />
+                        </div>
+                        <span className="absolute -top-1.5 -right-1.5 bg-indigo-950/90 text-white font-black text-[9px] px-1.5 py-0.2 rounded-full border border-white/20 shadow-md tabular-nums select-none">
+                          ×{count}
+                        </span>
+                      </div>
                     ))}
                   </div>
                 </div>
