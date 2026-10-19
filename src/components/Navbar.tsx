@@ -195,13 +195,19 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </header>
 
-      {/* Dreamy Mobile Bottom Navigation Dock with Sliding Focus Capsule */}
-      <nav className="lg:hidden fixed bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] left-4 right-4 z-50 max-w-md mx-auto bg-indigo-950/80 backdrop-blur-2xl rounded-full border border-white/15 p-1.5 shadow-2xl">
+      {/* Dreamy Mobile Bottom Navigation Dock with Dynamic Atmospheric Theme Adaptation */}
+      <nav
+        className="lg:hidden fixed bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] left-4 right-4 z-50 max-w-md mx-auto rounded-full border border-[var(--surface-border)] p-1.5 shadow-2xl backdrop-blur-2xl transition-all duration-700"
+        style={{
+          background: 'var(--surface-card)',
+          boxShadow: 'var(--card-shadow), 0 20px 45px -10px rgba(0,0,0,0.45)'
+        }}
+      >
         <div className="relative grid grid-cols-4 items-center">
-          {/* Sliding Pill Indicator for Active Tab (Smooth Glide Physics) */}
+          {/* Sliding Pill Indicator for Active Tab (Luminous Pearl Capsule) */}
           {effectiveActiveIndex >= 0 && (
             <div
-              className="absolute inset-y-0 rounded-full bg-white/20 border border-white/25 shadow-lg backdrop-blur-md pointer-events-none sliding-pill-spring"
+              className="absolute inset-y-0 rounded-full bg-white shadow-lg shadow-white/25 pointer-events-none sliding-pill-spring"
               style={{
                 width: '25%',
                 transform: `translateX(${effectiveActiveIndex * 100}%)`,
@@ -216,26 +222,26 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`relative z-10 flex flex-col items-center justify-center min-h-[46px] py-1 px-1 rounded-full select-none transition-all duration-200 ${
+                className={`relative z-10 flex flex-col items-center justify-center min-h-[46px] py-1 px-1 rounded-full select-none outline-none focus:outline-none transition-all duration-200 ${
                   isActive
-                    ? 'text-white'
-                    : 'text-slate-400 hover:text-slate-200 active:scale-95'
+                    ? 'text-indigo-950 font-black'
+                    : 'text-white/75 hover:text-white active:scale-95'
                 }`}
               >
                 <div className="relative">
                   <Icon
                     className={`w-5 h-5 transition-all duration-300 ${
                       isActive
-                        ? 'scale-110 -translate-y-0.5 stroke-[2.4] text-white'
-                        : 'scale-100 translate-y-0 stroke-[1.8] text-slate-400'
+                        ? 'scale-110 -translate-y-0.5 stroke-[2.4] text-indigo-950'
+                        : 'scale-100 translate-y-0 stroke-[1.8] text-white/80'
                     }`}
                   />
                   {tab.count !== undefined && (
                     <span
                       className={`absolute -top-1 -right-2 text-[8px] tabular-nums font-black px-1 rounded-full leading-none py-0.5 transition-all duration-300 ${
                         isActive
-                          ? 'bg-[var(--accent-primary)] text-slate-950 shadow-sm scale-105'
-                          : 'bg-white/10 text-slate-300'
+                          ? 'bg-indigo-950/15 text-indigo-950 font-black shadow-sm'
+                          : 'bg-white/15 text-white'
                       }`}
                     >
                       {tab.count}
@@ -244,7 +250,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </div>
                 <span
                   className={`text-[10px] font-display mt-0.5 truncate tracking-tight transition-all duration-200 ${
-                    isActive ? 'font-bold text-white scale-[1.02]' : 'font-medium text-slate-400'
+                    isActive ? 'font-black text-indigo-950 scale-[1.02]' : 'font-semibold text-white/80'
                   }`}
                 >
                   {tab.shortLabel || tab.label}

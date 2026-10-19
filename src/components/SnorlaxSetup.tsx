@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { SnorlaxConfig, DishType } from '../types/pokemon';
 import { ISLANDS, BERRIES, POT_SIZES, CANONICAL_BERRIES } from '../data/gameData';
 import { getBerrySpriteUrl, getRankPokeballUrl } from '../services/pokeApiService';
@@ -35,6 +36,15 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
   const [isStepperOpen, setIsStepperOpen] = useState(false);
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [activeBerrySlot, setActiveBerrySlot] = useState<number>(0);
+
+  useEffect(() => {
+    if (isStepperOpen) {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = '';
+      };
+    }
+  }, [isStepperOpen]);
 
   const currentIsland = ISLANDS.find(i => i.id === config.island) || ISLANDS[0];
 
@@ -214,55 +224,56 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
         </div>
       </div>
 
-      {/* INTERACTIVE 4-STEP WIZARD MODAL */}
-      {isStepperOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto">
-          <div className="cozy-card pokeball-watermark rounded-3xl w-full max-w-xl shadow-2xl relative my-auto overflow-hidden border border-[var(--surface-border)]">
+      {/* INTERACTIVE 4-STEP WIZARD MODAL (Portal to document.body for instant viewport centering) */}
+      {isStepperOpen && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/75 backdrop-blur-xl overflow-y-auto">
+          <div className="glass-dreamy rounded-[32px] border border-white/20 w-full max-w-xl max-h-[90vh] flex flex-col shadow-2xl relative my-auto overflow-hidden animate-dreamy-tab-enter">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-5 border-b border-[var(--surface-border)] bg-[var(--surface-card)] relative z-10">
-              <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-[var(--surface-inner)] border border-[var(--surface-border)] flex items-center justify-center text-xl flex-shrink-0 shadow-inner">
+            <div className="flex items-center justify-between p-5 border-b border-white/10 bg-white/[0.04] backdrop-blur-md relative z-10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center text-xl flex-shrink-0 shadow-inner">
                   <span>⛺</span>
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-display font-bold text-[var(--text-heading)]">
+                  <h3 className="text-base sm:text-lg font-display font-bold text-white tracking-tight">
                     Asistente de Campamento Snorlax
                   </h3>
-                  <p className="text-xs text-slate-300">
+                  <p className="text-xs text-white/60">
                     Paso {step} de 4: {step === 1 ? 'Isla & Bonus' : step === 2 ? 'Menú Culinario' : step === 3 ? 'Bayas Favoritas' : 'Puchero & Pase'}
                   </p>
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setIsStepperOpen(false)}
-                className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 transition-colors"
+                className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white border border-white/10 transition-colors outline-none focus:outline-none"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Stepper Progress Indicator */}
-            <div className="px-5 pt-4 pb-2 bg-white/[0.04] flex items-center justify-between relative z-10 border-b border-white/10">
+            <div className="px-5 pt-4 pb-3 bg-white/[0.03] flex items-center justify-between relative z-10 border-b border-white/10">
               {[1, 2, 3, 4].map((s) => (
                 <div
                   key={s}
                   onClick={() => setStep(s as any)}
-                  className={`flex-1 flex flex-col items-center gap-1 cursor-pointer transition-all ${
+                  className={`flex-1 flex flex-col items-center gap-1 cursor-pointer transition-all select-none ${
                     step === s ? 'opacity-100 scale-105' : 'opacity-50 hover:opacity-80'
                   }`}
                 >
                   <div
                     className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black transition-all ${
                       step === s
-                        ? 'bg-[var(--accent-primary)] text-slate-950 shadow-md shadow-[var(--accent-glow)]'
+                        ? 'bg-white text-indigo-950 shadow-lg shadow-white/30 scale-110'
                         : step > s
-                        ? 'bg-emerald-500 text-white'
-                        : 'bg-white/10 text-slate-300'
+                        ? 'bg-emerald-400 text-slate-950 font-bold'
+                        : 'bg-white/10 text-white/50 font-bold'
                     }`}
                   >
                     {step > s ? '✓' : s}
                   </div>
-                  <span className="text-[10px] font-bold text-slate-300 uppercase tracking-tighter">
+                  <span className={`text-[10px] font-bold uppercase tracking-wider ${step === s ? 'text-white' : 'text-white/60'}`}>
                     {s === 1 ? 'Isla' : s === 2 ? 'Menú' : s === 3 ? 'Bayas' : 'Puchero'}
                   </span>
                 </div>
@@ -270,21 +281,21 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
             </div>
 
             {/* Stepper Body Content */}
-            <div className="p-5 space-y-4 relative z-10 min-h-[220px]">
+            <div className="p-5 space-y-4 relative z-10 overflow-y-auto flex-1 min-h-[220px]">
               {/* STEP 1: ISLA & BONUS */}
               {step === 1 && (
-                <div key={1} className="space-y-3 animate-dreamy-tab-enter">
+                <div key={1} className="space-y-4 animate-dreamy-tab-enter">
                   <div>
-                    <label className="block text-xs font-black text-slate-200 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-white uppercase tracking-wider mb-2">
                       1. ¿En qué Isla estás acampando esta semana?
                     </label>
                     <select
                       value={config.island}
                       onChange={(e) => handleIslandChange(e.target.value)}
-                      className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-full text-xs text-white font-bold focus:outline-none focus:ring-2 focus:ring-sky-400"
+                      className="w-full px-4 py-2.5 bg-white/[0.06] hover:bg-white/[0.09] border border-white/10 rounded-2xl text-xs text-white font-bold focus:outline-none focus:ring-1 focus:ring-white/30 transition-all"
                     >
                       {ISLANDS.map(island => (
-                        <option key={island.id} value={island.id} className="bg-slate-900">
+                        <option key={island.id} value={island.id} className="bg-slate-900 text-white font-medium">
                           {island.name} {island.fixedBerries.length === 3 ? '(3 Bayas Fijas)' : '(Bayas Aleatorias)'}
                         </option>
                       ))}
@@ -292,17 +303,17 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-black text-slate-200 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-white uppercase tracking-wider mb-2">
                       Bonus de Área acumulado en esta Isla
                     </label>
                     <div className="flex items-center gap-3">
                       <select
                         value={config.areaBonus || 0}
                         onChange={(e) => onChangeConfig({ ...config, areaBonus: Number(e.target.value) })}
-                        className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-full text-xs text-white tabular-nums font-bold focus:outline-none focus:ring-2 focus:ring-purple-400"
+                        className="w-full px-4 py-2.5 bg-white/[0.06] hover:bg-white/[0.09] border border-white/10 rounded-2xl text-xs text-white tabular-nums font-bold focus:outline-none focus:ring-1 focus:ring-white/30 transition-all"
                       >
                         {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75].map(b => (
-                          <option key={b} value={b} className="bg-slate-900">
+                          <option key={b} value={b} className="bg-slate-900 text-white font-medium">
                             +{b}% de Bonus de Área
                           </option>
                         ))}
@@ -315,7 +326,7 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
               {/* STEP 2: MENU CULINARIO */}
               {step === 2 && (
                 <div key={2} className="animate-dreamy-tab-enter">
-                  <label className="block text-xs font-black text-slate-200 uppercase tracking-wider mb-2">
+                  <label className="block text-xs font-bold text-white uppercase tracking-wider mb-3">
                     2. ¿Qué tipo de plato pide tu Snorlax?
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -325,20 +336,21 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
                       return (
                         <button
                           key={dish.id}
+                          type="button"
                           onClick={() => onChangeConfig({ ...config, dishType: dish.id })}
-                          className={`p-4 rounded-3xl border text-center flex flex-col items-center justify-center gap-2 transition-all ${
+                          className={`p-4 rounded-3xl border text-center flex flex-col items-center justify-center gap-2.5 transition-all outline-none focus:outline-none ${
                             isSelected
-                              ? 'bg-white/10 border-purple-400/50 text-white shadow-lg ring-2 ring-purple-400/40'
-                              : 'bg-white/[0.04] border-white/10 text-slate-300 hover:border-white/20'
+                              ? 'bg-white text-indigo-950 shadow-xl border-white scale-[1.02] font-black'
+                              : 'bg-white/[0.04] hover:bg-white/[0.08] border-white/10 text-slate-200 hover:text-white'
                           }`}
                         >
-                          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl ${
-                            isSelected ? 'bg-white text-indigo-950 font-black' : 'bg-white/10 text-slate-300'
+                          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl transition-all ${
+                            isSelected ? 'bg-indigo-950/10 text-indigo-950 font-black' : 'bg-white/10 text-slate-200'
                           }`}>
-                            <Icon className="w-6 h-6" />
+                            <Icon className="w-6 h-6 stroke-[2.2]" />
                           </div>
-                          <span className="text-xs font-black uppercase tracking-wider">{dish.label}</span>
-                          {isSelected && <span className="text-[10px] text-purple-200 font-bold">✓ Seleccionado</span>}
+                          <span className="text-xs font-bold uppercase tracking-wider">{dish.label}</span>
+                          {isSelected && <span className="text-[10px] text-indigo-950 font-black bg-indigo-950/10 px-2 py-0.5 rounded-full">✓ Seleccionado</span>}
                         </button>
                       );
                     })}
@@ -350,10 +362,10 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
               {step === 3 && (
                 <div key={3} className="space-y-3.5 animate-dreamy-tab-enter">
                   <div>
-                    <label className="block text-xs font-black text-white uppercase tracking-wider">
+                    <label className="block text-xs font-bold text-white uppercase tracking-wider">
                       3. Las 3 Bayas Favoritas de tu Snorlax (×2 Vigor)
                     </label>
-                    <p className="text-xs text-slate-300 mt-0.5">
+                    <p className="text-xs text-white/60 mt-0.5">
                       {currentIsland.fixedBerries.length === 3
                         ? '✨ Esta isla cuenta con 3 bayas fijas predeterminadas por el juego.'
                         : 'Toca una ranura y selecciona su baya con arte oficial:'}
@@ -374,20 +386,20 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
                           type="button"
                           disabled={isFixed}
                           onClick={() => setActiveBerrySlot(slotIdx)}
-                          className={`p-2.5 sm:p-3 rounded-2xl border text-center flex flex-col items-center justify-center transition-all relative ${
+                          className={`p-2.5 sm:p-3 rounded-2xl border text-center flex flex-col items-center justify-center transition-all relative outline-none focus:outline-none ${
                             isSelectedSlot && !isFixed
-                              ? 'bg-white/10 border-purple-400/50 shadow-lg ring-2 ring-purple-400/40'
+                              ? 'bg-white/15 border-white/40 shadow-xl ring-2 ring-white/30'
                               : 'bg-white/[0.04] border-white/10 hover:border-white/20'
                           } ${isFixed ? 'opacity-90 cursor-default' : 'cursor-pointer active:scale-95'}`}
                         >
-                          <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1">
+                          <div className="text-[10px] font-bold uppercase tracking-wider text-white/60 mb-1 flex items-center gap-1">
                             <span>Ranura #{slotIdx + 1}</span>
                             {isSelectedSlot && !isFixed && (
-                              <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-ping" />
+                              <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
                             )}
                           </div>
 
-                          <div className="w-12 h-12 rounded-xl bg-black/25 flex items-center justify-center p-1 my-0.5">
+                          <div className="w-12 h-12 rounded-xl bg-black/20 border border-white/10 flex items-center justify-center p-1 my-0.5">
                             <img
                               src={getBerrySpriteUrl(berryName)}
                               alt={berryName}
@@ -399,7 +411,7 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
                             {berryName.replace('Baya ', '')}
                           </span>
 
-                          <span className="text-[10px] font-semibold text-slate-300 mt-0.5 px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
+                          <span className="text-[10px] font-semibold text-white/70 mt-0.5 px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
                             {berryMeta?.type || 'Normal'}
                           </span>
                         </button>
@@ -415,7 +427,7 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
                           <span>🍒</span>
                           <span>Elige baya para Ranura #{activeBerrySlot + 1}:</span>
                         </span>
-                        <span className="text-[10px] text-purple-200 tabular-nums font-bold">
+                        <span className="text-[10px] text-white/60 tabular-nums font-bold">
                           18 Tipos Oficiales
                         </span>
                       </div>
@@ -435,9 +447,9 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
                                   setActiveBerrySlot(activeBerrySlot + 1);
                                 }
                               }}
-                              className={`p-2 rounded-xl border flex flex-col items-center justify-center gap-1 transition-all ${
+                              className={`p-2 rounded-xl border flex flex-col items-center justify-center gap-1 transition-all outline-none focus:outline-none ${
                                 isCurrentSlotBerry
-                                  ? 'bg-purple-500/20 border-purple-400 text-white shadow-md ring-1 ring-purple-400'
+                                  ? 'bg-white/20 border-white/50 text-white shadow-md ring-1 ring-white/50 font-bold'
                                   : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:text-white'
                               } active:scale-95`}
                             >
@@ -450,7 +462,7 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
                               <span className="text-[11px] font-bold truncate max-w-full leading-tight">
                                 {b.replace('Baya ', '')}
                               </span>
-                              <span className="text-[9px] text-slate-400 font-medium">
+                              <span className="text-[9px] text-white/50 font-medium">
                                 {meta?.type}
                               </span>
                             </button>
@@ -473,16 +485,16 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
               {step === 4 && (
                 <div key={4} className="space-y-3.5 animate-dreamy-tab-enter">
                   <div>
-                    <label className="block text-xs font-black text-slate-200 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-white uppercase tracking-wider mb-2">
                       Capacidad Base del Puchero
                     </label>
                     <select
                       value={config.potSize}
                       onChange={(e) => onChangeConfig({ ...config, potSize: parseInt(e.target.value, 10) })}
-                      className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-full text-xs text-white tabular-nums font-bold focus:outline-none focus:ring-2 focus:ring-purple-400"
+                      className="w-full px-4 py-2.5 bg-white/[0.06] hover:bg-white/[0.09] border border-white/10 rounded-2xl text-xs text-white tabular-nums font-bold focus:outline-none focus:ring-1 focus:ring-white/30 transition-all"
                     >
                       {POT_SIZES.map(size => (
-                        <option key={size} value={size} className="bg-slate-900">
+                        <option key={size} value={size} className="bg-slate-900 text-white font-medium">
                           {size} ingredientes base {config.goodCampTicket ? `(se expande a ${Math.floor(size * 1.5)} con Pase)` : ''}
                         </option>
                       ))}
@@ -490,12 +502,12 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
                   </div>
 
                   {/* Good Camp Ticket Toggle */}
-                  <label className="flex items-center justify-between p-3.5 rounded-2xl bg-white/5 border border-white/10 cursor-pointer hover:bg-white/10 transition-all">
+                  <label className="flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 cursor-pointer transition-all">
                     <div>
                       <span className="font-bold text-white text-xs block">
                         🏕️ Pase de Buen Campamento
                       </span>
-                      <span className="text-[11px] text-slate-400 block mt-0.5">
+                      <span className="text-[11px] text-white/60 block mt-0.5">
                         Expande la olla en +50% y otorga +20% velocidad de ayuda a todo tu equipo.
                       </span>
                     </div>
@@ -511,12 +523,12 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
             </div>
 
             {/* Stepper Footer Buttons */}
-            <div className="p-4 border-t border-[var(--surface-border)] bg-[var(--surface-inner)] flex items-center justify-between relative z-10">
+            <div className="p-4 border-t border-white/10 bg-white/[0.03] flex items-center justify-between relative z-10">
               <button
                 type="button"
                 onClick={() => setStep((s) => Math.max(1, s - 1) as any)}
                 disabled={step === 1}
-                className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-[var(--surface-border)] text-slate-300 text-xs font-bold transition-all disabled:opacity-30"
+                className="px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/15 border border-white/10 text-white/90 text-xs font-bold transition-all disabled:opacity-30 outline-none focus:outline-none"
               >
                 Anterior
               </button>
@@ -525,10 +537,10 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
                 <button
                   type="button"
                   onClick={() => setStep((s) => Math.min(4, s + 1) as any)}
-                  className="btn-cozy-primary px-5 py-2 text-xs font-bold flex items-center gap-1.5 shadow-md"
+                  className="btn-dreamy-pearl px-6 py-2.5 rounded-full text-indigo-950 text-xs font-black uppercase tracking-wider shadow-xl hover:scale-[1.02] active:scale-95 flex items-center gap-1.5 transition-all outline-none focus:outline-none"
                 >
                   <span>Siguiente</span>
-                  <ChevronRight className="w-4 h-4" />
+                  <ChevronRight className="w-4 h-4 stroke-[3]" />
                 </button>
               ) : (
                 <button
@@ -537,7 +549,7 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
                     setIsStepperOpen(false);
                     onRunOptimizer();
                   }}
-                  className="px-5 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-white text-xs font-bold transition-all shadow-md shadow-sky-500/25 flex items-center gap-1.5"
+                  className="btn-dreamy-pearl px-7 py-2.5 rounded-full text-indigo-950 text-xs font-black uppercase tracking-wider shadow-xl hover:scale-[1.02] active:scale-95 flex items-center gap-2 transition-all outline-none focus:outline-none"
                 >
                   <Sparkles className="w-4 h-4 stroke-[2.5]" />
                   <span>Guardar y Optimizar</span>
@@ -545,7 +557,8 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
