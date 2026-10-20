@@ -87,6 +87,7 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
     return !getSleepMealWindow().isDinnerTime;
   });
   const [isTimelineExpanded, setIsTimelineExpanded] = useState<boolean>(true);
+  const [timelineViewMode, setTimelineViewMode] = useState<'dormir' | 'cierre'>('dormir');
   const [hidePastDays, setHidePastDays] = useState<boolean>(false);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
 
@@ -193,7 +194,14 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
     currentDayElapsedHours,
     currentDayRemainingHours,
     currentDayIntradayExpectedVigor,
-    currentDayDinnerPending
+    currentDayDinnerPending,
+    currentDayExpected10PM,
+    currentDayExpected10AM,
+    eficienciaCampamento,
+    promedioDiarioReal,
+    promedioDiarioTeorico,
+    vigorProyectadoAdaptado,
+    estadoRangoAdaptado
   } = proyeccion;
 
   // Pace metrics calculation
@@ -573,7 +581,73 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
           </div>
         </div>
 
-        {/* Termómetro de Ritmo en Vivo (Intraday Pace Monitor) */}
+        {/* Banner de Eficiencia de Campamento (Ritmo Real vs. Teórico) */}
+        {isCalibrated && (
+          <div className="relative z-10 rounded-2xl bg-white/[0.04] border border-white/10 p-3.5 sm:p-4 shadow-inner space-y-2.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
+                  eficienciaCampamento >= 98 && eficienciaCampamento <= 104
+                    ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/40'
+                    : eficienciaCampamento < 98
+                    ? 'bg-amber-500/20 text-amber-200 border-amber-400/40'
+                    : 'bg-purple-500/20 text-purple-200 border-purple-400/40'
+                }`}>
+                  ⚡ Eficiencia de Campamento: {eficienciaCampamento}%
+                </span>
+                <span className="text-xs text-slate-300 font-medium">
+                  {eficienciaCampamento >= 98 && eficienciaCampamento <= 104
+                    ? '¡Tu campamento rinde al ritmo ideal de laboratorio!'
+                    : eficienciaCampamento < 98
+                    ? 'Ritmo empírico de campo (ajustado por energía/recetas)'
+                    : '¡Racha de críticos en la cocina y gran activación!'}
+                </span>
+              </div>
+              <div className="text-[11px] text-slate-300 tabular-nums">
+                Producción Real: <strong className="text-white">~{promedioDiarioReal.toLocaleString()} pts/día</strong>{' '}
+                <span className="text-slate-400">(vs ~{promedioDiarioTeorico.toLocaleString()} óptimos)</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1">
+              <div className="p-2.5 rounded-xl bg-purple-950/30 border border-purple-400/20 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] text-purple-300 font-bold uppercase tracking-wider block">
+                    🎯 Pronóstico Realista (Tu Ritmo)
+                  </span>
+                  <span className="text-sm font-black text-white">
+                    {estadoRangoAdaptado.rangoActual}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-sm text-purple-200 font-black tabular-nums block">
+                    ~{vigorProyectadoAdaptado.toLocaleString()} pts
+                  </span>
+                  <span className="text-[10px] text-slate-400">al domingo</span>
+                </div>
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+                    ✨ Techo Teórico Máximo (100% Energía)
+                  </span>
+                  <span className="text-sm font-bold text-slate-200">
+                    {estadoRangoFinal.rangoActual}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-sm text-slate-300 font-bold tabular-nums block">
+                    ~{vigorFinalSemana.toLocaleString()} pts
+                  </span>
+                  <span className="text-[10px] text-slate-500">ideal</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Termómetro de Ritmo en Vivo (Checkpoints Humanos & 04:00 AM) */}
         {isCalibrated && (
           <div className="relative z-10 rounded-2xl bg-white/[0.04] border border-white/10 p-3.5 sm:p-4 shadow-inner space-y-2.5">
             <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -587,29 +661,44 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
                 </span>
               </div>
               <div className="text-[11px] text-slate-300 tabular-nums">
-                Puntos actuales: <strong className="text-white">{actualCalibratedPoints.toLocaleString()}</strong> / Esperados a las {new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}: <strong className="text-slate-300">{currentDayIntradayExpectedVigor.toLocaleString()} pts</strong>
+                Puntos actuales: <strong className="text-white">{actualCalibratedPoints.toLocaleString()}</strong> / Esperados ahora: <strong className="text-slate-300">{currentDayIntradayExpectedVigor.toLocaleString()} pts</strong>
               </div>
             </div>
 
-            {/* Dynamic message explaining 04:00 AM closing */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-200 bg-black/20 p-2.5 rounded-xl border border-white/5">
-              <div className="flex items-center gap-2">
-                {paceDiff >= 0 ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                ) : (
-                  <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0" />
-                )}
-                <span>
-                  {paceDiff >= 0
-                    ? `¡Vas excelente! Estás +${paceDiff.toLocaleString()} pts por encima del ritmo esperado para esta hora.`
-                    : `Estás a solo ${Math.abs(paceDiff).toLocaleString()} pts del ritmo ideal. Se compensa fácilmente con las comidas.`}
+            {/* Human Checkpoints Row (10 PM Antes de dormir & 4 AM Cierre Oficial) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+              <div className="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-400/25 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Moon className="w-4 h-4 text-indigo-300 flex-shrink-0" />
+                  <div>
+                    <span className="text-[10px] text-indigo-200 font-bold uppercase tracking-wider block">
+                      🌙 Meta Antes de Dormir (22:00)
+                    </span>
+                    <span className="text-[11px] text-slate-300">
+                      {actualCalibratedPoints >= currentDayExpected10PM
+                        ? '✓ ¡Objetivo diurno cumplido!'
+                        : `Faltan ${(currentDayExpected10PM - actualCalibratedPoints).toLocaleString()} pts (con cena)`}
+                    </span>
+                  </div>
+                </div>
+                <span className="text-sm font-black text-indigo-100 tabular-nums">
+                  ~{currentDayExpected10PM.toLocaleString()} pts
                 </span>
               </div>
 
-              {/* Breakdown to 04:00 AM */}
-              <div className="text-[11px] text-purple-200 font-bold self-end sm:self-auto flex items-center gap-1">
-                <span>Cierre de hoy (04:00 AM):</span>
-                <span className="text-white font-black bg-purple-500/20 px-2 py-0.5 rounded-lg border border-purple-400/30">
+              <div className="p-2.5 rounded-xl bg-purple-950/40 border border-purple-400/25 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-purple-300 flex-shrink-0" />
+                  <div>
+                    <span className="text-[10px] text-purple-200 font-bold uppercase tracking-wider block">
+                      ⏰ Cierre Oficial con Sueño (04:00 AM)
+                    </span>
+                    <span className="text-[11px] text-slate-300">
+                      Tras tu sesión nocturna completa
+                    </span>
+                  </div>
+                </div>
+                <span className="text-sm font-black text-purple-100 tabular-nums">
                   ~{timelineDias.find(d => d.esHoy)?.vigorAcumuladoFinDia.toLocaleString()} pts
                 </span>
               </div>
@@ -764,7 +853,7 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
 
       {/* Daily Timeline (Lunes a Domingo - Sellos de Diario de Sueño) */}
       <div className="relative z-10">
-        <div className="flex items-center justify-between mb-3.5 flex-wrap gap-2">
+        <div className="flex items-center justify-between mb-3.5 flex-wrap gap-3">
           <div>
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-purple-300" />
@@ -773,18 +862,48 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
               </h4>
             </div>
             <p className="text-[11px] text-slate-400 mt-0.5">
-              ℹ️ Cada total corresponde al cierre oficial de la jornada (<strong>04:00 AM</strong>) tras las 3 comidas y el sueño nocturno.
+              {timelineViewMode === 'dormir'
+                ? 'ℹ️ Mostrando metas antes de dormir (22:00) tras las 3 comidas del día (Desayuno, Almuerzo y Cena).'
+                : 'ℹ️ Mostrando cierre oficial del servidor (04:00 AM) tras la sesión de sueño nocturna.'}
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Checkpoint View Mode Toggle (10 PM vs 4 AM) */}
+            <div className="flex rounded-xl bg-black/40 p-1 border border-white/10 gap-1 text-xs">
+              <button
+                type="button"
+                onClick={() => setTimelineViewMode('dormir')}
+                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold flex items-center gap-1.5 transition-all ${
+                  timelineViewMode === 'dormir'
+                    ? 'bg-indigo-500/30 text-indigo-200 border border-indigo-400/40 shadow-sm font-black'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Moon className="w-3 h-3 text-indigo-300" />
+                <span>Antes de Dormir (22:00)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setTimelineViewMode('cierre')}
+                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold flex items-center gap-1.5 transition-all ${
+                  timelineViewMode === 'cierre'
+                    ? 'bg-purple-500/30 text-purple-200 border border-purple-400/40 shadow-sm font-black'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Clock className="w-3 h-3 text-purple-300" />
+                <span>Cierre Oficial (04:00 AM)</span>
+              </button>
+            </div>
+
             {isCalibrated && pastDaysCount > 0 && (
               <button
                 type="button"
                 onClick={() => setHidePastDays(!hidePastDays)}
-                className="btn-cozy-secondary text-xs px-2.5 py-1"
+                className="btn-cozy-secondary text-xs px-2.5 py-1.5"
               >
-                {hidePastDays ? `Mostrar Días Pasados (${pastDaysCount})` : 'Ocultar Pasados'}
+                {hidePastDays ? `Mostrar Pasados (${pastDaysCount})` : 'Ocultar Pasados'}
               </button>
             )}
 
@@ -806,7 +925,11 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
               {timelineDias
                 .filter(dia => !(hidePastDays && dia.esPasado))
                 .map((dia) => {
-                  const rankTheme = getRankTheme(dia.rangoAlcanzado);
+                  const isDormirView = timelineViewMode === 'dormir';
+                  const displayRank = isDormirView && dia.rangoAlcanzado10PM ? dia.rangoAlcanzado10PM : dia.rangoAlcanzado;
+                  const rankTheme = getRankTheme(displayRank);
+                  const displayVigorGain = isDormirView && dia.vigorGanado10PM ? dia.vigorGanado10PM : dia.vigorGanadoDia;
+                  const displayVigorTotal = isDormirView && dia.metaAcumulada10PM ? dia.metaAcumulada10PM : dia.vigorAcumuladoFinDia;
 
                   return (
                     <div
@@ -859,26 +982,26 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
                                 <span className="tabular-nums font-bold">~{dia.vigorCenaPendiente?.toLocaleString()}</span>
                               </div>
                             )}
-                            <div className="text-[9px] text-slate-300 flex items-center justify-between">
-                              <span>+ Noche pend.:</span>
-                              <span className="tabular-nums">~{dia.vigorNochePendiente?.toLocaleString()}</span>
+                            <div className="border-t border-white/10 pt-1 text-[10px] flex items-center justify-between">
+                              <span className="text-indigo-200 font-bold">Meta 22:00:</span>
+                              <span className="font-black text-white tabular-nums">~{dia.metaAcumulada10PM?.toLocaleString()}</span>
                             </div>
-                            <div className="border-t border-white/10 pt-1 text-[11px] text-white font-black flex items-center justify-between">
-                              <span className="text-[9px] text-purple-200 uppercase font-black">Cierre 04:00 AM:</span>
-                              <span className="tabular-nums">~{dia.vigorAcumuladoFinDia.toLocaleString()}</span>
+                            <div className="text-[10px] flex items-center justify-between">
+                              <span className="text-purple-200 font-bold">Cierre 4 AM:</span>
+                              <span className="font-black text-slate-300 tabular-nums">~{dia.vigorAcumuladoFinDia.toLocaleString()}</span>
                             </div>
                           </div>
                         ) : (
                           <>
                             {/* Vigor Ganado Hoy */}
                             <div className={`text-[11px] tabular-nums font-black ${dia.esPasado ? 'text-[var(--text-muted)]' : 'text-white'}`}>
-                              +{dia.vigorGanadoDia.toLocaleString()} pts
+                              +{displayVigorGain.toLocaleString()} pts
                             </div>
 
-                            {/* Vigor Acumulado Fin Dia */}
+                            {/* Vigor Acumulado */}
                             <div className="text-[10px] text-[var(--text-muted)] tabular-nums mt-0.5 font-medium flex items-center justify-between">
-                              <span className="text-[9px] text-slate-400">04:00 AM:</span>
-                              <span className="font-bold text-slate-300">{dia.vigorAcumuladoFinDia.toLocaleString()}</span>
+                              <span className="text-[9px] text-slate-400">{isDormirView ? '22:00:' : '04:00 AM:'}</span>
+                              <span className="font-bold text-slate-300">{displayVigorTotal.toLocaleString()}</span>
                             </div>
                           </>
                         )}
@@ -887,12 +1010,12 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
                       {/* Rango al final del día (Clean floating badge without dividing border) */}
                       <div className="mt-2.5 pt-1 flex items-center justify-center gap-1.5">
                         <img
-                          src={getRankPokeballUrl(dia.rangoAlcanzado)}
-                          alt={dia.rangoAlcanzado}
+                          src={getRankPokeballUrl(displayRank)}
+                          alt={displayRank}
                           className="w-4 h-4 object-contain flex-shrink-0"
                         />
                         <span className={`text-[10px] font-black px-2 py-0.5 rounded-full truncate uppercase tracking-wider ${rankTheme.pillBg}`}>
-                          {dia.rangoAlcanzado}
+                          {displayRank}
                         </span>
                       </div>
                     </div>

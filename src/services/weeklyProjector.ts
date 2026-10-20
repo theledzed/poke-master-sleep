@@ -19,9 +19,13 @@ export interface ProyeccionDia {
   puntosEnPantalla?: number;
   vigorEsperadoAHora?: number; // Vigor estimado a la hora actual del día en curso
   vigorGanadoDia: number;
-  vigorAcumuladoFinDia: number;
-  cierreHoraLabel?: string; // Siempre '04:00 AM'
+  vigorAcumuladoFinDia: number; // Cierre oficial a las 04:00 AM
+  vigorGanado10PM?: number;     // Vigor ganado hasta las 10:00 PM (3 comidas + 18h de vigilia)
+  metaAcumulada10PM?: number;   // Acumulado hasta las 10:00 PM (ideal para antes de dormir)
+  metaAcumulada10AM?: number;   // Acumulado hasta las 10:00 AM (desayuno + noche procesada)
+  cierreHoraLabel?: string;     // Siempre '04:00 AM'
   rangoAlcanzado: NombreRango;
+  rangoAlcanzado10PM?: NombreRango;
   indiceRango: number;
   platosCocinados: string[];
   horasRestantesHoy?: number;
@@ -41,7 +45,7 @@ export interface HitoClave {
 }
 
 export interface ProyeccionSemanalCompleta {
-  vigorFinalSemana: number; // Promedio / Esperado al cierre de la semana (Dom 04:00 AM)
+  vigorFinalSemana: number; // Promedio / Techo de laboratorio al cierre de la semana (Dom 04:00 AM)
   vigorMinSemana: number;   // Mínimo estimado (sin críticos, peor suerte en skills)
   vigorMaxSemana: number;   // Techo optimista (con críticos '¡Riquísimo!', buen RNG)
   estadoRangoFinal: EstadoRango;
@@ -62,6 +66,14 @@ export interface ProyeccionSemanalCompleta {
   currentDayRemainingHours: number;
   currentDayIntradayExpectedVigor: number; // Puntos esperados a este minuto exacto
   currentDayDinnerPending: boolean;
+  currentDayExpected10PM: number;          // Meta de hoy a las 10:00 PM (antes de dormir)
+  currentDayExpected10AM: number;          // Meta de hoy a las 10:00 AM (al despertar + desayuno)
+  // Métricas adaptativas (Realidad vs. Papel):
+  eficienciaCampamento: number;            // Porcentaje de eficiencia real (ej: 86 para 86%, 101 para 101%)
+  promedioDiarioReal: number;              // Puntos reales promedio por día
+  promedioDiarioTeorico: number;           // Puntos teóricos esperados por día
+  vigorProyectadoAdaptado: number;         // Vigor proyectado al domingo según el ritmo real empírico
+  estadoRangoAdaptado: EstadoRango;        // Rango al que apunta según su rendimiento real
 }
 
 export const DIAS_SEMANA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
@@ -201,14 +213,37 @@ export function proyectarSemanaEquipo(
     (mealsElapsedSoFar * currentSingleMeal)
   );
 
+  // Checkpoints humanos del día de hoy:
+  const currentDayPrevAcum = currentSleepDayIdx * vigorDiaNormal;
+  const currentDayExpected10AM = Math.round(
+    currentDayPrevAcum + (1 * currentSingleMeal) + (currentTeamDaily * 0.25)
+  );
+  const currentDayExpected10PM = Math.round(
+    currentDayPrevAcum + (3 * currentSingleMeal) + (currentTeamDaily * 0.75)
+  );
+
   const currentDayDinnerPending = effectiveDinnerEaten !== true && (currentHour >= 18 || currentHour < 4);
 
   const isCalibrated = vigorInicial > 0;
   const timelineDias: ProyeccionDia[] = [];
 
+  // Factor de Eficiencia Empírica (Realidad vs. Papel)
+  const etaRaw = isCalibrated && currentDayIntradayExpectedVigor > 0
+    ? (vigorInicial / currentDayIntradayExpectedVigor)
+    : 1.0;
+  const etaClamped = Math.max(0.50, Math.min(1.40, etaRaw));
+  const eficienciaCampamento = Math.round(etaClamped * 100);
+
+  const daysElapsedFloat = Math.max(0.25, (isCalibrated ? diaInicioIdx : currentSleepDayIdx) + (currentDayElapsedHours / 24));
+  const promedioDiarioReal = isCalibrated
+    ? Math.round(vigorInicial / daysElapsedFloat)
+    : Math.round(vigorDiaNormal);
+  const promedioDiarioTeorico = Math.round(vigorDiaNormal);
+
   let vigorAcumulado = isCalibrated ? vigorInicial : 0;
   let remainingMinSum = 0;
   let remainingMaxSum = 0;
+  let remainingAdaptedSum = 0;
 
   // A) Si está calibrado a mitad de semana, rellenamos los días pasados (0 a diaInicioIdx - 1)
   if (isCalibrated && diaInicioIdx > 0) {
@@ -217,6 +252,12 @@ export function proyectarSemanaEquipo(
       const vigorPast = Math.round(vigorInicial * frac);
       const estadoPast = calcularRangoSnorlax(islaId, vigorPast);
       const ganadoPast = d === 0 ? vigorPast : Math.round(vigorInicial / diaInicioIdx);
+      const pastPrevAcum = d === 0 ? 0 : Math.round(vigorInicial * (d / diaInicioIdx));
+      const pastSingleMeal = singleMealNormal;
+      const pastTeamDaily = teamDailyNormal;
+      const past10PM = Math.round((3 * pastSingleMeal) + (pastTeamDaily * 0.75));
+      const pastMeta10PM = pastPrevAcum + past10PM;
+      const pastMeta10AM = pastPrevAcum + Math.round((1 * pastSingleMeal) + (pastTeamDaily * 0.25));
 
       timelineDias.push({
         diaNombre: DIAS_SEMANA[d],
@@ -226,7 +267,11 @@ export function proyectarSemanaEquipo(
         cierreHoraLabel: '04:00 AM',
         vigorGanadoDia: ganadoPast,
         vigorAcumuladoFinDia: vigorPast,
+        vigorGanado10PM: past10PM,
+        metaAcumulada10PM: pastMeta10PM,
+        metaAcumulada10AM: pastMeta10AM,
         rangoAlcanzado: estadoPast.rangoActual,
+        rangoAlcanzado10PM: calcularRangoSnorlax(islaId, pastMeta10PM).rangoActual,
         indiceRango: estadoPast.indiceRango,
         platosCocinados: []
       });
@@ -287,6 +332,10 @@ export function proyectarSemanaEquipo(
         (dayEval.berryVigorDaily * 1.05 + dayEval.skillVigorDaily * 1.20) * remainingTeamFraction +
         (pendingDinnerVigor * 1.35)
       );
+
+      remainingAdaptedSum += Math.round(pendingNightVigor * etaClamped) + pendingDinnerVigor;
+    } else if (isCalibrated && d > diaInicioIdx) {
+      remainingAdaptedSum += Math.round(normalDailyExpected * etaClamped);
     }
 
     remainingMinSum += vigorGanadoMin;
@@ -297,6 +346,16 @@ export function proyectarSemanaEquipo(
     const platos = dayEval.meals
       .filter(m => m.recipe.baseVigor > 0)
       .map(m => m.recipe.name);
+
+    const prevDayAcum = timelineDias.length > 0
+      ? timelineDias[timelineDias.length - 1].vigorAcumuladoFinDia
+      : (d > 0 ? (d * vigorDiaNormal) : 0);
+
+    const day10PM = Math.round((3 * daySingleMeal) + (dayTeamDaily * 0.75));
+    const day10AM = Math.round((1 * daySingleMeal) + (dayTeamDaily * 0.25));
+    const metaAcum10PM = prevDayAcum + day10PM;
+    const metaAcum10AM = prevDayAcum + day10AM;
+    const estado10PM = calcularRangoSnorlax(islaId, metaAcum10PM);
 
     timelineDias.push({
       diaNombre: DIAS_SEMANA[d],
@@ -309,7 +368,11 @@ export function proyectarSemanaEquipo(
       vigorEsperadoAHora: isToday ? currentDayIntradayExpectedVigor : undefined,
       vigorGanadoDia: Math.round(vigorGanadoEsperado),
       vigorAcumuladoFinDia: Math.round(vigorAcumulado),
+      vigorGanado10PM: day10PM,
+      metaAcumulada10PM: metaAcum10PM,
+      metaAcumulada10AM: metaAcum10AM,
       rangoAlcanzado: estadoDia.rangoActual,
+      rangoAlcanzado10PM: estado10PM.rangoActual,
       indiceRango: estadoDia.indiceRango,
       platosCocinados: Array.from(new Set(platos)),
       horasRestantesHoy: isCurrentCalibratedDay ? Math.round(24 - getSleepDayHoursElapsed(effectiveUpdatedAt ? new Date(effectiveUpdatedAt) : now)) : undefined,
@@ -327,6 +390,12 @@ export function proyectarSemanaEquipo(
   const estadoRangoFinal = calcularRangoSnorlax(islaId, vigorFinalSemana);
   const estadoRangoMin = calcularRangoSnorlax(islaId, vigorMinSemana);
   const estadoRangoMax = calcularRangoSnorlax(islaId, vigorMaxSemana);
+
+  // Proyección Adaptada según Ritmo Real
+  const vigorProyectadoAdaptado = isCalibrated
+    ? Math.round(vigorInicial + remainingAdaptedSum)
+    : vigorFinalSemana;
+  const estadoRangoAdaptado = calcularRangoSnorlax(islaId, vigorProyectadoAdaptado);
 
   // 5. Evaluar Hitos Clave de la Isla:
   const hitosDef = [
@@ -377,6 +446,13 @@ export function proyectarSemanaEquipo(
     currentDayElapsedHours,
     currentDayRemainingHours,
     currentDayIntradayExpectedVigor,
-    currentDayDinnerPending
+    currentDayDinnerPending,
+    currentDayExpected10PM,
+    currentDayExpected10AM,
+    eficienciaCampamento,
+    promedioDiarioReal,
+    promedioDiarioTeorico,
+    vigorProyectadoAdaptado,
+    estadoRangoAdaptado
   };
 }
