@@ -72,6 +72,8 @@ export interface MidWeekProgress {
   currentDayIdx: number; // 0=Lun ... 6=Dom
   updatedAt?: string;
   isCalibrated?: boolean;
+  dinnerEaten?: boolean; // ¿Snorlax ya cenó hoy? (false = falta cena de 18:00 a 04:00)
+  recordedHour?: number; // Hora local (0-23) al calibrar
 }
 
 export interface SnorlaxConfig {

@@ -4,7 +4,11 @@ import {
   proyectarSemanaEquipo,
   ProyeccionSemanalCompleta,
   ProyeccionDia,
-  HitoClave
+  HitoClave,
+  getPokemonSleepDayIndex,
+  getSleepDayHoursElapsed,
+  getSleepMealWindow,
+  DIAS_SEMANA
 } from '../services/weeklyProjector';
 import {
   IslaId,
@@ -32,7 +36,10 @@ import {
   X,
   Sliders,
   Shield,
-  Rocket
+  Rocket,
+  Utensils,
+  Moon,
+  AlertCircle
 } from 'lucide-react';
 
 interface WeeklyRankProjectionViewProps {
@@ -45,7 +52,7 @@ interface WeeklyRankProjectionViewProps {
   onResetMidWeekProgress?: () => void;
 }
 
-const DIAS_NOMBRES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+const DIAS_NOMBRES = DIAS_SEMANA;
 
 export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> = ({
   equipo,
@@ -61,6 +68,9 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
     (config.midWeekProgress?.currentVigor ?? 0) > 0
   );
 
+  const detectedSleepDayIdx = useMemo(() => getPokemonSleepDayIndex(), []);
+  const detectedMealWindow = useMemo(() => getSleepMealWindow(), []);
+
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
   const [currentVigorInput, setCurrentVigorInput] = useState<number>(() => {
     return config.midWeekProgress?.currentVigor || 0;
@@ -68,7 +78,13 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
   const [currentDayIdx, setCurrentDayIdx] = useState<number>(() => {
     return typeof config.midWeekProgress?.currentDayIdx === 'number'
       ? config.midWeekProgress.currentDayIdx
-      : 5; // Default Saturday (idx 5)
+      : getPokemonSleepDayIndex();
+  });
+  const [dinnerEaten, setDinnerEaten] = useState<boolean>(() => {
+    if (typeof config.midWeekProgress?.dinnerEaten === 'boolean') {
+      return config.midWeekProgress.dinnerEaten;
+    }
+    return !getSleepMealWindow().isDinnerTime;
   });
   const [isTimelineExpanded, setIsTimelineExpanded] = useState<boolean>(true);
   const [hidePastDays, setHidePastDays] = useState<boolean>(false);
@@ -81,16 +97,22 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
       if (typeof config.midWeekProgress.currentDayIdx === 'number') {
         setCurrentDayIdx(config.midWeekProgress.currentDayIdx);
       }
+      if (typeof config.midWeekProgress.dinnerEaten === 'boolean') {
+        setDinnerEaten(config.midWeekProgress.dinnerEaten);
+      }
     }
   }, [config.midWeekProgress]);
 
-  const handleSaveMidWeek = (vigor: number, dayIdx: number) => {
+  const handleSaveMidWeek = (vigor: number, dayIdx: number, dinnerState: boolean) => {
     if (onUpdateMidWeekProgress) {
+      const now = new Date();
       onUpdateMidWeekProgress({
         currentVigor: vigor,
         currentDayIdx: dayIdx,
         isCalibrated: vigor > 0,
-        updatedAt: new Date().toISOString()
+        updatedAt: now.toISOString(),
+        dinnerEaten: dinnerState,
+        recordedHour: now.getHours()
       });
       setSaveStatus('¡Ajuste aplicado!');
       setTimeout(() => {
@@ -128,20 +150,24 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
   const islaId = useMemo(() => normalizeIslaId(config.island), [config.island]);
 
   // SINGLE UNIFIED PROJECTION:
-  // If calibrated, automatically uses in-game points + current day; otherwise theoretical full week
+  // If calibrated, automatically uses in-game points + exact time of calibration + dinner state
   const proyeccion = useMemo(() => {
     if (equipo.length === 0) return null;
     const vigorInit = isCalibrated ? (config.midWeekProgress?.currentVigor || 0) : 0;
-    const dayInit = isCalibrated ? (config.midWeekProgress?.currentDayIdx ?? 5) : 0;
-    return proyectarSemanaEquipo(equipo, config, vigorInit, dayInit);
+    const dayInit = isCalibrated ? (config.midWeekProgress?.currentDayIdx ?? getPokemonSleepDayIndex()) : 0;
+    const updatedAtStr = isCalibrated ? config.midWeekProgress?.updatedAt : undefined;
+    const dinnerState = isCalibrated ? config.midWeekProgress?.dinnerEaten : undefined;
+    return proyectarSemanaEquipo(equipo, config, vigorInit, dayInit, updatedAtStr, dinnerState);
   }, [equipo, config, isCalibrated]);
 
   // Optional comparison projection
   const proyeccionComparison = useMemo(() => {
     if (!comparisonEquipo || comparisonEquipo.length === 0) return null;
     const vigorInit = isCalibrated ? (config.midWeekProgress?.currentVigor || 0) : 0;
-    const dayInit = isCalibrated ? (config.midWeekProgress?.currentDayIdx ?? 5) : 0;
-    return proyectarSemanaEquipo(comparisonEquipo, config, vigorInit, dayInit);
+    const dayInit = isCalibrated ? (config.midWeekProgress?.currentDayIdx ?? getPokemonSleepDayIndex()) : 0;
+    const updatedAtStr = isCalibrated ? config.midWeekProgress?.updatedAt : undefined;
+    const dinnerState = isCalibrated ? config.midWeekProgress?.dinnerEaten : undefined;
+    return proyectarSemanaEquipo(comparisonEquipo, config, vigorInit, dayInit, updatedAtStr, dinnerState);
   }, [comparisonEquipo, config, isCalibrated]);
 
   if (!proyeccion || equipo.length === 0) {
@@ -162,8 +188,20 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
     timelineDias,
     hitosClave,
     vigorDiaNormal,
-    vigorDiaDomingo
+    vigorDiaDomingo,
+    currentSleepDayIdx,
+    currentDayElapsedHours,
+    currentDayRemainingHours,
+    currentDayIntradayExpectedVigor,
+    currentDayDinnerPending
   } = proyeccion;
+
+  // Pace metrics calculation
+  const actualCalibratedPoints = config.midWeekProgress?.currentVigor || 0;
+  const paceDiff = actualCalibratedPoints - currentDayIntradayExpectedVigor;
+  const pacePercent = currentDayIntradayExpectedVigor > 0
+    ? Math.round((actualCalibratedPoints / currentDayIntradayExpectedVigor) * 100)
+    : 100;
 
   // Rank Theme palette - authentic Pokemon Sleep tiers (Sapphire palette)
   const getRankTheme = (rango: NombreRango) => {
@@ -234,23 +272,29 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
             <span>Proyección Semanal: {teamLabel}</span>
           </h3>
           <p className="text-xs text-slate-300 mt-1 max-w-2xl">
-            Simula la progresión día a día considerando el puchero normal (Lun–Sáb) y el{' '}
-            <strong className="text-[var(--accent-primary)]">Súper Domingo</strong> de puchero doble con más probabilidad de ¡Riquísimo!
+            Simula la progresión día a día considerando el ciclo oficial de <strong>04:00 AM a 04:00 AM</strong>, las 3 comidas diarias y el{' '}
+            <strong className="text-[var(--accent-primary)]">Súper Domingo</strong> de doble puchero.
           </p>
         </div>
 
         {/* Quick Calibration Action Pill */}
-        <div className="flex items-center gap-2 self-start md:self-auto">
+        <div className="flex items-center gap-2 self-start md:self-auto flex-wrap">
           {isCalibrated ? (
-            <div className="flex items-center gap-1.5 bg-white/[0.06] backdrop-blur-md border border-purple-400/40 p-1.5 pl-3 rounded-full shadow-md">
+            <div className="flex items-center gap-2 bg-white/[0.06] backdrop-blur-md border border-purple-400/40 p-1.5 pl-3 rounded-full shadow-md">
               <div className="flex items-center gap-1.5 text-xs">
                 <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
                 <span className="font-bold text-purple-200 text-xs">
                   {config.midWeekProgress?.currentVigor.toLocaleString()} pts
                 </span>
                 <span className="text-[10px] text-slate-300">
-                  ({DIAS_NOMBRES[config.midWeekProgress?.currentDayIdx ?? 5]})
+                  ({DIAS_NOMBRES[config.midWeekProgress?.currentDayIdx ?? detectedSleepDayIdx]})
                 </span>
+                {config.midWeekProgress?.dinnerEaten === false && (
+                  <span className="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-400/30 px-1.5 py-0.5 rounded-full font-bold flex items-center gap-1">
+                    <Utensils className="w-2.5 h-2.5" />
+                    <span>Falta Cena</span>
+                  </span>
+                )}
               </div>
 
               <button
@@ -287,15 +331,15 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
 
       {/* Inline Calibration Drawer (Accordion / Collapsible) */}
       {isDrawerOpen && (
-        <div className="bg-[var(--surface-inner)] border border-[var(--surface-border)] rounded-3xl p-5 relative z-10 shadow-xl animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="flex items-start justify-between gap-4 mb-3">
+        <div className="bg-[var(--surface-inner)] border border-[var(--surface-border)] rounded-3xl p-5 relative z-10 shadow-xl animate-in fade-in slide-in-from-top-2 duration-200 space-y-4">
+          <div className="flex items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 text-xs font-black text-[var(--accent-primary)] uppercase tracking-wider">
                 <Sliders className="w-4 h-4 text-[var(--accent-primary)]" />
                 <span>Calibra con los Puntos Actuales de tu Snorlax</span>
               </div>
               <p className="text-xs text-slate-200 mt-1 max-w-2xl leading-relaxed">
-                Ingresa los puntos que ves hoy en tu juego. El algoritmo fijará tu progreso real como base y calculará la producción restante hasta el domingo, estrechando el margen de error.
+                Ingresa los puntos que ves en tu pantalla en este momento. El algoritmo registra tu hora local y calcula la producción exacta que resta hasta el cierre de la jornada (<strong>04:00 AM</strong>), sumando la cena si está pendiente y el sueño nocturno.
               </p>
             </div>
             <button
@@ -307,22 +351,38 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
             </button>
           </div>
 
-          <div className="flex flex-wrap items-end gap-3 pt-2">
+          {/* Time & Cycle Context Card */}
+          <div className="p-3 rounded-2xl bg-white/[0.04] border border-white/10 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2 text-slate-300">
+              <Clock className="w-4 h-4 text-purple-300 flex-shrink-0" />
+              <span>
+                Jornada oficial Pokémon Sleep: <strong className="text-white">04:00 AM a 04:00 AM</strong>.
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-purple-200 font-medium">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Hora local: <strong>{new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</strong> ({detectedMealWindow.label})</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+            {/* 1. Dia de la semana */}
             <div>
               <label className="block text-[11px] text-slate-300 font-bold mb-1">Día de la Semana</label>
               <select
                 value={currentDayIdx}
                 onChange={(e) => setCurrentDayIdx(parseInt(e.target.value, 10))}
-                className="bg-black/30 border border-white/15 text-white text-xs font-bold rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-[var(--accent-primary)] focus:outline-none"
+                className="w-full bg-black/30 border border-white/15 text-white text-xs font-bold rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-[var(--accent-primary)] focus:outline-none"
               >
                 {DIAS_NOMBRES.map((d, idx) => (
                   <option key={idx} value={idx} className="bg-slate-900">
-                    {d} {idx === 5 ? '(Hoy Sábado)' : idx === 6 ? '(Domingo)' : ''}
+                    {d} {idx === detectedSleepDayIdx ? '(Hoy en juego)' : idx === 6 ? '(Súper Domingo)' : ''}
                   </option>
                 ))}
               </select>
             </div>
 
+            {/* 2. Puntos actuales en pantalla */}
             <div>
               <label className="block text-[11px] text-slate-300 font-bold mb-1">Puntos en tu Pantalla</label>
               <input
@@ -332,15 +392,69 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
                   const val = Math.max(0, parseInt(e.target.value, 10) || 0);
                   setCurrentVigorInput(val);
                 }}
-                placeholder="Ej. 521439"
-                className="w-44 bg-[var(--surface-inner)] border border-[var(--surface-border)] text-white tabular-nums font-black text-sm rounded-xl px-3 py-2 focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                placeholder="Ej. 56601"
+                className="w-full bg-[var(--surface-inner)] border border-[var(--surface-border)] text-white tabular-nums font-black text-xs rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-purple-400 focus:outline-none"
               />
             </div>
 
+            {/* 3. Toggle de Cena */}
+            <div>
+              <label className="block text-[11px] text-slate-300 font-bold mb-1">Estado de la Cena de Hoy</label>
+              <div className="flex rounded-xl bg-black/30 p-1 border border-white/10 gap-1">
+                <button
+                  type="button"
+                  onClick={() => setDinnerEaten(false)}
+                  className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition-all ${
+                    !dinnerEaten
+                      ? 'bg-amber-500/20 text-amber-200 border border-amber-400/40 shadow-sm font-black'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Utensils className="w-3 h-3" />
+                  <span>Falta Cena</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDinnerEaten(true)}
+                  className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition-all ${
+                    dinnerEaten
+                      ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-400/40 shadow-sm font-black'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Check className="w-3 h-3" />
+                  <span>Ya Cenó</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Dinner helper note */}
+          <div className="text-[11px] text-slate-300 bg-white/[0.02] p-2.5 rounded-xl border border-white/5 flex items-center justify-between">
+            <span className="flex items-center gap-1.5">
+              {!dinnerEaten ? (
+                <>
+                  <Utensils className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+                  <span>
+                    El simulador sumará <strong>~{Math.round(vigorDiaNormal / 3).toLocaleString()} pts</strong> del platillo de la cena + producción de bayas nocturna hasta las 04:00 AM.
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Moon className="w-3.5 h-3.5 text-indigo-300 flex-shrink-0" />
+                  <span>
+                    Cena ya incluida en tus puntos. Solo se sumará la recolección de bayas y habilidades durante la noche hasta las 04:00 AM.
+                  </span>
+                </>
+              )}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3 pt-1">
             <button
               type="button"
-              onClick={() => handleSaveMidWeek(currentVigorInput, currentDayIdx)}
-              className="btn-cozy-primary px-4 py-2 text-xs flex items-center gap-1.5 active:scale-95 transition-all"
+              onClick={() => handleSaveMidWeek(currentVigorInput, currentDayIdx, dinnerEaten)}
+              className="btn-cozy-primary px-5 py-2 text-xs flex items-center gap-1.5 active:scale-95 transition-all"
             >
               {saveStatus ? <Check className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
               <span>{saveStatus || 'Aplicar y Proyectar'}</span>
@@ -383,7 +497,7 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
 
           {isCalibrated && (
             <span className="text-[11px] text-purple-200 tabular-nums bg-purple-950/60 border border-purple-400/30 px-3 py-0.5 rounded-full font-medium">
-              Actualizado: {formatUpdateDate(config.midWeekProgress?.updatedAt)}
+              Calibrado: {formatUpdateDate(config.midWeekProgress?.updatedAt)}
             </span>
           )}
         </div>
@@ -441,7 +555,7 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
                 <span className="text-white font-black text-lg">
                   ~{vigorFinalSemana.toLocaleString()} pts
                 </span>
-                <span className="text-[var(--text-muted)]">acumulados al cerrar el domingo</span>
+                <span className="text-[var(--text-muted)]">acumulados al cerrar el domingo (04:00 AM)</span>
               </div>
             </div>
           </div>
@@ -459,13 +573,57 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
           </div>
         </div>
 
+        {/* Termómetro de Ritmo en Vivo (Intraday Pace Monitor) */}
+        {isCalibrated && (
+          <div className="relative z-10 rounded-2xl bg-white/[0.04] border border-white/10 p-3.5 sm:p-4 shadow-inner space-y-2.5">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-2">
+                <span className={`w-2.5 h-2.5 rounded-full ${paceDiff >= 0 ? 'bg-emerald-400' : 'bg-amber-400'} animate-pulse`} />
+                <span className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+                  <span>Ritmo de Hoy en Vivo:</span>
+                  <span className={paceDiff >= 0 ? 'text-emerald-300' : 'text-amber-300'}>
+                    {pacePercent}% del objetivo a esta hora
+                  </span>
+                </span>
+              </div>
+              <div className="text-[11px] text-slate-300 tabular-nums">
+                Puntos actuales: <strong className="text-white">{actualCalibratedPoints.toLocaleString()}</strong> / Esperados a las {new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}: <strong className="text-slate-300">{currentDayIntradayExpectedVigor.toLocaleString()} pts</strong>
+              </div>
+            </div>
+
+            {/* Dynamic message explaining 04:00 AM closing */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-200 bg-black/20 p-2.5 rounded-xl border border-white/5">
+              <div className="flex items-center gap-2">
+                {paceDiff >= 0 ? (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                )}
+                <span>
+                  {paceDiff >= 0
+                    ? `¡Vas excelente! Estás +${paceDiff.toLocaleString()} pts por encima del ritmo esperado para esta hora.`
+                    : `Estás a solo ${Math.abs(paceDiff).toLocaleString()} pts del ritmo ideal. Se compensa fácilmente con las comidas.`}
+                </span>
+              </div>
+
+              {/* Breakdown to 04:00 AM */}
+              <div className="text-[11px] text-purple-200 font-bold self-end sm:self-auto flex items-center gap-1">
+                <span>Cierre de hoy (04:00 AM):</span>
+                <span className="text-white font-black bg-purple-500/20 px-2 py-0.5 rounded-lg border border-purple-400/30">
+                  ~{timelineDias.find(d => d.esHoy)?.vigorAcumuladoFinDia.toLocaleString()} pts
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* PREVISIÓN DE SNORLAX (Cozy 3-Scenario Cards) */}
         <div className="relative z-10 rounded-[24px] bg-white/[0.04] backdrop-blur-md p-4 sm:p-5 shadow-inner">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-purple-300" />
               <h4 className="text-xs sm:text-sm font-display font-bold text-[var(--text-heading)]">
-                Previsión de Snorlax para el Domingo
+                Previsión de Snorlax para el Cierre del Domingo (04:00 AM)
               </h4>
             </div>
             <div className="text-[11px] text-[var(--text-creamy)] tabular-nums">
@@ -563,7 +721,7 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
               <span className="flex items-center gap-1.5 text-emerald-300">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
                 <span>
-                  <strong>Calibrado con tus {pastDaysCount} días jugados:</strong> El margen de cálculo es mínimo y de altísima precisión.
+                  <strong>Calibrado con tus puntos reales:</strong> El cálculo considera tu hora local exacta y las comidas pendientes para cerrar el día a las 04:00 AM.
                 </span>
               </span>
             ) : (
@@ -607,11 +765,16 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
       {/* Daily Timeline (Lunes a Domingo - Sellos de Diario de Sueño) */}
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-3.5 flex-wrap gap-2">
-          <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-purple-300" />
-            <h4 className="text-sm font-display font-bold text-[var(--text-heading)]">
-              Progresión de la Semana (Diario de Campo)
-            </h4>
+          <div>
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-purple-300" />
+              <h4 className="text-sm font-display font-bold text-[var(--text-heading)]">
+                Progresión de la Semana (Diario de Campo)
+              </h4>
+            </div>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              ℹ️ Cada total corresponde al cierre oficial de la jornada (<strong>04:00 AM</strong>) tras las 3 comidas y el sueño nocturno.
+            </p>
           </div>
 
           <div className="flex items-center gap-2">
@@ -683,15 +846,42 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
                           )}
                         </div>
 
-                        {/* Vigor Ganado Hoy */}
-                        <div className={`text-[11px] tabular-nums font-black ${dia.esPasado ? 'text-[var(--text-muted)]' : 'text-white'}`}>
-                          +{dia.vigorGanadoDia.toLocaleString()} pts
-                        </div>
+                        {/* Si es hoy y está calibrado: desglose en vivo */}
+                        {dia.esHoy && dia.puntosEnPantalla ? (
+                          <div className="space-y-1 my-1">
+                            <div className="text-[10px] text-emerald-300 font-bold flex items-center justify-between">
+                              <span>En pantalla:</span>
+                              <span className="font-black tabular-nums">{dia.puntosEnPantalla.toLocaleString()}</span>
+                            </div>
+                            {dia.faltaCena && (
+                              <div className="text-[9px] text-amber-300 flex items-center justify-between">
+                                <span>+ Cena pend.:</span>
+                                <span className="tabular-nums font-bold">~{dia.vigorCenaPendiente?.toLocaleString()}</span>
+                              </div>
+                            )}
+                            <div className="text-[9px] text-slate-300 flex items-center justify-between">
+                              <span>+ Noche pend.:</span>
+                              <span className="tabular-nums">~{dia.vigorNochePendiente?.toLocaleString()}</span>
+                            </div>
+                            <div className="border-t border-white/10 pt-1 text-[11px] text-white font-black flex items-center justify-between">
+                              <span className="text-[9px] text-purple-200 uppercase font-black">Cierre 04:00 AM:</span>
+                              <span className="tabular-nums">~{dia.vigorAcumuladoFinDia.toLocaleString()}</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            {/* Vigor Ganado Hoy */}
+                            <div className={`text-[11px] tabular-nums font-black ${dia.esPasado ? 'text-[var(--text-muted)]' : 'text-white'}`}>
+                              +{dia.vigorGanadoDia.toLocaleString()} pts
+                            </div>
 
-                        {/* Vigor Acumulado Fin Dia */}
-                        <div className="text-[10px] text-[var(--text-muted)] tabular-nums mt-0.5 font-medium">
-                          Total: {dia.vigorAcumuladoFinDia.toLocaleString()}
-                        </div>
+                            {/* Vigor Acumulado Fin Dia */}
+                            <div className="text-[10px] text-[var(--text-muted)] tabular-nums mt-0.5 font-medium flex items-center justify-between">
+                              <span className="text-[9px] text-slate-400">04:00 AM:</span>
+                              <span className="font-bold text-slate-300">{dia.vigorAcumuladoFinDia.toLocaleString()}</span>
+                            </div>
+                          </>
+                        )}
                       </div>
 
                       {/* Rango al final del día (Clean floating badge without dividing border) */}

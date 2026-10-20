@@ -17,11 +17,17 @@ export interface ProyeccionDia {
   esPasado?: boolean;
   esHoy?: boolean;
   puntosEnPantalla?: number;
+  vigorEsperadoAHora?: number; // Vigor estimado a la hora actual del día en curso
   vigorGanadoDia: number;
   vigorAcumuladoFinDia: number;
+  cierreHoraLabel?: string; // Siempre '04:00 AM'
   rangoAlcanzado: NombreRango;
   indiceRango: number;
   platosCocinados: string[];
+  horasRestantesHoy?: number;
+  faltaCena?: boolean;
+  vigorCenaPendiente?: number;
+  vigorNochePendiente?: number;
 }
 
 export interface HitoClave {
@@ -35,7 +41,7 @@ export interface HitoClave {
 }
 
 export interface ProyeccionSemanalCompleta {
-  vigorFinalSemana: number; // Promedio / Esperado
+  vigorFinalSemana: number; // Promedio / Esperado al cierre de la semana (Dom 04:00 AM)
   vigorMinSemana: number;   // Mínimo estimado (sin críticos, peor suerte en skills)
   vigorMaxSemana: number;   // Techo optimista (con críticos '¡Riquísimo!', buen RNG)
   estadoRangoFinal: EstadoRango;
@@ -48,15 +54,71 @@ export interface ProyeccionSemanalCompleta {
   isCalibrated: boolean;
   calibratedVigor?: number;
   calibratedDayIdx?: number;
+  calibratedUpdatedAt?: string;
+  calibratedDinnerEaten?: boolean;
+  // Métricas del ritmo en tiempo real del día en curso:
+  currentSleepDayIdx: number;
+  currentDayElapsedHours: number;
+  currentDayRemainingHours: number;
+  currentDayIntradayExpectedVigor: number; // Puntos esperados a este minuto exacto
+  currentDayDinnerPending: boolean;
 }
 
-const DIAS_SEMANA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+export const DIAS_SEMANA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+
+/**
+ * En Pokémon Sleep, el día canónico va de 04:00 AM a 04:00 AM del día siguiente.
+ * Si son entre las 00:00 y las 03:59, aún cuenta como el día de ayer.
+ * Retorna: 0=Lunes, 1=Martes, 2=Miércoles, 3=Jueves, 4=Viernes, 5=Sábado, 6=Domingo.
+ */
+export function getPokemonSleepDayIndex(date: Date = new Date()): number {
+  const adjusted = new Date(date);
+  if (adjusted.getHours() < 4) {
+    adjusted.setDate(adjusted.getDate() - 1);
+  }
+  const jsDay = adjusted.getDay(); // 0=Dom, 1=Lun ... 6=Sab
+  return jsDay === 0 ? 6 : jsDay - 1;
+}
+
+/**
+ * Retorna las horas transcurridas en la jornada oficial de Pokémon Sleep (de 0 a 24 horas),
+ * tomando como punto de inicio las 04:00 AM locales.
+ */
+export function getSleepDayHoursElapsed(date: Date = new Date()): number {
+  const h = date.getHours();
+  const m = date.getMinutes();
+  const timeInHours = h + m / 60;
+  return timeInHours >= 4 ? timeInHours - 4 : timeInHours + 20;
+}
+
+/**
+ * Ventana horaria oficial de cocina en Pokémon Sleep:
+ * - Desayuno: 06:00 a 12:00
+ * - Almuerzo: 12:00 a 18:00
+ * - Cena: 18:00 a 06:00
+ */
+export function getSleepMealWindow(date: Date = new Date()): {
+  meal: 'desayuno' | 'almuerzo' | 'cena';
+  label: string;
+  isDinnerTime: boolean;
+} {
+  const h = date.getHours();
+  if (h >= 6 && h < 12) {
+    return { meal: 'desayuno', label: 'Desayuno (06:00 - 12:00)', isDinnerTime: false };
+  }
+  if (h >= 12 && h < 18) {
+    return { meal: 'almuerzo', label: 'Almuerzo (12:00 - 18:00)', isDinnerTime: false };
+  }
+  return { meal: 'cena', label: 'Cena (18:00 - 06:00)', isDinnerTime: true };
+}
 
 export function proyectarSemanaEquipo(
   equipo: Pokemon[],
   configBase: SnorlaxConfig,
   vigorInicial: number = 0,
-  diaInicioIdx: number = 0
+  diaInicioIdx: number = 0,
+  updatedAtStr?: string,
+  dinnerEaten?: boolean
 ): ProyeccionSemanalCompleta {
   const islaId = normalizeIslaId(configBase.island);
 
@@ -64,15 +126,17 @@ export function proyectarSemanaEquipo(
   const configNormal: SnorlaxConfig = { ...configBase, isSunday: false };
   const evalNormal = evaluateTeam(equipo, configNormal);
   const vigorDiaNormal = evalNormal.totalDailyVigor;
+  const singleMealNormal = Math.round(evalNormal.cookingVigorDaily / 3);
+  const teamDailyNormal = evalNormal.berryVigorDaily + evalNormal.skillVigorDaily;
 
   // 2. Evaluar Domingo (Puchero Doble y Riquísimo 1.60x)
   const configDomingo: SnorlaxConfig = { ...configBase, isSunday: true };
   const evalDomingo = evaluateTeam(equipo, configDomingo);
   const vigorDiaDomingo = evalDomingo.totalDailyVigor;
+  const singleMealDomingo = Math.round(evalDomingo.cookingVigorDaily / 3);
+  const teamDailyDomingo = evalDomingo.berryVigorDaily + evalDomingo.skillVigorDaily;
 
   // 3. Estimar variación por día (Mínimo / Esperado / Máximo)
-  // Lunes a Sábado:
-  // - Base sin críticos de cocina (~90.9% de cocina esperada):
   const minDayNormal = Math.round(
     evalNormal.berryVigorDaily * 0.95 +
     evalNormal.cookingVigorDaily * 0.90 +
@@ -85,8 +149,6 @@ export function proyectarSemanaEquipo(
     evalNormal.skillVigorDaily * 1.20
   );
 
-  // Súper Domingo (30% de ¡Riquísimo! con 3x):
-  // - Si no sale ningún crítico en domingo, la cocina da ~62.5% de su promedio dominical:
   const minDayDomingo = Math.round(
     evalDomingo.berryVigorDaily * 0.95 +
     evalDomingo.cookingVigorDaily * 0.65 +
@@ -98,6 +160,48 @@ export function proyectarSemanaEquipo(
     evalDomingo.cookingVigorDaily * 1.45 +
     evalDomingo.skillVigorDaily * 1.20
   );
+
+  // Detección del tiempo real de Pokémon Sleep hoy
+  const now = new Date();
+  const currentSleepDayIdx = getPokemonSleepDayIndex(now);
+  const currentDayElapsedHours = getSleepDayHoursElapsed(now);
+  const currentDayRemainingHours = Math.max(0, 24 - currentDayElapsedHours);
+
+  // Comidas consumidas hoy a esta hora
+  const currentHour = now.getHours();
+  let mealsElapsedSoFar = 0;
+  if (currentHour >= 4 && currentHour < 6) {
+    mealsElapsedSoFar = 0;
+  } else if (currentHour >= 6 && currentHour < 12) {
+    mealsElapsedSoFar = 1; // Desayuno
+  } else if (currentHour >= 12 && currentHour < 18) {
+    mealsElapsedSoFar = 2; // Desayuno + Almuerzo
+  } else {
+    // 18:00 - 04:00 (Ventana de cena)
+    mealsElapsedSoFar = 2; // Cena pendiente por defecto
+  }
+
+  const effectiveUpdatedAt = updatedAtStr || configBase.midWeekProgress?.updatedAt;
+  const effectiveDinnerEaten = dinnerEaten !== undefined
+    ? dinnerEaten
+    : configBase.midWeekProgress?.dinnerEaten;
+
+  if (effectiveDinnerEaten === true && (currentHour >= 18 || currentHour < 4)) {
+    mealsElapsedSoFar = 3;
+  }
+
+  const isTodaySunday = currentSleepDayIdx === 6;
+  const currentSingleMeal = isTodaySunday ? singleMealDomingo : singleMealNormal;
+  const currentTeamDaily = isTodaySunday ? teamDailyDomingo : teamDailyNormal;
+
+  // Vigor intradía que tu Snorlax debería llevar exactamente en este momento:
+  const currentDayIntradayExpectedVigor = Math.round(
+    (currentSleepDayIdx * vigorDiaNormal) +
+    (currentTeamDaily * (currentDayElapsedHours / 24)) +
+    (mealsElapsedSoFar * currentSingleMeal)
+  );
+
+  const currentDayDinnerPending = effectiveDinnerEaten !== true && (currentHour >= 18 || currentHour < 4);
 
   const isCalibrated = vigorInicial > 0;
   const timelineDias: ProyeccionDia[] = [];
@@ -119,6 +223,7 @@ export function proyectarSemanaEquipo(
         diaIdx: d,
         esDomingo: false,
         esPasado: true,
+        cierreHoraLabel: '04:00 AM',
         vigorGanadoDia: ganadoPast,
         vigorAcumuladoFinDia: vigorPast,
         rangoAlcanzado: estadoPast.rangoActual,
@@ -128,34 +233,68 @@ export function proyectarSemanaEquipo(
     }
   }
 
-  // B) Días desde diaInicioIdx hasta el Domingo (índice 6)
+  // B) Días desde diaInicioIdx (o 0 si teórico) hasta el Domingo (índice 6)
   for (let d = isCalibrated ? diaInicioIdx : 0; d < 7; d++) {
     const esDom = d === 6;
     const isCurrentCalibratedDay = isCalibrated && d === diaInicioIdx;
+    const isToday = d === currentSleepDayIdx;
 
     const normalDailyExpected = esDom ? expectedDayDomingo : expectedDayNormal;
     const normalDailyMin = esDom ? minDayDomingo : minDayNormal;
     const normalDailyMax = esDom ? maxDayDomingo : maxDayNormal;
 
-    // Si es el día que el usuario calibró en vivo, solo se suma el restante de hoy (cena + noche ~35%)
-    const vigorGanadoEsperado = isCurrentCalibratedDay
-      ? Math.round(normalDailyExpected * 0.35)
-      : normalDailyExpected;
+    const dayEval = esDom ? evalDomingo : evalNormal;
+    const dayTeamDaily = esDom ? teamDailyDomingo : teamDailyNormal;
+    const daySingleMeal = esDom ? singleMealDomingo : singleMealNormal;
 
-    const vigorGanadoMin = isCurrentCalibratedDay
-      ? Math.round(normalDailyMin * 0.35)
-      : normalDailyMin;
+    let vigorGanadoEsperado = normalDailyExpected;
+    let vigorGanadoMin = normalDailyMin;
+    let vigorGanadoMax = normalDailyMax;
+    let pendingDinnerVigor = 0;
+    let pendingNightVigor = 0;
+    let faltaCena = false;
 
-    const vigorGanadoMax = isCurrentCalibratedDay
-      ? Math.round(normalDailyMax * 0.35)
-      : normalDailyMax;
+    if (isCurrentCalibratedDay) {
+      // Usar la fecha exacta de calibración para calcular el tiempo restante con precisión
+      const calibDate = effectiveUpdatedAt ? new Date(effectiveUpdatedAt) : now;
+      const calibElapsedHours = getSleepDayHoursElapsed(calibDate);
+      const calibRemainingHours = Math.max(0, 24 - calibElapsedHours);
+      const remainingTeamFraction = calibRemainingHours / 24;
+
+      pendingNightVigor = Math.round(dayTeamDaily * remainingTeamFraction);
+
+      // Determinar si falta la cena u otra comida según la hora y la respuesta del usuario
+      const calibHour = calibDate.getHours();
+      if (effectiveDinnerEaten === false || (effectiveDinnerEaten === undefined && (calibHour >= 18 || calibHour < 4))) {
+        faltaCena = true;
+        pendingDinnerVigor = daySingleMeal;
+      } else if (calibHour < 12) {
+        // Mañana: faltan almuerzo y cena
+        faltaCena = true;
+        pendingDinnerVigor = daySingleMeal * 2;
+      } else if (calibHour < 18 && effectiveDinnerEaten !== true) {
+        // Tarde: falta cena
+        faltaCena = true;
+        pendingDinnerVigor = daySingleMeal;
+      }
+
+      vigorGanadoEsperado = pendingNightVigor + pendingDinnerVigor;
+      vigorGanadoMin = Math.round(
+        (dayEval.berryVigorDaily * 0.95 + dayEval.skillVigorDaily * 0.80) * remainingTeamFraction +
+        (pendingDinnerVigor * 0.90)
+      );
+      vigorGanadoMax = Math.round(
+        (dayEval.berryVigorDaily * 1.05 + dayEval.skillVigorDaily * 1.20) * remainingTeamFraction +
+        (pendingDinnerVigor * 1.35)
+      );
+    }
 
     remainingMinSum += vigorGanadoMin;
     remainingMaxSum += vigorGanadoMax;
     vigorAcumulado += vigorGanadoEsperado;
 
     const estadoDia = calcularRangoSnorlax(islaId, vigorAcumulado);
-    const platos = (esDom ? evalDomingo : evalNormal).meals
+    const platos = dayEval.meals
       .filter(m => m.recipe.baseVigor > 0)
       .map(m => m.recipe.name);
 
@@ -164,13 +303,19 @@ export function proyectarSemanaEquipo(
       diaIdx: d,
       esDomingo: esDom,
       esPasado: false,
-      esHoy: isCurrentCalibratedDay,
+      esHoy: isToday,
+      cierreHoraLabel: '04:00 AM',
       puntosEnPantalla: isCurrentCalibratedDay ? vigorInicial : undefined,
+      vigorEsperadoAHora: isToday ? currentDayIntradayExpectedVigor : undefined,
       vigorGanadoDia: Math.round(vigorGanadoEsperado),
       vigorAcumuladoFinDia: Math.round(vigorAcumulado),
       rangoAlcanzado: estadoDia.rangoActual,
       indiceRango: estadoDia.indiceRango,
-      platosCocinados: Array.from(new Set(platos))
+      platosCocinados: Array.from(new Set(platos)),
+      horasRestantesHoy: isCurrentCalibratedDay ? Math.round(24 - getSleepDayHoursElapsed(effectiveUpdatedAt ? new Date(effectiveUpdatedAt) : now)) : undefined,
+      faltaCena: isCurrentCalibratedDay ? faltaCena : undefined,
+      vigorCenaPendiente: isCurrentCalibratedDay && pendingDinnerVigor > 0 ? pendingDinnerVigor : undefined,
+      vigorNochePendiente: isCurrentCalibratedDay ? pendingNightVigor : undefined
     });
   }
 
@@ -225,6 +370,13 @@ export function proyectarSemanaEquipo(
     vigorDiaDomingo,
     isCalibrated,
     calibratedVigor: isCalibrated ? vigorInicial : undefined,
-    calibratedDayIdx: isCalibrated ? diaInicioIdx : undefined
+    calibratedDayIdx: isCalibrated ? diaInicioIdx : undefined,
+    calibratedUpdatedAt: isCalibrated ? effectiveUpdatedAt : undefined,
+    calibratedDinnerEaten: isCalibrated ? effectiveDinnerEaten : undefined,
+    currentSleepDayIdx,
+    currentDayElapsedHours,
+    currentDayRemainingHours,
+    currentDayIntradayExpectedVigor,
+    currentDayDinnerPending
   };
 }
