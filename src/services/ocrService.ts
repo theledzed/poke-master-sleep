@@ -505,3 +505,164 @@ Output strictly valid JSON.`;
 
   throw new Error(`Error de Google AI Studio: ${lastError?.message || 'No se pudo generar respuesta'}`);
 }
+
+export interface ScannedPotData {
+  potCapacity: number;
+  currentAdded: number;
+  dishType: 'curry' | 'salad' | 'dessert' | null;
+  inventory: Record<string, number>;
+  rawList: Array<{ name: string; quantity: number }>;
+}
+
+/**
+ * Normalizes raw OCR pot data: canonicalizes ingredient names and aggregates counts
+ */
+export function normalizeOcrPotData(raw: any): ScannedPotData {
+  const potCapacity = typeof raw.potCapacity === 'number' && raw.potCapacity > 0 ? raw.potCapacity : 57;
+  const currentAdded = typeof raw.currentAdded === 'number' ? raw.currentAdded : 0;
+  
+  let dishType: 'curry' | 'salad' | 'dessert' | null = null;
+  if (raw.dishType) {
+    const dt = String(raw.dishType).toLowerCase();
+    if (dt.includes('curry') || dt.includes('curri')) dishType = 'curry';
+    else if (dt.includes('salad') || dt.includes('ensalada')) dishType = 'salad';
+    else if (dt.includes('dessert') || dt.includes('postre') || dt.includes('bebida')) dishType = 'dessert';
+  }
+
+  const inventory: Record<string, number> = {};
+  const rawList: Array<{ name: string; quantity: number }> = [];
+
+  if (Array.isArray(raw.ingredients)) {
+    for (const item of raw.ingredients) {
+      if (!item || !item.name) continue;
+      const canonical = normalizeIngredientName(item.name);
+      const qty = typeof item.quantity === 'number' ? Math.max(0, item.quantity) : 0;
+
+      if (canonical && qty > 0) {
+        inventory[canonical] = (inventory[canonical] || 0) + qty;
+        rawList.push({ name: canonical, quantity: qty });
+      }
+    }
+  }
+
+  return {
+    potCapacity,
+    currentAdded,
+    dishType,
+    inventory,
+    rawList
+  };
+}
+
+/**
+ * Scans cooking pot / ingredient selection screenshot(s) using /api/scan-pot or direct Gemini
+ */
+export async function scanPotScreenshots(
+  imageInput: File | Blob | (File | Blob)[],
+  customApiKey?: string
+): Promise<ScannedPotData> {
+  const files = Array.isArray(imageInput) ? imageInput : [imageInput];
+  if (files.length === 0) {
+    throw new Error('No se proporcionó ninguna imagen.');
+  }
+
+  const base64List = await Promise.all(files.map((f) => compressScreenshot(f)));
+
+  const savedApiKey =
+    customApiKey ||
+    (typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY_GEMINI_KEY) || undefined : undefined);
+
+  // 1. Try serverless endpoint /api/scan-pot
+  try {
+    const response = await fetch('/api/scan-pot', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        imageBase64: base64List[0],
+        imagesBase64: base64List,
+        mimeType: 'image/jpeg',
+        apiKey: savedApiKey
+      })
+    });
+
+    if (response.ok) {
+      const resData = await response.json();
+      if (resData.success && resData.data) {
+        return normalizeOcrPotData(resData.data);
+      }
+    }
+
+    const errJson = await response.json().catch(() => ({}));
+    if (errJson.error === 'MISSING_API_KEY' && savedApiKey) {
+      return await callGeminiPotDirectly(base64List, savedApiKey);
+    }
+
+    throw new Error(errJson.message || `Error del servidor HTTP ${response.status}`);
+  } catch (err: any) {
+    if (savedApiKey) {
+      return await callGeminiPotDirectly(base64List, savedApiKey);
+    }
+    throw err;
+  }
+}
+
+/**
+ * Direct client-side Gemini fallback for pot OCR
+ */
+async function callGeminiPotDirectly(
+  base64Images: string[],
+  apiKey: string
+): Promise<ScannedPotData> {
+  const cleanImages = base64Images.map(img => img.replace(/^data:image\/[a-zA-Z]+;base64,/, ''));
+  const systemPrompt = `You are an expert OCR vision AI specialized in extracting cooking pot and ingredient inventory data from "Pokémon Sleep" mobile screenshots.
+Look for the pot capacity in "Añadido: X/Y" (return Y as potCapacity) and list every ingredient in the grid with the quantity after the slash (denominator in "0/X").
+Expected JSON: { "potCapacity": number, "currentAdded": number, "dishType": string|null, "ingredients": [{ "name": string, "quantity": number }] }
+Output strictly valid JSON.`;
+
+  const models = ['gemini-2.0-flash', 'gemini-1.5-flash'];
+  let lastError: any = null;
+
+  for (const model of models) {
+    for (const apiVer of ['v1beta', 'v1']) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/${apiVer}/models/${model}:generateContent?key=${apiKey}`;
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  { text: systemPrompt },
+                  ...cleanImages.map((data) => ({
+                    inline_data: { mime_type: 'image/jpeg', data }
+                  }))
+                ]
+              }
+            ],
+            generationConfig: {
+              temperature: 0.1,
+              responseMimeType: 'application/json'
+            }
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (text) {
+            const cleanText = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+            const parsed = JSON.parse(cleanText);
+            return normalizeOcrPotData(parsed);
+          }
+        }
+      } catch (e: any) {
+        lastError = e;
+      }
+    }
+  }
+
+  throw new Error(`Error de Google AI Studio: ${lastError?.message || 'No se pudo procesar la captura de la olla'}`);
+}
