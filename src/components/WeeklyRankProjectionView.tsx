@@ -39,6 +39,7 @@ import {
   Rocket,
   Utensils,
   Moon,
+  Sun,
   AlertCircle
 } from 'lucide-react';
 
@@ -53,6 +54,8 @@ interface WeeklyRankProjectionViewProps {
 }
 
 const DIAS_NOMBRES = DIAS_SEMANA;
+
+export type TimelineViewMode = 'manana' | 'noche' | 'cierre';
 
 export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> = ({
   equipo,
@@ -80,6 +83,20 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
       ? config.midWeekProgress.currentDayIdx
       : getPokemonSleepDayIndex();
   });
+  const [breakfastEaten, setBreakfastEaten] = useState<boolean>(() => {
+    if (typeof config.midWeekProgress?.breakfastEaten === 'boolean') {
+      return config.midWeekProgress.breakfastEaten;
+    }
+    const h = new Date().getHours();
+    return h >= 10;
+  });
+  const [lunchEaten, setLunchEaten] = useState<boolean>(() => {
+    if (typeof config.midWeekProgress?.lunchEaten === 'boolean') {
+      return config.midWeekProgress.lunchEaten;
+    }
+    const h = new Date().getHours();
+    return h >= 15;
+  });
   const [dinnerEaten, setDinnerEaten] = useState<boolean>(() => {
     if (typeof config.midWeekProgress?.dinnerEaten === 'boolean') {
       return config.midWeekProgress.dinnerEaten;
@@ -87,7 +104,11 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
     return !getSleepMealWindow().isDinnerTime;
   });
   const [isTimelineExpanded, setIsTimelineExpanded] = useState<boolean>(true);
-  const [timelineViewMode, setTimelineViewMode] = useState<'dormir' | 'cierre'>('dormir');
+  const [timelineViewMode, setTimelineViewMode] = useState<TimelineViewMode>(() => {
+    const h = new Date().getHours();
+    if (h >= 4 && h < 14) return 'manana';
+    return 'noche';
+  });
   const [hidePastDays, setHidePastDays] = useState<boolean>(false);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
 
@@ -98,13 +119,25 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
       if (typeof config.midWeekProgress.currentDayIdx === 'number') {
         setCurrentDayIdx(config.midWeekProgress.currentDayIdx);
       }
+      if (typeof config.midWeekProgress.breakfastEaten === 'boolean') {
+        setBreakfastEaten(config.midWeekProgress.breakfastEaten);
+      }
+      if (typeof config.midWeekProgress.lunchEaten === 'boolean') {
+        setLunchEaten(config.midWeekProgress.lunchEaten);
+      }
       if (typeof config.midWeekProgress.dinnerEaten === 'boolean') {
         setDinnerEaten(config.midWeekProgress.dinnerEaten);
       }
     }
   }, [config.midWeekProgress]);
 
-  const handleSaveMidWeek = (vigor: number, dayIdx: number, dinnerState: boolean) => {
+  const handleSaveMidWeek = (
+    vigor: number,
+    dayIdx: number,
+    dinnerState: boolean,
+    breakfastState: boolean,
+    lunchState: boolean
+  ) => {
     if (onUpdateMidWeekProgress) {
       const now = new Date();
       onUpdateMidWeekProgress({
@@ -113,6 +146,8 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
         isCalibrated: vigor > 0,
         updatedAt: now.toISOString(),
         dinnerEaten: dinnerState,
+        breakfastEaten: breakfastState,
+        lunchEaten: lunchState,
         recordedHour: now.getHours()
       });
       setSaveStatus('¡Ajuste aplicado!');
@@ -151,14 +186,25 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
   const islaId = useMemo(() => normalizeIslaId(config.island), [config.island]);
 
   // SINGLE UNIFIED PROJECTION:
-  // If calibrated, automatically uses in-game points + exact time of calibration + dinner state
+  // If calibrated, automatically uses in-game points + exact time of calibration + meal states
   const proyeccion = useMemo(() => {
     if (equipo.length === 0) return null;
     const vigorInit = isCalibrated ? (config.midWeekProgress?.currentVigor || 0) : 0;
     const dayInit = isCalibrated ? (config.midWeekProgress?.currentDayIdx ?? getPokemonSleepDayIndex()) : 0;
     const updatedAtStr = isCalibrated ? config.midWeekProgress?.updatedAt : undefined;
     const dinnerState = isCalibrated ? config.midWeekProgress?.dinnerEaten : undefined;
-    return proyectarSemanaEquipo(equipo, config, vigorInit, dayInit, updatedAtStr, dinnerState);
+    const breakfastState = isCalibrated ? config.midWeekProgress?.breakfastEaten : undefined;
+    const lunchState = isCalibrated ? config.midWeekProgress?.lunchEaten : undefined;
+    return proyectarSemanaEquipo(
+      equipo,
+      config,
+      vigorInit,
+      dayInit,
+      updatedAtStr,
+      dinnerState,
+      breakfastState,
+      lunchState
+    );
   }, [equipo, config, isCalibrated]);
 
   // Optional comparison projection
@@ -168,7 +214,18 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
     const dayInit = isCalibrated ? (config.midWeekProgress?.currentDayIdx ?? getPokemonSleepDayIndex()) : 0;
     const updatedAtStr = isCalibrated ? config.midWeekProgress?.updatedAt : undefined;
     const dinnerState = isCalibrated ? config.midWeekProgress?.dinnerEaten : undefined;
-    return proyectarSemanaEquipo(comparisonEquipo, config, vigorInit, dayInit, updatedAtStr, dinnerState);
+    const breakfastState = isCalibrated ? config.midWeekProgress?.breakfastEaten : undefined;
+    const lunchState = isCalibrated ? config.midWeekProgress?.lunchEaten : undefined;
+    return proyectarSemanaEquipo(
+      comparisonEquipo,
+      config,
+      vigorInit,
+      dayInit,
+      updatedAtStr,
+      dinnerState,
+      breakfastState,
+      lunchState
+    );
   }, [comparisonEquipo, config, isCalibrated]);
 
   if (!proyeccion || equipo.length === 0) {
@@ -297,7 +354,13 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
                 <span className="text-[10px] text-slate-300">
                   ({DIAS_NOMBRES[config.midWeekProgress?.currentDayIdx ?? detectedSleepDayIdx]})
                 </span>
-                {config.midWeekProgress?.dinnerEaten === false && (
+                {new Date().getHours() >= 6 && new Date().getHours() < 12 && config.midWeekProgress?.breakfastEaten === false && (
+                  <span className="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-400/30 px-1.5 py-0.5 rounded-full font-bold flex items-center gap-1">
+                    <Sun className="w-2.5 h-2.5" />
+                    <span>Falta Desayuno</span>
+                  </span>
+                )}
+                {(new Date().getHours() >= 18 || new Date().getHours() < 4) && config.midWeekProgress?.dinnerEaten === false && (
                   <span className="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-400/30 px-1.5 py-0.5 rounded-full font-bold flex items-center gap-1">
                     <Utensils className="w-2.5 h-2.5" />
                     <span>Falta Cena</span>
@@ -347,7 +410,7 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
                 <span>Calibra con los Puntos Actuales de tu Snorlax</span>
               </div>
               <p className="text-xs text-slate-200 mt-1 max-w-2xl leading-relaxed">
-                Ingresa los puntos que ves en tu pantalla en este momento. El algoritmo registra tu hora local y calcula la producción exacta que resta hasta el cierre de la jornada (<strong>04:00 AM</strong>), sumando la cena si está pendiente y el sueño nocturno.
+                Ingresa los puntos que ves en tu pantalla en este momento. El algoritmo registra tu hora local y calcula la producción exacta que resta hasta el cierre de la jornada (<strong>04:00 AM</strong>), sumando las comidas pendientes (Desayuno, Almuerzo o Cena) y el descanso nocturno.
               </p>
             </div>
             <button
@@ -405,55 +468,162 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
               />
             </div>
 
-            {/* 3. Toggle de Cena */}
+            {/* 3. Toggle de Comida según la hora */}
             <div>
-              <label className="block text-[11px] text-slate-300 font-bold mb-1">Estado de la Cena de Hoy</label>
-              <div className="flex rounded-xl bg-black/30 p-1 border border-white/10 gap-1">
-                <button
-                  type="button"
-                  onClick={() => setDinnerEaten(false)}
-                  className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition-all ${
-                    !dinnerEaten
-                      ? 'bg-amber-500/20 text-amber-200 border border-amber-400/40 shadow-sm font-black'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <Utensils className="w-3 h-3" />
-                  <span>Falta Cena</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDinnerEaten(true)}
-                  className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition-all ${
-                    dinnerEaten
-                      ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-400/40 shadow-sm font-black'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <Check className="w-3 h-3" />
-                  <span>Ya Cenó</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Dinner helper note */}
-          <div className="text-[11px] text-slate-300 bg-white/[0.02] p-2.5 rounded-xl border border-white/5 flex items-center justify-between">
-            <span className="flex items-center gap-1.5">
-              {!dinnerEaten ? (
+              {detectedMealWindow.meal === 'desayuno' ? (
                 <>
-                  <Utensils className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
-                  <span>
-                    El simulador sumará <strong>~{Math.round(vigorDiaNormal / 3).toLocaleString()} pts</strong> del platillo de la cena + producción de bayas nocturna hasta las 04:00 AM.
-                  </span>
+                  <label className="block text-[11px] text-slate-300 font-bold mb-1 flex items-center gap-1">
+                    <Sun className="w-3 h-3 text-amber-300" />
+                    <span>Desayuno de Hoy (10:00 AM)</span>
+                  </label>
+                  <div className="flex rounded-xl bg-black/30 p-1 border border-white/10 gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setBreakfastEaten(false)}
+                      className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition-all ${
+                        !breakfastEaten
+                          ? 'bg-amber-500/20 text-amber-200 border border-amber-400/40 shadow-sm font-black'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <Sun className="w-3 h-3" />
+                      <span>Falta Desayuno</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBreakfastEaten(true)}
+                      className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition-all ${
+                        breakfastEaten
+                          ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-400/40 shadow-sm font-black'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <Check className="w-3 h-3" />
+                      <span>Ya Desayunó</span>
+                    </button>
+                  </div>
+                </>
+              ) : detectedMealWindow.meal === 'almuerzo' ? (
+                <>
+                  <label className="block text-[11px] text-slate-300 font-bold mb-1 flex items-center gap-1">
+                    <Utensils className="w-3 h-3 text-emerald-300" />
+                    <span>Almuerzo de Hoy</span>
+                  </label>
+                  <div className="flex rounded-xl bg-black/30 p-1 border border-white/10 gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setLunchEaten(false)}
+                      className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition-all ${
+                        !lunchEaten
+                          ? 'bg-amber-500/20 text-amber-200 border border-amber-400/40 shadow-sm font-black'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <Utensils className="w-3 h-3" />
+                      <span>Falta Almuerzo</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLunchEaten(true)}
+                      className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition-all ${
+                        lunchEaten
+                          ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-400/40 shadow-sm font-black'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <Check className="w-3 h-3" />
+                      <span>Ya Almorzó</span>
+                    </button>
+                  </div>
                 </>
               ) : (
                 <>
-                  <Moon className="w-3.5 h-3.5 text-indigo-300 flex-shrink-0" />
-                  <span>
-                    Cena ya incluida en tus puntos. Solo se sumará la recolección de bayas y habilidades durante la noche hasta las 04:00 AM.
-                  </span>
+                  <label className="block text-[11px] text-slate-300 font-bold mb-1 flex items-center gap-1">
+                    <Moon className="w-3 h-3 text-indigo-300" />
+                    <span>Cena de Hoy (22:00 PM)</span>
+                  </label>
+                  <div className="flex rounded-xl bg-black/30 p-1 border border-white/10 gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setDinnerEaten(false)}
+                      className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition-all ${
+                        !dinnerEaten
+                          ? 'bg-amber-500/20 text-amber-200 border border-amber-400/40 shadow-sm font-black'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <Utensils className="w-3 h-3" />
+                      <span>Falta Cena</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDinnerEaten(true)}
+                      className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition-all ${
+                        dinnerEaten
+                          ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-400/40 shadow-sm font-black'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <Check className="w-3 h-3" />
+                      <span>Ya Cenó</span>
+                    </button>
+                  </div>
                 </>
+              )}
+            </div>
+          </div>
+
+          {/* Meal helper note */}
+          <div className="text-[11px] text-slate-300 bg-white/[0.02] p-2.5 rounded-xl border border-white/5 flex items-center justify-between">
+            <span className="flex items-center gap-1.5">
+              {detectedMealWindow.meal === 'desayuno' ? (
+                !breakfastEaten ? (
+                  <>
+                    <Sun className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+                    <span>
+                      El simulador sumará <strong>~{Math.round(vigorDiaNormal / 3).toLocaleString()} pts</strong> del Desayuno + Almuerzo + Cena y la recolección de todo el día.
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-300 flex-shrink-0" />
+                    <span>
+                      Desayuno ya incluido en tus puntos. Faltan Almuerzo y Cena + recolección del resto del día.
+                    </span>
+                  </>
+                )
+              ) : detectedMealWindow.meal === 'almuerzo' ? (
+                !lunchEaten ? (
+                  <>
+                    <Utensils className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+                    <span>
+                      El simulador sumará <strong>~{Math.round(vigorDiaNormal / 3).toLocaleString()} pts</strong> del Almuerzo + Cena y la recolección restante.
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-300 flex-shrink-0" />
+                    <span>
+                      Almuerzo ya incluido en tus puntos. Falta la Cena + sesión de sueño nocturna.
+                    </span>
+                  </>
+                )
+              ) : (
+                !dinnerEaten ? (
+                  <>
+                    <Utensils className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+                    <span>
+                      El simulador sumará <strong>~{Math.round(vigorDiaNormal / 3).toLocaleString()} pts</strong> de la Cena + producción nocturna hasta las 04:00 AM.
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Moon className="w-3.5 h-3.5 text-indigo-300 flex-shrink-0" />
+                    <span>
+                      Cena ya incluida en tus puntos. Solo se sumará la recolección nocturna y habilidades hasta las 04:00 AM.
+                    </span>
+                  </>
+                )
               )}
             </span>
           </div>
@@ -461,7 +631,7 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
           <div className="flex items-center gap-3 pt-1">
             <button
               type="button"
-              onClick={() => handleSaveMidWeek(currentVigorInput, currentDayIdx, dinnerEaten)}
+              onClick={() => handleSaveMidWeek(currentVigorInput, currentDayIdx, dinnerEaten, breakfastEaten, lunchEaten)}
               className="btn-cozy-primary px-5 py-2 text-xs flex items-center gap-1.5 active:scale-95 transition-all"
             >
               {saveStatus ? <Check className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
@@ -665,42 +835,67 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
               </div>
             </div>
 
-            {/* Human Checkpoints Row (10 PM Antes de dormir & 4 AM Cierre Oficial) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-              <div className="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-400/25 flex items-center justify-between">
+            {/* Human Checkpoints Row (10 AM Mañana, 22 PM Antes de dormir & 4 AM Cierre Oficial) */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+              <div className="p-2.5 rounded-xl bg-amber-950/30 border border-amber-400/25 flex flex-col justify-between gap-1.5">
+                <div className="flex items-center gap-2">
+                  <Sun className="w-4 h-4 text-amber-300 flex-shrink-0" />
+                  <div>
+                    <span className="text-[10px] text-amber-200 font-bold uppercase tracking-wider block">
+                      ☀️ Mañana (10:00 AM)
+                    </span>
+                    <span className="text-[11px] text-slate-300">
+                      {actualCalibratedPoints >= currentDayExpected10AM
+                        ? '✓ ¡Objetivo matutino cumplido!'
+                        : `Faltan ${(currentDayExpected10AM - actualCalibratedPoints).toLocaleString()} pts`}
+                    </span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-sm font-black text-amber-100 tabular-nums">
+                    ~{currentDayExpected10AM.toLocaleString()} pts
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-indigo-950/40 border border-indigo-400/25 flex flex-col justify-between gap-1.5">
                 <div className="flex items-center gap-2">
                   <Moon className="w-4 h-4 text-indigo-300 flex-shrink-0" />
                   <div>
                     <span className="text-[10px] text-indigo-200 font-bold uppercase tracking-wider block">
-                      🌙 Meta Antes de Dormir (22:00)
+                      🌙 Antes de Dormir (22:00)
                     </span>
                     <span className="text-[11px] text-slate-300">
                       {actualCalibratedPoints >= currentDayExpected10PM
                         ? '✓ ¡Objetivo diurno cumplido!'
-                        : `Faltan ${(currentDayExpected10PM - actualCalibratedPoints).toLocaleString()} pts (con cena)`}
+                        : `Faltan ${(currentDayExpected10PM - actualCalibratedPoints).toLocaleString()} pts`}
                     </span>
                   </div>
                 </div>
-                <span className="text-sm font-black text-indigo-100 tabular-nums">
-                  ~{currentDayExpected10PM.toLocaleString()} pts
-                </span>
+                <div className="text-right">
+                  <span className="text-sm font-black text-indigo-100 tabular-nums">
+                    ~{currentDayExpected10PM.toLocaleString()} pts
+                  </span>
+                </div>
               </div>
 
-              <div className="p-2.5 rounded-xl bg-purple-950/40 border border-purple-400/25 flex items-center justify-between">
+              <div className="p-2.5 rounded-xl bg-purple-950/40 border border-purple-400/25 flex flex-col justify-between gap-1.5">
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-purple-300 flex-shrink-0" />
                   <div>
                     <span className="text-[10px] text-purple-200 font-bold uppercase tracking-wider block">
-                      ⏰ Cierre Oficial con Sueño (04:00 AM)
+                      ⏰ Cierre Oficial (04:00 AM)
                     </span>
                     <span className="text-[11px] text-slate-300">
-                      Tras tu sesión nocturna completa
+                      Tras sesión de sueño
                     </span>
                   </div>
                 </div>
-                <span className="text-sm font-black text-purple-100 tabular-nums">
-                  ~{timelineDias.find(d => d.esHoy)?.vigorAcumuladoFinDia.toLocaleString()} pts
-                </span>
+                <div className="text-right">
+                  <span className="text-sm font-black text-purple-100 tabular-nums">
+                    ~{timelineDias.find(d => d.esHoy)?.vigorAcumuladoFinDia.toLocaleString()} pts
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -862,20 +1057,34 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
               </h4>
             </div>
             <p className="text-[11px] text-slate-400 mt-0.5">
-              {timelineViewMode === 'dormir'
+              {timelineViewMode === 'manana'
+                ? 'ℹ️ Mostrando metas de la mañana (10:00 AM) tras el desayuno y vigilia inicial (25% del día).'
+                : timelineViewMode === 'noche'
                 ? 'ℹ️ Mostrando metas antes de dormir (22:00) tras las 3 comidas del día (Desayuno, Almuerzo y Cena).'
                 : 'ℹ️ Mostrando cierre oficial del servidor (04:00 AM) tras la sesión de sueño nocturna.'}
             </p>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Checkpoint View Mode Toggle (10 PM vs 4 AM) */}
+            {/* Checkpoint View Mode Toggle (10 AM vs 10 PM vs 4 AM) */}
             <div className="flex rounded-xl bg-black/40 p-1 border border-white/10 gap-1 text-xs">
               <button
                 type="button"
-                onClick={() => setTimelineViewMode('dormir')}
+                onClick={() => setTimelineViewMode('manana')}
                 className={`px-3 py-1.5 rounded-lg text-[11px] font-bold flex items-center gap-1.5 transition-all ${
-                  timelineViewMode === 'dormir'
+                  timelineViewMode === 'manana'
+                    ? 'bg-amber-500/30 text-amber-200 border border-amber-400/40 shadow-sm font-black'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Sun className="w-3 h-3 text-amber-300" />
+                <span>Mañana (10:00)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setTimelineViewMode('noche')}
+                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold flex items-center gap-1.5 transition-all ${
+                  timelineViewMode === 'noche'
                     ? 'bg-indigo-500/30 text-indigo-200 border border-indigo-400/40 shadow-sm font-black'
                     : 'text-slate-400 hover:text-white'
                 }`}
@@ -925,11 +1134,27 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
               {timelineDias
                 .filter(dia => !(hidePastDays && dia.esPasado))
                 .map((dia) => {
-                  const isDormirView = timelineViewMode === 'dormir';
-                  const displayRank = isDormirView && dia.rangoAlcanzado10PM ? dia.rangoAlcanzado10PM : dia.rangoAlcanzado;
+                  const isMananaView = timelineViewMode === 'manana';
+                  const isNocheView = timelineViewMode === 'noche';
+
+                  let displayRank = dia.rangoAlcanzado;
+                  let displayVigorGain = dia.vigorGanadoDia;
+                  let displayVigorTotal = dia.vigorAcumuladoFinDia;
+                  let checkpointLabel = '04:00 AM:';
+
+                  if (isMananaView) {
+                    displayRank = dia.rangoAlcanzado10AM ?? dia.rangoAlcanzado;
+                    displayVigorGain = dia.vigorGanado10AM ?? Math.round(dia.vigorGanadoDia * 0.35);
+                    displayVigorTotal = dia.metaAcumulada10AM ?? dia.vigorAcumuladoFinDia;
+                    checkpointLabel = '10:00 AM:';
+                  } else if (isNocheView) {
+                    displayRank = dia.rangoAlcanzado10PM ?? dia.rangoAlcanzado;
+                    displayVigorGain = dia.vigorGanado10PM ?? dia.vigorGanadoDia;
+                    displayVigorTotal = dia.metaAcumulada10PM ?? dia.vigorAcumuladoFinDia;
+                    checkpointLabel = '22:00 PM:';
+                  }
+
                   const rankTheme = getRankTheme(displayRank);
-                  const displayVigorGain = isDormirView && dia.vigorGanado10PM ? dia.vigorGanado10PM : dia.vigorGanadoDia;
-                  const displayVigorTotal = isDormirView && dia.metaAcumulada10PM ? dia.metaAcumulada10PM : dia.vigorAcumuladoFinDia;
 
                   return (
                     <div
@@ -976,6 +1201,12 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
                               <span>En pantalla:</span>
                               <span className="font-black tabular-nums">{dia.puntosEnPantalla.toLocaleString()}</span>
                             </div>
+                            {dia.faltaDesayuno && (
+                              <div className="text-[9px] text-amber-300 flex items-center justify-between">
+                                <span>+ Desayuno pend.:</span>
+                                <span className="tabular-nums font-bold">~{dia.vigorDesayunoPendiente?.toLocaleString()}</span>
+                              </div>
+                            )}
                             {dia.faltaCena && (
                               <div className="text-[9px] text-amber-300 flex items-center justify-between">
                                 <span>+ Cena pend.:</span>
@@ -983,6 +1214,10 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
                               </div>
                             )}
                             <div className="border-t border-white/10 pt-1 text-[10px] flex items-center justify-between">
+                              <span className="text-amber-200 font-bold">Meta 10:00:</span>
+                              <span className="font-black text-amber-100 tabular-nums">~{dia.metaAcumulada10AM?.toLocaleString()}</span>
+                            </div>
+                            <div className="text-[10px] flex items-center justify-between">
                               <span className="text-indigo-200 font-bold">Meta 22:00:</span>
                               <span className="font-black text-white tabular-nums">~{dia.metaAcumulada10PM?.toLocaleString()}</span>
                             </div>
@@ -1000,7 +1235,7 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
 
                             {/* Vigor Acumulado */}
                             <div className="text-[10px] text-[var(--text-muted)] tabular-nums mt-0.5 font-medium flex items-center justify-between">
-                              <span className="text-[9px] text-slate-400">{isDormirView ? '22:00:' : '04:00 AM:'}</span>
+                              <span className="text-[9px] text-slate-400">{checkpointLabel}</span>
                               <span className="font-bold text-slate-300">{displayVigorTotal.toLocaleString()}</span>
                             </div>
                           </>

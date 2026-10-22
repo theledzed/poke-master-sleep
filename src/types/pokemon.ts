@@ -73,6 +73,8 @@ export interface MidWeekProgress {
   updatedAt?: string;
   isCalibrated?: boolean;
   dinnerEaten?: boolean; // ¿Snorlax ya cenó hoy? (false = falta cena de 18:00 a 04:00)
+  breakfastEaten?: boolean; // ¿Snorlax ya desayunó hoy? (false = falta desayuno de 06:00 a 12:00)
+  lunchEaten?: boolean; // ¿Snorlax ya almorzó hoy? (false = falta almuerzo de 12:00 a 18:00)
   recordedHour?: number; // Hora local (0-23) al calibrar
 }
 
