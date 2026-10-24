@@ -111,9 +111,9 @@ Expected JSON Output Schema:
 Output strictly valid JSON.`;
 
     const candidateModels = [
-      'gemini-2.0-flash',
-      'gemini-1.5-flash',
-      'gemini-2.0-flash-lite'
+      'gemini-2.5-flash',
+      'gemini-2.5-flash-lite',
+      'gemini-1.5-flash'
     ];
 
     let lastError: any = null;
@@ -164,6 +164,41 @@ Output strictly valid JSON.`;
       } catch (err: any) {
         lastError = err;
       }
+    }
+
+    // Dynamic auto-discovery fallback if hardcoded models are deprecated or not found
+    if (!resultJson && lastError && (String(lastError?.message).includes('no longer available') || String(lastError?.message).includes('not found'))) {
+      try {
+        const catRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+        if (catRes.ok) {
+          const catData = await catRes.json();
+          const dynamicModels = (catData.models || [])
+            .filter((m: any) => (m.supportedGenerationMethods || []).includes('generateContent') && (m.name || '').includes('flash'))
+            .map((m: any) => (m.name || '').replace('models/', ''));
+          for (const dModel of dynamicModels) {
+            if (candidateModels.includes(dModel)) continue;
+            try {
+              const url = `https://generativelanguage.googleapis.com/v1beta/models/${dModel}:generateContent?key=${apiKey}`;
+              const resp = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  contents: [{ parts: [{ text: systemPrompt }, ...cleanImages.map((data) => ({ inline_data: { mime_type: mimeType, data } }))] }],
+                  generationConfig: { temperature: 0.1, responseMimeType: 'application/json' }
+                })
+              });
+              if (resp.ok) {
+                const data = await resp.json();
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (text) {
+                  resultJson = JSON.parse(text.replace(/```json/gi, '').replace(/```/g, '').trim());
+                  break;
+                }
+              }
+            } catch {}
+          }
+        }
+      } catch {}
     }
 
     if (!resultJson) {

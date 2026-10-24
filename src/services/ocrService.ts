@@ -439,9 +439,107 @@ export async function scanPokemonScreenshot(
   throw new Error('No se pudo procesar la captura con el servicio de IA.');
 }
 
+const GEMINI_MODELS_CACHE_KEY = 'gemini_active_vision_models_v1';
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+export const DEFAULT_GEMINI_MODELS = [
+  'gemini-2.5-flash',
+  'gemini-2.5-flash-lite',
+  'gemini-1.5-flash'
+];
+
+/**
+ * Dynamically discovers the newest, fastest vision-capable Gemini models for this API key.
+ * Caches results in localStorage for 24h (0ms overhead on subsequent scans).
+ * Automatically updates if Google releases a newer model or deprecates an older one.
+ */
+export async function resolveGeminiVisionModels(
+  apiKey: string,
+  forceRefresh = false
+): Promise<string[]> {
+  if (!apiKey) return DEFAULT_GEMINI_MODELS;
+
+  // 1. Check local cache (0ms cost on subsequent runs)
+  if (!forceRefresh && typeof window !== 'undefined' && window.localStorage) {
+    try {
+      const raw = localStorage.getItem(GEMINI_MODELS_CACHE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (
+          Date.now() - parsed.timestamp < CACHE_TTL_MS &&
+          Array.isArray(parsed.models) &&
+          parsed.models.length > 0
+        ) {
+          return parsed.models;
+        }
+      }
+    } catch {
+      // ignore storage parsing errors
+    }
+  }
+
+  // 2. Query Google AI Studio API directly to get all models active for this key
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+    if (res.ok) {
+      const json = await res.json();
+      if (Array.isArray(json.models)) {
+        const available = json.models
+          .filter((m: any) => {
+            const name = (m.name || '').replace('models/', '').toLowerCase();
+            const methods = m.supportedGenerationMethods || [];
+            return (
+              methods.includes('generateContent') &&
+              name.includes('gemini') &&
+              !name.includes('embedding') &&
+              !name.includes('aqa') &&
+              !name.includes('imagen') &&
+              !name.includes('learnlm')
+            );
+          })
+          .map((m: any) => (m.name || '').replace('models/', ''));
+
+        if (available.length > 0) {
+          // Sort: flash models first, newest version first (2.5 > 2.0 > 1.5)
+          available.sort((a: string, b: string) => {
+            const isAFlash = a.includes('flash') ? 1 : 0;
+            const isBFlash = b.includes('flash') ? 1 : 0;
+            if (isBFlash !== isAFlash) return isBFlash - isAFlash;
+
+            const vA = parseFloat((a.match(/gemini-(\d+(?:\.\d+)?)/i) || [])[1] || '1.0');
+            const vB = parseFloat((b.match(/gemini-(\d+(?:\.\d+)?)/i) || [])[1] || '1.0');
+            if (vB !== vA) return vB - vA;
+
+            const isALite = a.includes('lite') ? 1 : 0;
+            const isBLite = b.includes('lite') ? 1 : 0;
+            return isALite - isBLite;
+          });
+
+          if (typeof window !== 'undefined' && window.localStorage) {
+            try {
+              localStorage.setItem(
+                GEMINI_MODELS_CACHE_KEY,
+                JSON.stringify({ timestamp: Date.now(), models: available })
+              );
+            } catch {
+              // ignore
+            }
+          }
+
+          return available;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Auto-discovery of Gemini models failed, falling back to defaults:', err);
+  }
+
+  return DEFAULT_GEMINI_MODELS;
+}
+
 /**
  * Fallback direct client call to Google AI Studio if running on static hosting without serverless functions.
- * Uses Gemini 2.0 Flash on v1beta directly for sub-2s response time with zero listModels overhead.
+ * Uses cached dynamic model discovery (Gemini 2.5 Flash / newest active model).
  */
 async function callGeminiDirectly(base64Input: string | string[], apiKey: string): Promise<PreFilledPokemonData> {
   const rawList = Array.isArray(base64Input) ? base64Input : [base64Input];
@@ -481,16 +579,12 @@ Expected JSON Schema:
 Ensure accurate reading of ingredient counts (e.g. x1, x2, x4) and subskill tier names.
 Output strictly valid JSON.`;
 
-  // Targeted production models in priority order (Fastest first)
-  const candidateModels = [
-    'gemini-2.0-flash',
-    'gemini-1.5-flash',
-    'gemini-2.0-flash-lite'
-  ];
-
+  // Targeted production models in priority order (Fastest first, with dynamic auto-discovery)
+  let candidateModels = await resolveGeminiVisionModels(apiKey);
   let lastError: any = null;
 
-  for (const model of candidateModels) {
+  for (let i = 0; i < candidateModels.length; i++) {
+    const model = candidateModels[i];
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
       const response = await fetch(url, {
@@ -519,7 +613,26 @@ Output strictly valid JSON.`;
 
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.error?.message || `HTTP ${response.status}`);
+        const errMsg = errData.error?.message || `HTTP ${response.status}`;
+
+        // Auto-recovery: If Google reports the model is deprecated / not available / 404, force refresh catalog
+        if (
+          errMsg.includes('no longer available') ||
+          errMsg.includes('not found') ||
+          response.status === 404
+        ) {
+          if (typeof window !== 'undefined' && window.localStorage) {
+            localStorage.removeItem(GEMINI_MODELS_CACHE_KEY);
+          }
+          // If this was our first model, re-fetch available models immediately
+          if (i === 0) {
+            const freshModels = await resolveGeminiVisionModels(apiKey, true);
+            if (freshModels.length > 0 && freshModels[0] !== model) {
+              candidateModels = freshModels;
+            }
+          }
+        }
+        throw new Error(errMsg);
       }
 
       const data = await response.json();
@@ -691,7 +804,7 @@ Look for the pot capacity in "Añadido: X/Y" (return Y as potCapacity) and list 
 Expected JSON: { "potCapacity": number, "currentAdded": number, "dishType": string|null, "ingredients": [{ "name": string, "quantity": number }] }
 Output strictly valid JSON.`;
 
-  const models = ['gemini-2.0-flash', 'gemini-1.5-flash'];
+  const models = await resolveGeminiVisionModels(apiKey);
   let lastError: any = null;
 
   for (const model of models) {
@@ -728,7 +841,13 @@ Output strictly valid JSON.`;
         }
       } else {
         const errData = await response.json().catch(() => ({}));
-        lastError = new Error(errData.error?.message || `HTTP ${response.status}`);
+        const errMsg = errData.error?.message || `HTTP ${response.status}`;
+        if (errMsg.includes('no longer available') || errMsg.includes('not found') || response.status === 404) {
+          if (typeof window !== 'undefined' && window.localStorage) {
+            localStorage.removeItem(GEMINI_MODELS_CACHE_KEY);
+          }
+        }
+        lastError = new Error(errMsg);
       }
     } catch (e: any) {
       lastError = e;
