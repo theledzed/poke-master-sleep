@@ -403,7 +403,7 @@ export async function scanPokemonScreenshot(
     // If serverless reports missing API key and we have a client key, fallback to direct client call
     if (errJson.error === 'MISSING_API_KEY') {
       if (savedApiKey) {
-        const result = await callGeminiDirectly(base64List, savedApiKey);
+        const result = await callGeminiDirectly(base64List, savedApiKey, onProgress);
         stopProgressTicker();
         onProgress?.(100, '¡Lectura completada con éxito!', 'done');
         return result;
@@ -422,7 +422,7 @@ export async function scanPokemonScreenshot(
     // If the server route returned an error or 404, but we have a saved client API key, try direct client call
     if (savedApiKey) {
       try {
-        const result = await callGeminiDirectly(base64List, savedApiKey);
+        const result = await callGeminiDirectly(base64List, savedApiKey, onProgress);
         stopProgressTicker();
         onProgress?.(100, '¡Lectura completada con éxito!', 'done');
         return result;
@@ -439,8 +439,7 @@ export async function scanPokemonScreenshot(
   throw new Error('No se pudo procesar la captura con el servicio de IA.');
 }
 
-const GEMINI_MODELS_CACHE_KEY = 'gemini_active_vision_models_v1';
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const GEMINI_MODELS_CACHE_KEY = 'gemini_active_vision_models_v2';
 
 export const DEFAULT_GEMINI_MODELS = [
   'gemini-2.5-flash',
@@ -449,9 +448,9 @@ export const DEFAULT_GEMINI_MODELS = [
 ];
 
 /**
- * Dynamically discovers the newest, fastest vision-capable Gemini models for this API key.
- * Caches results in localStorage for 24h (0ms overhead on subsequent scans).
- * Automatically updates if Google releases a newer model or deprecates an older one.
+ * Event-Driven Dynamic Gemini Model Discovery:
+ * Keeps the active model cached indefinitely (0ms overhead on every single scan)
+ * until an actual error from Google triggers a fresh catalog discovery.
  */
 export async function resolveGeminiVisionModels(
   apiKey: string,
@@ -459,26 +458,24 @@ export async function resolveGeminiVisionModels(
 ): Promise<string[]> {
   if (!apiKey) return DEFAULT_GEMINI_MODELS;
 
-  // 1. Check local cache (0ms cost on subsequent runs)
+  // 1. If not forcing a refresh, return cached models if present, or DEFAULT_GEMINI_MODELS immediately (0ms latency!)
   if (!forceRefresh && typeof window !== 'undefined' && window.localStorage) {
     try {
       const raw = localStorage.getItem(GEMINI_MODELS_CACHE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (
-          Date.now() - parsed.timestamp < CACHE_TTL_MS &&
-          Array.isArray(parsed.models) &&
-          parsed.models.length > 0
-        ) {
-          return parsed.models;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
         }
       }
     } catch {
       // ignore storage parsing errors
     }
+    // Zero latency: return defaults without hitting network
+    return DEFAULT_GEMINI_MODELS;
   }
 
-  // 2. Query Google AI Studio API directly to get all models active for this key
+  // 2. Only on forceRefresh (triggered by an API error): query Google AI Studio catalog
   try {
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
     if (res.ok) {
@@ -500,7 +497,7 @@ export async function resolveGeminiVisionModels(
           .map((m: any) => (m.name || '').replace('models/', ''));
 
         if (available.length > 0) {
-          // Sort: flash models first, newest version first (2.5 > 2.0 > 1.5)
+          // Sort: flash models first, newest version first (e.g. 3.0 > 2.5 > 1.5)
           available.sort((a: string, b: string) => {
             const isAFlash = a.includes('flash') ? 1 : 0;
             const isBFlash = b.includes('flash') ? 1 : 0;
@@ -517,10 +514,7 @@ export async function resolveGeminiVisionModels(
 
           if (typeof window !== 'undefined' && window.localStorage) {
             try {
-              localStorage.setItem(
-                GEMINI_MODELS_CACHE_KEY,
-                JSON.stringify({ timestamp: Date.now(), models: available })
-              );
+              localStorage.setItem(GEMINI_MODELS_CACHE_KEY, JSON.stringify(available));
             } catch {
               // ignore
             }
@@ -539,9 +533,13 @@ export async function resolveGeminiVisionModels(
 
 /**
  * Fallback direct client call to Google AI Studio if running on static hosting without serverless functions.
- * Uses cached dynamic model discovery (Gemini 2.5 Flash / newest active model).
+ * Uses cached dynamic model discovery with error-triggered recovery and progress notification.
  */
-async function callGeminiDirectly(base64Input: string | string[], apiKey: string): Promise<PreFilledPokemonData> {
+async function callGeminiDirectly(
+  base64Input: string | string[],
+  apiKey: string,
+  onProgress?: ScanProgressCallback
+): Promise<PreFilledPokemonData> {
   const rawList = Array.isArray(base64Input) ? base64Input : [base64Input];
   const cleanImages = rawList.map((b) => b.replace(/^data:image\/[a-zA-Z]+;base64,/, ''));
 
@@ -579,7 +577,7 @@ Expected JSON Schema:
 Ensure accurate reading of ingredient counts (e.g. x1, x2, x4) and subskill tier names.
 Output strictly valid JSON.`;
 
-  // Targeted production models in priority order (Fastest first, with dynamic auto-discovery)
+  // Targeted production models in priority order (Fastest first, with zero-latency event-driven cache)
   let candidateModels = await resolveGeminiVisionModels(apiKey);
   let lastError: any = null;
 
@@ -615,20 +613,22 @@ Output strictly valid JSON.`;
         const errData = await response.json().catch(() => ({}));
         const errMsg = errData.error?.message || `HTTP ${response.status}`;
 
-        // Auto-recovery: If Google reports the model is deprecated / not available / 404, force refresh catalog
+        // Event-Driven Auto-Recovery: If model is deprecated / not available / 404, query catalog and notify progress bar
         if (
           errMsg.includes('no longer available') ||
           errMsg.includes('not found') ||
+          errMsg.includes('deprecated') ||
           response.status === 404
         ) {
           if (typeof window !== 'undefined' && window.localStorage) {
             localStorage.removeItem(GEMINI_MODELS_CACHE_KEY);
           }
-          // If this was our first model, re-fetch available models immediately
           if (i === 0) {
+            onProgress?.(38, 'Detectando modelo más nuevo de Gemini en Google AI Studio...', 'uploading');
             const freshModels = await resolveGeminiVisionModels(apiKey, true);
             if (freshModels.length > 0 && freshModels[0] !== model) {
               candidateModels = freshModels;
+              onProgress?.(50, `Conectando con ${freshModels[0]}...`, 'analyzing');
             }
           }
         }
@@ -766,7 +766,7 @@ export async function scanPotScreenshots(
 
     const errJson = await response.json().catch(() => ({}));
     if (errJson.error === 'MISSING_API_KEY' && savedApiKey) {
-      const result = await callGeminiPotDirectly(base64List, savedApiKey);
+      const result = await callGeminiPotDirectly(base64List, savedApiKey, onProgress);
       stopProgressTicker();
       onProgress?.(100, '¡Olla escaneada con éxito!', 'done');
       return result;
@@ -777,7 +777,7 @@ export async function scanPotScreenshots(
   } catch (err: any) {
     if (savedApiKey) {
       try {
-        const result = await callGeminiPotDirectly(base64List, savedApiKey);
+        const result = await callGeminiPotDirectly(base64List, savedApiKey, onProgress);
         stopProgressTicker();
         onProgress?.(100, '¡Olla escaneada con éxito!', 'done');
         return result;
@@ -792,11 +792,12 @@ export async function scanPotScreenshots(
 }
 
 /**
- * Direct client-side Gemini fallback for pot OCR using fast Gemini 2.0 Flash.
+ * Direct client-side Gemini fallback for pot OCR with error-triggered dynamic recovery.
  */
 async function callGeminiPotDirectly(
   base64Images: string[],
-  apiKey: string
+  apiKey: string,
+  onProgress?: ScanProgressCallback
 ): Promise<ScannedPotData> {
   const cleanImages = base64Images.map(img => img.replace(/^data:image\/[a-zA-Z]+;base64,/, ''));
   const systemPrompt = `You are an expert OCR vision AI specialized in extracting cooking pot and ingredient inventory data from "Pokémon Sleep" mobile screenshots.
@@ -804,10 +805,11 @@ Look for the pot capacity in "Añadido: X/Y" (return Y as potCapacity) and list 
 Expected JSON: { "potCapacity": number, "currentAdded": number, "dishType": string|null, "ingredients": [{ "name": string, "quantity": number }] }
 Output strictly valid JSON.`;
 
-  const models = await resolveGeminiVisionModels(apiKey);
+  let models = await resolveGeminiVisionModels(apiKey);
   let lastError: any = null;
 
-  for (const model of models) {
+  for (let i = 0; i < models.length; i++) {
+    const model = models[i];
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
       const response = await fetch(url, {
@@ -842,9 +844,22 @@ Output strictly valid JSON.`;
       } else {
         const errData = await response.json().catch(() => ({}));
         const errMsg = errData.error?.message || `HTTP ${response.status}`;
-        if (errMsg.includes('no longer available') || errMsg.includes('not found') || response.status === 404) {
+        if (
+          errMsg.includes('no longer available') ||
+          errMsg.includes('not found') ||
+          errMsg.includes('deprecated') ||
+          response.status === 404
+        ) {
           if (typeof window !== 'undefined' && window.localStorage) {
             localStorage.removeItem(GEMINI_MODELS_CACHE_KEY);
+          }
+          if (i === 0) {
+            onProgress?.(38, 'Detectando modelo más nuevo de Gemini en Google AI Studio...', 'uploading');
+            const fresh = await resolveGeminiVisionModels(apiKey, true);
+            if (fresh.length > 0 && fresh[0] !== model) {
+              models = fresh;
+              onProgress?.(50, `Conectando con ${fresh[0]}...`, 'analyzing');
+            }
           }
         }
         lastError = new Error(errMsg);
