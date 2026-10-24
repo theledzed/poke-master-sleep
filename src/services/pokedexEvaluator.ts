@@ -1,5 +1,6 @@
 import { Pokemon, Specialty } from '../types/pokemon';
 import { isSpecialPokemon } from './pokeApiService';
+import { NATURES } from '../data/gameData';
 
 export type PokedexTier = 'S+' | 'S' | 'A' | 'B' | 'C' | 'D';
 
@@ -10,6 +11,37 @@ export type PokedexVerdict =
   | 'UTIL_TEMPORAL'      // 🛡️ Único proveedor de su baya/ingrediente o puente temporal
   | 'UTIL_NICHO'         // 🛠️ Buen rol secundario o de rotación específica
   | 'CAMBIAR_CARAMELOS'; // 🍬 Duplicado inferior o saboteado, enviar al Profesor por caramelos
+
+export interface SpeciesPeerComparison {
+  id: string;
+  name: string;
+  level: number;
+  rp?: number;
+  geneticScore: number;
+  currentPowerScore: number;
+  ceilingScore: number;
+  tier: PokedexTier;
+  verdict: PokedexVerdict;
+  verdictLabel: string;
+  isMonoIngredient?: boolean;
+  ingredientSummary: string;
+  subskillsSummary: string[];
+  natureName: string;
+  natureEffect: string;
+  isCurrent: boolean;
+  speciesRank: number;
+  isWinner: boolean;
+}
+
+export interface FamilyComparisonSummary {
+  familyId: string;
+  familyName: string;
+  totalMembers: number;
+  bestMemberId: string;
+  bestMemberName: string;
+  winnerReason: string;
+  peers: SpeciesPeerComparison[];
+}
 
 export interface PokemonAuditResult {
   pokemon: Pokemon;
@@ -30,6 +62,10 @@ export interface PokemonAuditResult {
   subskillSeedTarget?: string;
   favoredIslands?: string[];
   recipeSynergyNote?: string;
+  speciesRank?: number;       // 1, 2, 3... en su familia
+  speciesTotal?: number;      // Total de ejemplares en su familia
+  isSpeciesBest?: boolean;    // true si es el #1 de su familia
+  familyComparison?: FamilyComparisonSummary;
 }
 
 // 1. Familias evolutivas y etapa evolutiva (1 = base, 2 = intermedia, 3 = final / única)
@@ -757,8 +793,7 @@ export function auditPokedexCollection(allPokemons: Pokemon[]): PokemonAuditResu
     return { pokemon, ...evalData };
   });
 
-  return rawEvaluations
-    .map(item => {
+  const auditedList: PokemonAuditResult[] = rawEvaluations.map(item => {
       const {
         pokemon,
         score,
@@ -893,6 +928,176 @@ export function auditPokedexCollection(allPokemons: Pokemon[]): PokemonAuditResu
         favoredIslands,
         recipeSynergyNote
       };
-    })
-    .sort((a, b) => b.geneticScore - a.geneticScore || b.currentPowerScore - a.currentPowerScore);
+    });
+
+  // Agrupamiento y comparación directa entre ejemplares de la misma familia evolutiva
+  const familyGroups = new Map<string, PokemonAuditResult[]>();
+  for (const item of auditedList) {
+    const familyKey = getPokemonFamilyKey(item.pokemon.name);
+    if (!familyGroups.has(familyKey)) {
+      familyGroups.set(familyKey, []);
+    }
+    familyGroups.get(familyKey)!.push(item);
+  }
+
+  for (const [familyKey, group] of familyGroups.entries()) {
+    if (group.length > 1) {
+      // Ordenamiento dentro de la familia:
+      // Prioridad: 1. geneticScore desc, 2. ceilingScore desc, 3. currentPowerScore desc, 4. level desc
+      group.sort((a, b) => {
+        if (b.geneticScore !== a.geneticScore) return b.geneticScore - a.geneticScore;
+        if (b.ceilingScore !== a.ceilingScore) return b.ceilingScore - a.ceilingScore;
+        if (b.currentPowerScore !== a.currentPowerScore) return b.currentPowerScore - a.currentPowerScore;
+        return (b.pokemon.level || 0) - (a.pokemon.level || 0);
+      });
+
+      const best = group[0];
+      const secondBest = group[1];
+      const winnerReason = generateWinnerReason(best, secondBest);
+
+      const peers: SpeciesPeerComparison[] = group.map((member, idx) => {
+        const nat = NATURES[member.pokemon.nature || ''];
+        const natureEffect = nat
+          ? (nat.upStat && nat.downStat ? `+${nat.upStat} / -${nat.downStat}` : 'Neutra (sin penalizaciones)')
+          : 'Neutra';
+
+        const ingSummary = member.pokemon.ingredients && member.pokemon.ingredients.length > 0
+          ? member.pokemon.ingredients.map(i => `${i.name}${i.count ? ` x${i.count}` : ''}`).join(', ')
+          : 'Ingredientes no asignados';
+
+        const subskillsSummary = member.pokemon.subskills && member.pokemon.subskills.length > 0
+          ? member.pokemon.subskills.map(s => `${s.name}${s.unlockLevel ? ` (Nv.${s.unlockLevel})` : ''}`)
+          : [];
+
+        return {
+          id: member.pokemon.id,
+          name: member.pokemon.name,
+          level: member.pokemon.level,
+          rp: member.pokemon.rp,
+          geneticScore: member.geneticScore,
+          currentPowerScore: member.currentPowerScore,
+          ceilingScore: member.ceilingScore,
+          tier: member.tier,
+          verdict: member.verdict,
+          verdictLabel: member.verdictLabel,
+          isMonoIngredient: member.isMonoIngredient,
+          ingredientSummary: ingSummary,
+          subskillsSummary,
+          natureName: member.pokemon.nature || 'Neutra',
+          natureEffect,
+          isCurrent: false,
+          speciesRank: idx + 1,
+          isWinner: idx === 0
+        };
+      });
+
+      const familySummary: FamilyComparisonSummary = {
+        familyId: familyKey,
+        familyName: formatFamilyName(familyKey),
+        totalMembers: group.length,
+        bestMemberId: best.pokemon.id,
+        bestMemberName: best.pokemon.name,
+        winnerReason,
+        peers
+      };
+
+      group.forEach((member, idx) => {
+        member.speciesRank = idx + 1;
+        member.speciesTotal = group.length;
+        member.isSpeciesBest = idx === 0;
+        member.familyComparison = familySummary;
+      });
+    } else if (group.length === 1) {
+      group[0].speciesRank = 1;
+      group[0].speciesTotal = 1;
+      group[0].isSpeciesBest = true;
+    }
+  }
+
+  return auditedList.sort((a, b) => b.geneticScore - a.geneticScore || b.currentPowerScore - a.currentPowerScore);
+}
+
+export function formatFamilyName(familyId: string): string {
+  if (!familyId) return 'Pokémon';
+  return familyId.charAt(0).toUpperCase() + familyId.slice(1);
+}
+
+function generateWinnerReason(best: PokemonAuditResult, secondBest?: PokemonAuditResult): string {
+  const reasons: string[] = [];
+  if (best.isMonoIngredient) {
+    reasons.push('distribución Mono-Ingrediente pura');
+  }
+  const topSubskills = (best.pokemon.subskills || [])
+    .filter((s) =>
+      ['Ayuda adicional', 'Buscador de bayas S', 'Buscador de ingredientes M', 'Rapidez de ayuda M'].some(
+        good => s.name.toLowerCase().includes(good.toLowerCase())
+      )
+    )
+    .map((s) => s.name);
+  if (topSubskills.length > 0) {
+    reasons.push(`subhabilidades clave (${topSubskills.slice(0, 2).join(', ')})`);
+  }
+  const nat = NATURES[best.pokemon.nature || ''];
+  if (nat?.upStat) {
+    reasons.push(`bono de naturaleza (+${nat.upStat.split(' ')[0]})`);
+  }
+  if (secondBest && best.geneticScore > secondBest.geneticScore) {
+    reasons.push(`mayor potencial genético (${best.geneticScore} pts vs ${secondBest.geneticScore} pts)`);
+  } else if (best.ceilingScore) {
+    reasons.push(`techo proyectado a Nv. 50 de ${best.ceilingScore} pts`);
+  }
+
+  if (reasons.length === 0) {
+    return `Lidera la familia con mejor balance genético global (${best.geneticScore} pts).`;
+  }
+  return `Lidera la familia por ${reasons.join(', ')}.`;
+}
+
+export function evaluatePokemonWithCollection(
+  candidate: Pokemon,
+  collection: Pokemon[]
+): PokemonAuditResult {
+  const collectionWithoutCandidate = collection.filter(p => p.id !== candidate.id);
+  const fullList = [...collectionWithoutCandidate, candidate];
+  const auditedList = auditPokedexCollection(fullList);
+  const found = auditedList.find(r => r.pokemon.id === candidate.id);
+
+  if (found) {
+    if (found.familyComparison) {
+      found.familyComparison = {
+        ...found.familyComparison,
+        peers: found.familyComparison.peers.map(p => ({
+          ...p,
+          isCurrent: p.id === candidate.id
+        }))
+      };
+    }
+    return found;
+  }
+
+  // Fallback
+  const single = evaluateSinglePokemonGenetics(candidate);
+  const tier: PokedexTier =
+    single.score >= 86 ? 'S+' :
+    single.score >= 75 ? 'S' :
+    single.score >= 64 ? 'A' :
+    single.score >= 52 ? 'B' :
+    single.score >= 40 ? 'C' : 'D';
+
+  return {
+    pokemon: candidate,
+    geneticScore: single.score,
+    currentPowerScore: single.currentPowerScore,
+    ceilingScore: single.ceilingScore,
+    tier,
+    verdict: 'UTIL_NICHO',
+    verdictLabel: '🛠️ Rotación Estratégica',
+    verdictBadgeColor: 'bg-sky-500/20 text-sky-200 border-sky-400/30',
+    pros: single.pros,
+    cons: single.cons,
+    recommendation: 'Evaluación rápida sin contexto de caja.',
+    speciesRank: 1,
+    speciesTotal: 1,
+    isSpeciesBest: true
+  };
 }

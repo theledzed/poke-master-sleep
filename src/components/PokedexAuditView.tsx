@@ -3,8 +3,10 @@ import { Pokemon } from '../types/pokemon';
 import {
   auditPokedexCollection,
   PokemonAuditResult,
-  PokedexVerdict
+  PokedexVerdict,
+  FamilyComparisonSummary
 } from '../services/pokedexEvaluator';
+import { SpeciesComparisonModal } from './SpeciesComparisonModal';
 import {
   getPokemonArtworkUrl,
   getBerrySpriteUrl,
@@ -55,6 +57,8 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedResult, setSelectedResult] = useState<PokemonAuditResult | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [selectedFamilySummary, setSelectedFamilySummary] = useState<FamilyComparisonSummary | null>(null);
+  const [isComparisonModalOpen, setIsComparisonModalOpen] = useState(false);
 
   // Evaluate the entire collection
   const auditResults = useMemo(() => {
@@ -169,6 +173,16 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
             </div>
             <div className="h-6 w-px bg-white/10" />
             <div className="text-center px-2">
+              <span className="text-[10px] text-sky-300 uppercase font-bold block">Nicho</span>
+              <span className="text-lg font-black text-sky-200 tabular-nums">{counts.UTIL_NICHO}</span>
+            </div>
+            <div className="h-6 w-px bg-white/10" />
+            <div className="text-center px-2">
+              <span className="text-[10px] text-indigo-300 uppercase font-bold block">Útiles</span>
+              <span className="text-lg font-black text-indigo-200 tabular-nums">{counts.UTIL_TEMPORAL}</span>
+            </div>
+            <div className="h-6 w-px bg-white/10" />
+            <div className="text-center px-2">
               <span className="text-[10px] text-rose-400 uppercase font-bold block">Caramelos</span>
               <span className="text-lg font-black text-rose-300 tabular-nums">{counts.CAMBIAR_CARAMELOS}</span>
             </div>
@@ -216,6 +230,34 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
             <span>💎 Promesas</span>
             <span className="text-[10px] tabular-nums px-1.5 py-0.2 rounded-full bg-teal-950/60 text-teal-200 border border-teal-500/30 font-black">
               {counts.PROMESA_INVERTIR}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setFilterCategory('UTIL_NICHO')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+              filterCategory === 'UTIL_NICHO'
+                ? 'bg-sky-500 text-slate-950 font-black shadow-sm shadow-sky-500/25'
+                : 'text-sky-300 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <span>🛠️ Nicho / Rotación</span>
+            <span className="text-[10px] tabular-nums px-1.5 py-0.2 rounded-full bg-sky-950/60 text-sky-200 border border-sky-500/30 font-black">
+              {counts.UTIL_NICHO}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setFilterCategory('UTIL_TEMPORAL')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+              filterCategory === 'UTIL_TEMPORAL'
+                ? 'bg-indigo-500 text-white font-black shadow-sm shadow-indigo-500/25'
+                : 'text-indigo-300 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <span>🛡️ Útiles Temporales</span>
+            <span className="text-[10px] tabular-nums px-1.5 py-0.2 rounded-full bg-indigo-950/60 text-indigo-200 border border-indigo-500/30 font-black">
+              {counts.UTIL_TEMPORAL}
             </span>
           </button>
 
@@ -342,6 +384,36 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
                             <span>{pokemon.berry}</span>
                           </span>
                         </div>
+
+                        {audit.speciesTotal && audit.speciesTotal > 1 && (
+                          <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                            <span
+                              className={`inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-full border ${
+                                audit.isSpeciesBest
+                                  ? 'bg-amber-400/20 text-amber-200 border-amber-300/40 shadow-sm shadow-amber-500/20'
+                                  : audit.speciesRank === 2
+                                  ? 'bg-slate-400/20 text-slate-200 border-slate-300/40'
+                                  : 'bg-rose-500/15 text-rose-200 border-rose-400/30'
+                              }`}
+                            >
+                              <span>{audit.isSpeciesBest ? '👑 #1' : audit.speciesRank === 2 ? '🥈 #2' : `🥉 #${audit.speciesRank}`}</span>
+                              <span>de {audit.speciesTotal} en Familia</span>
+                            </span>
+
+                            {audit.familyComparison && (
+                              <button
+                                onClick={() => {
+                                  setSelectedFamilySummary(audit.familyComparison!);
+                                  setIsComparisonModalOpen(true);
+                                }}
+                                className="inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-full bg-purple-500/20 hover:bg-purple-500/35 text-purple-200 border border-purple-400/30 transition-all active:scale-95 shadow-sm"
+                                title={`Comparar frente a frente los ${audit.speciesTotal} ejemplares de la familia ${audit.familyComparison.familyName}`}
+                              >
+                                <span>⚔️ Comparar ({audit.speciesTotal})</span>
+                              </button>
+                            )}
+                          </div>
+                        )}
 
                         {/* Ingredientes Activos / Desbloqueables */}
                         {pokemon.ingredients && pokemon.ingredients.length > 0 && (
@@ -600,6 +672,26 @@ export const PokedexAuditView: React.FC<PokedexAuditViewProps> = ({
             );
           })}
         </div>
+      )}
+
+      {/* Evolutionary Family Side-by-Side Comparison Modal */}
+      {isComparisonModalOpen && selectedFamilySummary && (
+        <SpeciesComparisonModal
+          isOpen={isComparisonModalOpen}
+          onClose={() => {
+            setIsComparisonModalOpen(false);
+            setSelectedFamilySummary(null);
+          }}
+          summary={selectedFamilySummary}
+          onSelectEdit={(pokemonId) => {
+            const target = pokemons.find(p => p.id === pokemonId);
+            if (target && onEditPokemon) {
+              onEditPokemon(target);
+            }
+          }}
+          onTransferPokemon={onDeletePokemon}
+          spriteStyle={spriteStyle}
+        />
       )}
     </div>
   );

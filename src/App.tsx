@@ -492,6 +492,7 @@ export const App: React.FC = () => {
         pokemonToEdit={pokemonToEdit}
         spriteStyle={spriteStyle}
         preFillData={preFillPokemonData}
+        existingPokemons={pokemons}
       />
     </div>
   );

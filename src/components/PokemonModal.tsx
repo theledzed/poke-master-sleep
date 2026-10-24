@@ -22,7 +22,13 @@ import { canPokemonEvolve } from '../services/evolutionService';
 import { EvolutionModal } from './EvolutionModal';
 import { PreFilledPokemonData } from '../services/ocrService';
 import { ScanPokemonModal } from './ScanPokemonModal';
-import { X, Check, Plus, Trash2, Lock, CheckCircle2, Sparkles, Dna, Star, ChevronDown, Search, Wand2, RefreshCw, Camera } from 'lucide-react';
+import {
+  evaluatePokemonWithCollection,
+  PokemonAuditResult,
+  FamilyComparisonSummary
+} from '../services/pokedexEvaluator';
+import { SpeciesComparisonModal } from './SpeciesComparisonModal';
+import { X, Check, Plus, Trash2, Lock, CheckCircle2, Sparkles, Dna, Star, ChevronDown, Search, Wand2, RefreshCw, Camera, Crown, Trophy, Zap, TrendingUp, AlertTriangle } from 'lucide-react';
 
 function formatFrequencySeconds(seconds: number): string {
   const h = Math.floor(seconds / 3600);
@@ -80,6 +86,7 @@ interface PokemonModalProps {
   pokemonToEdit?: Pokemon | null;
   spriteStyle?: SpriteStyle;
   preFillData?: PreFilledPokemonData | null;
+  existingPokemons?: Pokemon[];
 }
 
 export const PokemonModal: React.FC<PokemonModalProps> = ({
@@ -89,11 +96,14 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
   onDelete,
   pokemonToEdit,
   spriteStyle = 'sleep',
-  preFillData
+  preFillData,
+  existingPokemons = []
 }) => {
   const isEditing = Boolean(pokemonToEdit);
   const [isScanModalOpen, setIsScanModalOpen] = useState(false);
   const [wasAutoFilled, setWasAutoFilled] = useState(false);
+  const [showEvaluation, setShowEvaluation] = useState(false);
+  const [isFamilyComparisonModalOpen, setIsFamilyComparisonModalOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -210,6 +220,11 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
     matchedMaster
   ]);
 
+  const dynamicLiveEvaluation: PokemonAuditResult | null = useMemo(() => {
+    if (!showEvaluation) return null;
+    return evaluatePokemonWithCollection(currentDraftPokemon, existingPokemons);
+  }, [showEvaluation, currentDraftPokemon, existingPokemons]);
+
   const handleApplyEvolution = (evolved: Pokemon) => {
     setName(evolved.name);
     setSpecialty(evolved.specialty);
@@ -267,6 +282,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
     setIng3Count(data.ing3Count);
     setSubskills(data.subskills);
     setWasAutoFilled(true);
+    setShowEvaluation(true);
   };
 
   useEffect(() => {
@@ -677,6 +693,190 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
               </div>
             </div>
           )}
+
+          {/* Live Genetic Evaluation & Box Duplicate Comparison Section */}
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] overflow-hidden transition-all shadow-sm">
+            <div className="p-3 sm:p-4 flex items-center justify-between gap-3 bg-white/[0.02]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500/20 to-purple-500/20 border border-amber-400/30 flex items-center justify-center text-amber-300">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-bold text-white flex items-center gap-2 flex-wrap">
+                    <span>Evaluador Genético & Auditor de Caja</span>
+                    {showEvaluation && dynamicLiveEvaluation && (
+                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${dynamicLiveEvaluation.verdictBadgeColor}`}>
+                        {dynamicLiveEvaluation.verdictLabel}
+                      </span>
+                    )}
+                  </h4>
+                  <p className="text-[11px] text-slate-400">
+                    Diagnóstico de calidad genética y comparación con ejemplares de su misma especie en tu caja.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowEvaluation(prev => !prev)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 select-none ${
+                  showEvaluation
+                    ? 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-200 border border-purple-400/30'
+                    : 'btn-dreamy-pearl text-indigo-950 font-black shadow-md hover:scale-[1.02] active:scale-95'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>{showEvaluation ? 'Ocultar Análisis' : '✨ Evaluar Potencial'}</span>
+              </button>
+            </div>
+
+            {showEvaluation && dynamicLiveEvaluation && (
+              <div className="p-4 border-t border-white/10 space-y-3.5 bg-black/25 animate-fade-in">
+                {/* Tier, Score, and Verdict Banner */}
+                <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-white/[0.04] border border-white/10 flex-wrap sm:flex-nowrap">
+                  <div className="flex items-center gap-3">
+                    <div className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-black text-center shadow-md">
+                      <span className="text-[10px] uppercase tracking-wider block opacity-80 leading-none">Grado</span>
+                      <span className="text-base font-black leading-tight">{dynamicLiveEvaluation.tier}</span>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-black text-white">{dynamicLiveEvaluation.geneticScore} / 100 pts</span>
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${dynamicLiveEvaluation.verdictBadgeColor}`}>
+                          {dynamicLiveEvaluation.verdictLabel}
+                        </span>
+                        {dynamicLiveEvaluation.isMonoIngredient && (
+                          <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-200 border border-sky-400/30">
+                            🥣 Mono-Ingrediente
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-300 mt-1 leading-relaxed">
+                        {dynamicLiveEvaluation.recommendation}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Action Suggestion Pill */}
+                  <div className="text-right flex-shrink-0 self-start sm:self-auto">
+                    {dynamicLiveEvaluation.verdict === 'CAMBIAR_CARAMELOS' ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-black text-rose-300 bg-rose-500/20 px-2.5 py-1 rounded-xl border border-rose-500/40">
+                        🍬 Sugerencia: Descartar
+                      </span>
+                    ) : dynamicLiveEvaluation.verdict === 'TITULAR_ELITE' || dynamicLiveEvaluation.verdict === 'PROMESA_INVERTIR' ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-black text-emerald-300 bg-emerald-500/20 px-2.5 py-1 rounded-xl border border-emerald-500/40">
+                        ✓ Sugerencia: Guardar
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-black text-sky-300 bg-sky-500/20 px-2.5 py-1 rounded-xl border border-sky-400/40">
+                        🛠️ Sugerencia: Guardar (Nicho)
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Dual Meters */}
+                <div className="grid grid-cols-2 gap-2 p-2.5 rounded-xl bg-black/30 border border-white/5 text-[11px]">
+                  <div>
+                    <div className="flex items-center justify-between text-slate-300 font-bold mb-1">
+                      <span className="flex items-center gap-1">
+                        <Zap className="w-3.5 h-3.5 text-amber-400" /> Rendimiento Hoy
+                      </span>
+                      <span className="text-amber-300 font-black">{dynamicLiveEvaluation.currentPowerScore}/100</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-amber-400 rounded-full transition-all duration-300"
+                        style={{ width: `${Math.min(100, Math.max(5, dynamicLiveEvaluation.currentPowerScore))}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between text-slate-300 font-bold mb-1">
+                      <span className="flex items-center gap-1">
+                        <TrendingUp className="w-3.5 h-3.5 text-purple-400" /> Techo Nv. 50
+                      </span>
+                      <span className="text-purple-300 font-black">{dynamicLiveEvaluation.ceilingScore}/100</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-purple-400 rounded-full transition-all duration-300"
+                        style={{ width: `${Math.min(100, Math.max(5, dynamicLiveEvaluation.ceilingScore))}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Duplicate / Box Peer Comparison Spotlight */}
+                {dynamicLiveEvaluation.familyComparison && dynamicLiveEvaluation.speciesTotal && dynamicLiveEvaluation.speciesTotal > 1 ? (
+                  <div className="p-3 rounded-xl bg-purple-950/30 border border-purple-400/30 space-y-2">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">👥</span>
+                        <span className="text-xs font-black text-white">
+                          Comparación con tu Caja ({dynamicLiveEvaluation.speciesTotal} en Familia {dynamicLiveEvaluation.familyComparison.familyName})
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setIsFamilyComparisonModalOpen(true)}
+                        className="px-2.5 py-1 rounded-lg bg-purple-500/20 hover:bg-purple-500/35 text-purple-200 border border-purple-400/30 text-[11px] font-bold transition-all flex items-center gap-1 shadow-sm"
+                      >
+                        <span>⚔️ Comparar Frente a Frente</span>
+                      </button>
+                    </div>
+
+                    <div className="text-xs">
+                      {dynamicLiveEvaluation.isSpeciesBest ? (
+                        <p className="text-amber-200 font-semibold flex items-center gap-1.5">
+                          <span>👑</span>
+                          <span>¡Nuevo Mejor de tu Caja! Supera a tus otros ejemplares de esta familia ({dynamicLiveEvaluation.familyComparison.totalMembers} en caja).</span>
+                        </p>
+                      ) : (
+                        <p className="text-slate-300 font-medium leading-relaxed">
+                          Queda en puesto <strong className="text-white">#{dynamicLiveEvaluation.speciesRank} de {dynamicLiveEvaluation.speciesTotal}</strong>. Tu mejor ejemplar registrado es <strong className="text-amber-300">{dynamicLiveEvaluation.familyComparison.bestMemberName}</strong>.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-2.5 rounded-xl bg-emerald-950/20 border border-emerald-500/20 text-xs text-emerald-200 flex items-center gap-2">
+                    <span>✨</span>
+                    <span>Sería tu primer ejemplar registrado de esta familia en tu caja.</span>
+                  </div>
+                )}
+
+                {/* Pros & Cons List */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                  {dynamicLiveEvaluation.pros.length > 0 && (
+                    <div className="p-2.5 rounded-xl bg-emerald-950/20 border border-emerald-500/20 space-y-1">
+                      <span className="text-[10px] font-black uppercase text-emerald-400 block">Puntos Fuertes:</span>
+                      {dynamicLiveEvaluation.pros.slice(0, 3).map((p, idx) => (
+                        <div key={idx} className="text-[11px] text-slate-200 flex items-start gap-1 leading-snug">
+                          <span className="text-emerald-400 font-bold leading-none mt-0.5">•</span>
+                          <span>{p}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {dynamicLiveEvaluation.cons.length > 0 && (
+                    <div className="p-2.5 rounded-xl bg-rose-950/20 border border-rose-500/20 space-y-1">
+                      <span className="text-[10px] font-black uppercase text-rose-400 block">Puntos Débiles:</span>
+                      {dynamicLiveEvaluation.cons.slice(0, 3).map((c, idx) => (
+                        <div key={idx} className="text-[11px] text-rose-200 flex items-start gap-1 leading-snug">
+                          <span className="text-rose-400 font-bold leading-none mt-0.5">•</span>
+                          <span>{c}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Fila 1: Nombre con Autocompletado, Nivel, PA */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -1459,11 +1659,37 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                 <Trash2 className="w-3.5 h-3.5 text-rose-400" />
                 <span>Eliminar</span>
               </button>
+            ) : !isEditing ? (
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm('¿Descartar este Pokémon y salir sin guardarlo en tu Pokédex?')) {
+                    onClose();
+                  }
+                }}
+                className="px-3.5 py-2 rounded-full bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 text-xs font-bold transition-all active:scale-95 flex items-center gap-1.5"
+                title="Descartar este ejemplar sin guardarlo en tu caja"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+                <span>Descartar y No Guardar</span>
+              </button>
             ) : (
               <div />
             )}
 
             <div className="flex items-center gap-2 sm:gap-3">
+              {!showEvaluation && (
+                <button
+                  type="button"
+                  onClick={() => setShowEvaluation(true)}
+                  className="px-3.5 py-2.5 rounded-full bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/30 text-purple-200 text-xs font-bold transition-all active:scale-95 flex items-center gap-1.5"
+                  title="Evaluar calidad genética y comparar con caja"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-purple-300" />
+                  <span className="hidden sm:inline">Evaluar Potencial</span>
+                  <span className="sm:hidden">Evaluar</span>
+                </button>
+              )}
               <button
                 type="button"
                 onClick={onClose}
@@ -1500,6 +1726,16 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
           isOpen={isScanModalOpen}
           onClose={() => setIsScanModalOpen(false)}
           onScanSuccess={applyPreFill}
+        />
+      )}
+
+      {/* Evolutionary Family Side-by-Side Comparison Modal */}
+      {isFamilyComparisonModalOpen && dynamicLiveEvaluation?.familyComparison && (
+        <SpeciesComparisonModal
+          isOpen={isFamilyComparisonModalOpen}
+          onClose={() => setIsFamilyComparisonModalOpen(false)}
+          summary={dynamicLiveEvaluation.familyComparison}
+          spriteStyle={spriteStyle}
         />
       )}
     </div>,
