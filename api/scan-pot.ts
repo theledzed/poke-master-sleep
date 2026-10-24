@@ -111,9 +111,9 @@ Expected JSON Output Schema:
 Output strictly valid JSON.`;
 
     const candidateModels = [
-      'gemini-2.5-flash',
       'gemini-2.5-flash-lite',
-      'gemini-1.5-flash'
+      'gemini-1.5-flash',
+      'gemini-2.5-flash'
     ];
 
     let lastError: any = null;
@@ -125,6 +125,7 @@ Output strictly valid JSON.`;
         const response = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          signal: AbortSignal.timeout(15000),
           body: JSON.stringify({
             contents: [
               {
@@ -141,7 +142,10 @@ Output strictly valid JSON.`;
             ],
             generationConfig: {
               temperature: 0.1,
-              responseMimeType: 'application/json'
+              responseMimeType: 'application/json',
+              thinkingConfig: {
+                thinkingBudget: 0
+              }
             }
           })
         });

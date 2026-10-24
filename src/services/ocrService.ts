@@ -372,13 +372,26 @@ export async function scanPokemonScreenshot(
 
   startProgressTicker();
 
-  // 4. Attempt Serverless endpoint first
+  // 4. Fast path: If client has personal API key, call Google directly (single-hop, no serverless cold-start, <2.5s!)
+  if (savedApiKey) {
+    try {
+      const result = await callGeminiDirectly(base64List, savedApiKey, onProgress);
+      stopProgressTicker();
+      onProgress?.(100, '¡Lectura completada con éxito!', 'done');
+      return result;
+    } catch (directErr) {
+      console.warn('Direct Google AI Studio call failed, attempting serverless fallback:', directErr);
+    }
+  }
+
+  // 5. Attempt Serverless endpoint fallback
   try {
     const response = await fetch('/api/scan-pokemon', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
+      signal: AbortSignal.timeout(20000),
       body: JSON.stringify({
         imageBase64: base64List[0],
         imagesBase64: base64List,
@@ -399,38 +412,11 @@ export async function scanPokemonScreenshot(
     }
 
     const errJson = await response.json().catch(() => ({}));
-
-    // If serverless reports missing API key and we have a client key, fallback to direct client call
-    if (errJson.error === 'MISSING_API_KEY') {
-      if (savedApiKey) {
-        const result = await callGeminiDirectly(base64List, savedApiKey, onProgress);
-        stopProgressTicker();
-        onProgress?.(100, '¡Lectura completada con éxito!', 'done');
-        return result;
-      }
-      stopProgressTicker();
-      throw new Error(
-        'Se requiere una API Key de Google AI Studio (Gemini Flash). Puedes configurarla en el botón de ajustes del escáner.'
-      );
-    }
-
     if (errJson.message) {
       stopProgressTicker();
       throw new Error(errJson.message);
     }
   } catch (err: any) {
-    // If the server route returned an error or 404, but we have a saved client API key, try direct client call
-    if (savedApiKey) {
-      try {
-        const result = await callGeminiDirectly(base64List, savedApiKey, onProgress);
-        stopProgressTicker();
-        onProgress?.(100, '¡Lectura completada con éxito!', 'done');
-        return result;
-      } catch (directErr) {
-        stopProgressTicker();
-        throw directErr;
-      }
-    }
     stopProgressTicker();
     throw err;
   }
@@ -439,12 +425,12 @@ export async function scanPokemonScreenshot(
   throw new Error('No se pudo procesar la captura con el servicio de IA.');
 }
 
-const GEMINI_MODELS_CACHE_KEY = 'gemini_active_vision_models_v2';
+const GEMINI_MODELS_CACHE_KEY = 'gemini_active_vision_models_v3';
 
 export const DEFAULT_GEMINI_MODELS = [
-  'gemini-2.5-flash',
   'gemini-2.5-flash-lite',
-  'gemini-1.5-flash'
+  'gemini-1.5-flash',
+  'gemini-2.5-flash'
 ];
 
 /**
@@ -497,19 +483,19 @@ export async function resolveGeminiVisionModels(
           .map((m: any) => (m.name || '').replace('models/', ''));
 
         if (available.length > 0) {
-          // Sort: flash models first, newest version first (e.g. 3.0 > 2.5 > 1.5)
+          // Sort: flash-lite models first (lowest latency, zero thinking overhead)
           available.sort((a: string, b: string) => {
+            const isALite = a.includes('lite') ? 1 : 0;
+            const isBLite = b.includes('lite') ? 1 : 0;
+            if (isBLite !== isALite) return isBLite - isALite;
+
             const isAFlash = a.includes('flash') ? 1 : 0;
             const isBFlash = b.includes('flash') ? 1 : 0;
             if (isBFlash !== isAFlash) return isBFlash - isAFlash;
 
             const vA = parseFloat((a.match(/gemini-(\d+(?:\.\d+)?)/i) || [])[1] || '1.0');
             const vB = parseFloat((b.match(/gemini-(\d+(?:\.\d+)?)/i) || [])[1] || '1.0');
-            if (vB !== vA) return vB - vA;
-
-            const isALite = a.includes('lite') ? 1 : 0;
-            const isBLite = b.includes('lite') ? 1 : 0;
-            return isALite - isBLite;
+            return vB - vA;
           });
 
           if (typeof window !== 'undefined' && window.localStorage) {
@@ -588,6 +574,7 @@ Output strictly valid JSON.`;
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(15000),
         body: JSON.stringify({
           contents: [
             {
@@ -604,7 +591,10 @@ Output strictly valid JSON.`;
           ],
           generationConfig: {
             temperature: 0.1,
-            responseMimeType: 'application/json'
+            responseMimeType: 'application/json',
+            thinkingConfig: {
+              thinkingBudget: 0
+            }
           }
         })
       });
@@ -815,6 +805,7 @@ Output strictly valid JSON.`;
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(15000),
         body: JSON.stringify({
           contents: [
             {
@@ -828,7 +819,10 @@ Output strictly valid JSON.`;
           ],
           generationConfig: {
             temperature: 0.1,
-            responseMimeType: 'application/json'
+            responseMimeType: 'application/json',
+            thinkingConfig: {
+              thinkingBudget: 0
+            }
           }
         })
       });

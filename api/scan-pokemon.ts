@@ -84,11 +84,11 @@ Expected JSON Schema:
 Ensure accurate reading of ingredient counts (e.g. x1, x2, x4) and subskill tier names.
 Output strictly valid JSON.`;
 
-    // Fast-path prioritized models: Gemini 2.5 Flash / Flash Lite with dynamic fallback
+    // Fast-path prioritized models: Gemini 2.5 Flash Lite (ultra-fast, zero thinking latency)
     const candidateModels = [
-      'gemini-2.5-flash',
       'gemini-2.5-flash-lite',
-      'gemini-1.5-flash'
+      'gemini-1.5-flash',
+      'gemini-2.5-flash'
     ];
 
     let lastError: any = null;
@@ -100,6 +100,7 @@ Output strictly valid JSON.`;
         const response = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          signal: AbortSignal.timeout(15000),
           body: JSON.stringify({
             contents: [
               {
@@ -116,7 +117,10 @@ Output strictly valid JSON.`;
             ],
             generationConfig: {
               temperature: 0.1,
-              responseMimeType: 'application/json'
+              responseMimeType: 'application/json',
+              thinkingConfig: {
+                thinkingBudget: 0
+              }
             }
           })
         });
