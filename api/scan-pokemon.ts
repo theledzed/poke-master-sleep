@@ -1,8 +1,162 @@
 // Vercel Serverless Function: POST /api/scan-pokemon
-// Analyzes a Pokémon Sleep screenshot using Gemini 2.0 Flash Vision
+// Analyzes 1 or 2 Pokémon Sleep summary screenshots using Gemini 3.5 Flash-Lite Vision
+
+let cachedWinningModel: string | null = null;
+
+const DEFAULT_MODELS = ['gemini-3.5-flash-lite', 'gemini-2.5-flash-lite'];
+
+const POKEMON_SYSTEM_PROMPT = `Extract Pokémon Sleep summary data from the image(s) into JSON.
+If the image contains 2 side-by-side or separate views (top stats + scrolled subskills/ingredients), merge all visible data for this single Pokémon.
+Rules:
+- name: species name; if top header is cut off, read candy text ("Caramelos <Name>" or "<Name> Candy").
+- isShiny: true only if golden sparkle/star icon is visible near name/avatar.
+- Read integer level, rp (PR/PA/RP), nature, mainSkillName, mainSkillLevel (1-7), carryLimit (bag size).
+- ingredients: up to 3 slots (slot 1 lv1, slot 2 lv30, slot 3 lv60) with name and integer count (x1, x2, x4...).
+- subskills: up to 5 slots (slot 1 lv10, slot 2 lv25, slot 3 lv50, slot 4 lv75, slot 5 lv100) with exact badge text.`;
+
+const POKEMON_OCR_SCHEMA = {
+  type: 'OBJECT',
+  properties: {
+    name: { type: 'STRING' },
+    isShiny: { type: 'BOOLEAN' },
+    level: { type: 'INTEGER' },
+    rp: { type: 'INTEGER' },
+    nature: { type: 'STRING' },
+    mainSkillName: { type: 'STRING' },
+    mainSkillLevel: { type: 'INTEGER' },
+    carryLimit: { type: 'INTEGER' },
+    ingredients: {
+      type: 'ARRAY',
+      items: {
+        type: 'OBJECT',
+        properties: {
+          slot: { type: 'INTEGER' },
+          unlockLevel: { type: 'INTEGER' },
+          name: { type: 'STRING' },
+          count: { type: 'INTEGER' }
+        },
+        required: ['slot', 'name', 'count']
+      }
+    },
+    subskills: {
+      type: 'ARRAY',
+      items: {
+        type: 'OBJECT',
+        properties: {
+          slot: { type: 'INTEGER' },
+          unlockLevel: { type: 'INTEGER' },
+          name: { type: 'STRING' }
+        },
+        required: ['slot', 'name']
+      }
+    }
+  },
+  required: ['name']
+};
+
+async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function buildGenerationConfig(model: string, minimalFallback = false) {
+  if (minimalFallback) {
+    return { responseMimeType: 'application/json' };
+  }
+  const lower = model.toLowerCase();
+  const isLite = lower.includes('lite');
+  const config: Record<string, any> = {
+    responseMimeType: 'application/json',
+    maxOutputTokens: isLite ? 900 : 1400,
+    responseSchema: POKEMON_OCR_SCHEMA
+  };
+  if (!isLite) {
+    if (/gemini-3/.test(lower)) {
+      config.thinkingConfig = { thinkingLevel: 'minimal' };
+    } else if (/gemini-2\.5/.test(lower)) {
+      config.thinkingConfig = { thinkingBudget: 0 };
+    }
+  }
+  return config;
+}
+
+function extractSuggestedModel(errMsg: string, failedModel: string): string | null {
+  const regex = /models\/(gemini-[a-z0-9.-]+)/gi;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(errMsg || '')) !== null) {
+    const candidate = match[1].replace(/\.$/, '');
+    if (candidate && candidate !== failedModel && !candidate.includes('2.0-') && !candidate.includes('1.5-')) {
+      return candidate;
+    }
+  }
+  return null;
+}
+
+function filterVisionModels(modelsList: any[]): string[] {
+  const excluded = [
+    '2.0-', '1.5-', '1.0-', 'embedding', 'aqa', 'imagen', 'learnlm',
+    'tts', 'audio', 'live', 'thinking', 'robotics', 'computer-use',
+    'image', 'veo', 'gemma', 'pro', 'customtools'
+  ];
+  const valid = modelsList
+    .filter((m: any) => {
+      const name = String(m?.name || '').replace(/^models\//, '').toLowerCase();
+      const methods: string[] = m?.supportedGenerationMethods || [];
+      return (
+        methods.includes('generateContent') &&
+        name.startsWith('gemini-') &&
+        name.includes('flash') &&
+        !excluded.some((tok) => name.includes(tok))
+      );
+    })
+    .map((m: any) => String(m.name).replace(/^models\//, ''));
+
+  valid.sort((a, b) => {
+    const aL = a.toLowerCase();
+    const bL = b.toLowerCase();
+    const aLite = aL.includes('lite') ? 1 : 0;
+    const bLite = bL.includes('lite') ? 1 : 0;
+    if (bLite !== aLite) return bLite - aLite;
+    const aStable = !aL.includes('preview') && !aL.includes('exp') ? 1 : 0;
+    const bStable = !bL.includes('preview') && !bL.includes('exp') ? 1 : 0;
+    if (bStable !== aStable) return bStable - aStable;
+    const vA = parseFloat((aL.match(/gemini-(\d+(?:\.\d+)?)/) || [])[1] || '0');
+    const vB = parseFloat((bL.match(/gemini-(\d+(?:\.\d+)?)/) || [])[1] || '0');
+    return vB - vA;
+  });
+
+  return Array.from(new Set(valid)).slice(0, 2);
+}
+
+function extractJsonFromCandidate(data: any): any {
+  const parts: any[] = data?.candidates?.[0]?.content?.parts || [];
+  let rawText = '';
+  for (let i = parts.length - 1; i >= 0; i--) {
+    if (parts[i] && !parts[i].thought && typeof parts[i].text === 'string' && parts[i].text.trim()) {
+      rawText = parts[i].text;
+      break;
+    }
+  }
+  if (!rawText && typeof parts[0]?.text === 'string') rawText = parts[0].text;
+  if (!rawText) throw new Error('Respuesta vacía del modelo Gemini.');
+
+  const stripped = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+  try {
+    return JSON.parse(stripped);
+  } catch {
+    const start = stripped.indexOf('{');
+    const end = stripped.lastIndexOf('}');
+    if (start !== -1 && end > start) return JSON.parse(stripped.slice(start, end + 1));
+    throw new Error('JSON inválido devuelto por Gemini.');
+  }
+}
 
 export default async function handler(req: any, res: any) {
-  // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -11,13 +165,8 @@ export default async function handler(req: any, res: any) {
     'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
   );
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Método no permitido. Usa POST.' });
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Método no permitido. Usa POST.' });
 
   try {
     const { imageBase64, imagesBase64, mimeType = 'image/jpeg', apiKey: userApiKey } = req.body || {};
@@ -32,148 +181,139 @@ export default async function handler(req: any, res: any) {
       return res.status(400).json({ error: 'Falta la imagen en base64 (imageBase64 o imagesBase64).' });
     }
 
-    // Determine API Key: Environment variable or client-provided key
-    const apiKey =
+    const apiKey = (
       userApiKey ||
       process.env.GEMINI_API_KEY ||
       process.env.VITE_GEMINI_API_KEY ||
-      process.env.GOOGLE_API_KEY;
+      process.env.GOOGLE_API_KEY ||
+      ''
+    ).trim();
 
     if (!apiKey) {
       return res.status(401).json({
         error: 'MISSING_API_KEY',
         message:
-          'Se requiere una API Key de Google AI Studio (Gemini Flash). Configúrala en el servidor o ingrésala en la app.'
+          'Se requiere una API Key de Google AI Studio (Gemini Flash-Lite). Configúrala en el servidor o ingrésala en la app.'
       });
     }
 
-    // Clean base64 strings
-    const cleanImages = rawImages.map(img => img.replace(/^data:image\/[a-zA-Z]+;base64,/, ''));
+    const cleanImages = rawImages.map((img) => img.replace(/^data:image\/[a-zA-Z]+;base64,/, ''));
 
-    const systemPrompt = `You are an expert OCR vision AI specialized in extracting data from "Pokémon Sleep" mobile screenshots.
-You may be provided with 1 or 2 screenshots of the same Pokémon (e.g. top section with Level/RP/Nature and a second scrolled section showing all 5 Subskills and 3 Ingredient slots).
-Combine and synthesize all visible information across all provided screenshots to create a single complete JSON representation of the Pokémon.
-IMPORTANT RULES:
-- SCROLLED SCREENSHOTS: If the top header or Pokémon species name is scrolled off-screen or cut off, look lower down at the candy text (e.g. "Caramelos Gastly", "Caramelos Pikachu", "Pikachu Candy") to accurately determine the species name!
-- INGREDIENT ICONS: In Pokémon Sleep, ingredient slots show icons with quantities (e.g. x1, x2, x4). Carefully inspect the shapes and colors of the ingredient icons.
-
-Expected JSON Schema:
-{
-  "name": string,              // Official species name in Spanish or English (e.g. "Ribombee", "Pikachu", "Gastly", "Slowpoke", "Charizard")
-  "isShiny": boolean,          // true if there is a golden sparkles / star icon near the name or avatar, else false
-  "level": number,             // integer level (e.g. 20, 33, 50)
-  "rp": number,                // total RP / PA (Puntos de Ayuda, e.g. 989, 1420, 2723)
-  "nature": string,            // nature name (e.g. "Audaz", "Huraña", "Firme", "Alegre", "Adamant", "Modest", etc.)
-  "mainSkillName": string,     // main skill name if visible (e.g. "Afortunado", "Imán ingredientes S", "Carga vigor S")
-  "mainSkillLevel": number,    // main skill level (integer 1-7, default 1)
-  "carryLimit": number,        // bag / inventory capacity if visible (integer, e.g. 19, 24, 30)
-  "ingredients": [             // up to 3 ingredient slots:
-    { "slot": 1, "unlockLevel": 1, "name": string, "count": number },
-    { "slot": 2, "unlockLevel": 30, "name": string, "count": number },
-    { "slot": 3, "unlockLevel": 60, "name": string, "count": number }
-  ],
-  "subskills": [               // up to 5 subskills unlocked at levels 10, 25, 50, 75, 100:
-    { "slot": 1, "unlockLevel": 10, "name": string },
-    { "slot": 2, "unlockLevel": 25, "name": string },
-    { "slot": 3, "unlockLevel": 50, "name": string },
-    { "slot": 4, "unlockLevel": 75, "name": string },
-    { "slot": 5, "unlockLevel": 100, "name": string }
-  ]
-}
-
-Ensure accurate reading of ingredient counts (e.g. x1, x2, x4) and subskill tier names.
-Output strictly valid JSON.`;
-
-    // Fast-path prioritized models: Gemini 3.5 Flash Lite (ultra-low latency, zero thinking overhead)
-    const candidateModels = [
-      'gemini-3.5-flash-lite',
-      'gemini-2.5-flash-lite',
-      'gemini-1.5-flash'
-    ];
-
+    const queue: string[] = cachedWinningModel
+      ? [cachedWinningModel, ...DEFAULT_MODELS.filter((m) => m !== cachedWinningModel)]
+      : [...DEFAULT_MODELS];
+    const tried = new Set<string>();
+    let catalogQueried = false;
     let lastError: any = null;
-    let resultJson = null;
+    let resultJson: any = null;
+    let attempts = 0;
 
-    for (const model of candidateModels) {
-      try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          signal: AbortSignal.timeout(15000),
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  { text: systemPrompt },
-                  ...cleanImages.map((data) => ({
-                    inline_data: {
-                      mime_type: mimeType,
-                      data
-                    }
-                  }))
-                ]
-              }
-            ],
-            generationConfig: {
-              responseMimeType: 'application/json'
-            }
-          })
-        });
+    while (queue.length > 0 && attempts < 3 && !resultJson) {
+      const model = queue.shift()!;
+      if (!model || tried.has(model)) continue;
+      tried.add(model);
+      attempts++;
 
-        if (!response.ok) {
-          const errData = await response.json().catch(() => ({}));
-          throw new Error(errData.error?.message || `HTTP ${response.status}`);
-        }
+      for (const minimalFallback of [false, true]) {
+        try {
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
+          const response = await fetchWithTimeout(
+            url,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [
+                  {
+                    parts: [
+                      { text: POKEMON_SYSTEM_PROMPT },
+                      ...cleanImages.map((data) => ({
+                        inline_data: { mime_type: mimeType, data }
+                      }))
+                    ]
+                  }
+                ],
+                generationConfig: buildGenerationConfig(model, minimalFallback)
+              })
+            },
+            12000
+          );
 
-        const data = await response.json();
-        const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (candidateText) {
-          const cleanText = candidateText
-            .replace(/```json/gi, '')
-            .replace(/```/g, '')
-            .trim();
-          resultJson = JSON.parse(cleanText);
-          break;
-        }
-      } catch (err: any) {
-        lastError = err;
-      }
-    }
+          if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            const errMsg: string = errData?.error?.message || `HTTP ${response.status}`;
+            const lowerMsg = errMsg.toLowerCase();
 
-    // Dynamic auto-discovery fallback if hardcoded models are deprecated or not found
-    if (!resultJson && lastError && (String(lastError?.message).includes('no longer available') || String(lastError?.message).includes('not found'))) {
-      try {
-        const catRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-        if (catRes.ok) {
-          const catData = await catRes.json();
-          const dynamicModels = (catData.models || [])
-            .filter((m: any) => (m.supportedGenerationMethods || []).includes('generateContent') && (m.name || '').includes('flash'))
-            .map((m: any) => (m.name || '').replace('models/', ''));
-          for (const dModel of dynamicModels) {
-            if (candidateModels.includes(dModel)) continue;
-            try {
-              const url = `https://generativelanguage.googleapis.com/v1beta/models/${dModel}:generateContent?key=${apiKey}`;
-              const resp = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  contents: [{ parts: [{ text: systemPrompt }, ...cleanImages.map((data) => ({ inline_data: { mime_type: mimeType, data } }))] }],
-                  generationConfig: { temperature: 0.1, responseMimeType: 'application/json' }
-                })
+            if (
+              response.status === 401 ||
+              response.status === 403 ||
+              lowerMsg.includes('api_key_invalid') ||
+              lowerMsg.includes('api key not valid')
+            ) {
+              return res.status(401).json({
+                error: 'INVALID_API_KEY',
+                message: 'API Key de Google AI Studio inválida o sin permisos.'
               });
-              if (resp.ok) {
-                const data = await resp.json();
-                const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (text) {
-                  resultJson = JSON.parse(text.replace(/```json/gi, '').replace(/```/g, '').trim());
-                  break;
+            }
+
+            if (response.status === 429 || lowerMsg.includes('quota') || lowerMsg.includes('resource_exhausted')) {
+              return res.status(429).json({
+                error: 'QUOTA_EXCEEDED',
+                message: 'Límite por minuto alcanzado en Google AI Studio. Intenta de nuevo en unos segundos.'
+              });
+            }
+
+            if (
+              !minimalFallback &&
+              response.status === 400 &&
+              (lowerMsg.includes('responseschema') || lowerMsg.includes('thinking') || lowerMsg.includes('unknown name'))
+            ) {
+              continue;
+            }
+
+            if (
+              lowerMsg.includes('no longer available') ||
+              lowerMsg.includes('not found') ||
+              lowerMsg.includes('deprecated') ||
+              response.status === 404
+            ) {
+              if (cachedWinningModel === model) cachedWinningModel = null;
+              const hinted = extractSuggestedModel(errMsg, model);
+              if (hinted && !tried.has(hinted)) {
+                queue.unshift(hinted);
+              } else if (!catalogQueried) {
+                catalogQueried = true;
+                try {
+                  const catRes = await fetchWithTimeout(
+                    `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`,
+                    { method: 'GET' },
+                    5000
+                  );
+                  if (catRes.ok) {
+                    const catData = await catRes.json();
+                    const dynamic = filterVisionModels(catData.models || []);
+                    for (let k = dynamic.length - 1; k >= 0; k--) {
+                      if (!tried.has(dynamic[k])) queue.unshift(dynamic[k]);
+                    }
+                  }
+                } catch {
+                  // ignore catalog error
                 }
               }
-            } catch {}
+            }
+
+            throw new Error(errMsg);
           }
+
+          const data = await response.json();
+          resultJson = extractJsonFromCandidate(data);
+          cachedWinningModel = model;
+          break;
+        } catch (err: any) {
+          lastError = err;
+          break;
         }
-      } catch {}
+      }
     }
 
     if (!resultJson) {

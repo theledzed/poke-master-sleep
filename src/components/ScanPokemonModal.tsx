@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import {
   scanPokemonScreenshot,
+  prewarmScreenshotCompression,
   PreFilledPokemonData,
   STORAGE_KEY_GEMINI_KEY,
   ScanProgressStage
@@ -74,6 +75,7 @@ export const ScanPokemonModal: React.FC<ScanPokemonModalProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const slot2InputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const scanAbortRef = useRef<AbortController | null>(null);
 
   // Prevent background scrolling when modal is open & add ESC listener
   useEffect(() => {
@@ -125,6 +127,8 @@ export const ScanPokemonModal: React.FC<ScanPokemonModalProps> = ({
       previewUrls.forEach((oldUrl) => {
         if (!newUrls.includes(oldUrl)) URL.revokeObjectURL(oldUrl);
       });
+      // Pre-compress immediately in background so clicking "Analizar con IA" has 0ms local delay
+      prewarmScreenshotCompression(combined);
       setPreviewUrls(newUrls);
       return combined;
     });
@@ -183,17 +187,28 @@ export const ScanPokemonModal: React.FC<ScanPokemonModalProps> = ({
     setTimeout(() => setIsKeySaved(false), 2500);
   };
 
+  const handleCancelScan = () => {
+    scanAbortRef.current?.abort();
+    scanAbortRef.current = null;
+    setIsScanning(false);
+    setScanStatus('');
+  };
+
   const handleStartScan = async () => {
     if (selectedFiles.length === 0) {
       setErrorMsg('Por favor añade al menos 1 captura de Pokémon Sleep.');
       return;
     }
 
+    scanAbortRef.current?.abort();
+    const controller = new AbortController();
+    scanAbortRef.current = controller;
+
     setErrorMsg(null);
     setIsScanning(true);
-    setScanPercent(10);
+    setScanPercent(12);
     setScanStage('compressing');
-    setScanStatus('Comprimiendo capturas a tamaño ultra ligero...');
+    setScanStatus('Preparando captura en mosaico único (768px)...');
 
     try {
       const result = await scanPokemonScreenshot(
@@ -203,7 +218,8 @@ export const ScanPokemonModal: React.FC<ScanPokemonModalProps> = ({
           setScanPercent(percent);
           setScanStatus(status);
           setScanStage(stage);
-        }
+        },
+        controller.signal
       );
 
       setScanPercent(100);
@@ -213,11 +229,19 @@ export const ScanPokemonModal: React.FC<ScanPokemonModalProps> = ({
         setIsScanning(false);
         onScanSuccess(result);
         onClose();
-      }, 400);
+      }, 280);
     } catch (err: any) {
+      if (err?.name === 'AbortError') {
+        setIsScanning(false);
+        return;
+      }
       console.error('Scan error:', err);
       setIsScanning(false);
       setErrorMsg(err.message || 'Error al analizar la captura.');
+    } finally {
+      if (scanAbortRef.current === controller) {
+        scanAbortRef.current = null;
+      }
     }
   };
 
@@ -403,8 +427,16 @@ export const ScanPokemonModal: React.FC<ScanPokemonModalProps> = ({
               </div>
 
               <p className="text-[11px] text-slate-400 max-w-sm">
-                💡 <strong className="text-white">Velocidad Pro:</strong> Redimensionado inteligente a 960px y Gemini 2.0 Flash para procesar en ~2 a 4 segundos.
+                💡 <strong className="text-white">Velocidad Turbo:</strong> Mosaico único 768px + Gemini 3.5 Flash-Lite para procesar en ~1.5 a 3 segundos.
               </p>
+
+              <button
+                type="button"
+                onClick={handleCancelScan}
+                className="mt-3 px-4 py-1.5 rounded-full bg-white/10 hover:bg-rose-500/25 border border-white/15 hover:border-rose-400/40 text-xs font-bold text-slate-300 hover:text-rose-200 transition-all"
+              >
+                Cancelar escaneo
+              </button>
             </div>
           ) : selectedFiles.length === 0 ? (
             /* STATE 1: ZERO FILES SELECTED (DROPZONE) */
@@ -643,7 +675,7 @@ export const ScanPokemonModal: React.FC<ScanPokemonModalProps> = ({
                   >
                     Google AI Studio
                   </a>{' '}
-                  (Gemini 2.0 / 2.5 Flash):
+                  (Gemini 3.5 Flash-Lite):
                 </p>
 
                 <div className="flex items-center gap-2">

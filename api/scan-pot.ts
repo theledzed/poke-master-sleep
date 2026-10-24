@@ -1,8 +1,141 @@
 // Vercel Serverless Function: POST /api/scan-pot
-// Analyzes Pokémon Sleep cooking pot / ingredient inventory screenshots using Gemini 2.0 Flash Vision
+// Analyzes Pokémon Sleep cooking pot / ingredient inventory screenshots using Gemini 3.5 Flash-Lite Vision
+
+let cachedWinningPotModel: string | null = null;
+
+const DEFAULT_MODELS = ['gemini-3.5-flash-lite', 'gemini-2.5-flash-lite'];
+
+const POT_SYSTEM_PROMPT = `Extract Pokémon Sleep cooking pot & ingredient stock from the image(s) into JSON.
+Rules:
+- potCapacity: second integer Y in "Añadido: X/Y" or "Added: X/Y" (default 57 if hidden); currentAdded = X.
+- dishType: "curry", "salad", or "dessert" if visible, else null.
+- ingredients: read every ingredient card in the grid. Counter "A/B" means available quantity = B (the denominator AFTER the slash!). Deduplicate across scrolled views.
+Canonical Spanish names: Puerro Grueso, Seta Sabrosa, Huevo Selecto, Patata, Manzana Selecta, Hierba Picante, Fiambre Vegetariano, Leche Mu-mu, Miel, Aceite Puro, Jengibre, Siestomate, Cacao Relajante, Cola de Slowpoke, Soja Verdegal, Maíz Verdegal, Café Estimulante, Calabaza Suculenta, Aguacate.`;
+
+const POT_OCR_SCHEMA = {
+  type: 'OBJECT',
+  properties: {
+    potCapacity: { type: 'INTEGER' },
+    currentAdded: { type: 'INTEGER' },
+    dishType: { type: 'STRING', nullable: true },
+    ingredients: {
+      type: 'ARRAY',
+      items: {
+        type: 'OBJECT',
+        properties: {
+          name: { type: 'STRING' },
+          quantity: { type: 'INTEGER' }
+        },
+        required: ['name', 'quantity']
+      }
+    }
+  },
+  required: ['potCapacity', 'ingredients']
+};
+
+async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function buildGenerationConfig(model: string, minimalFallback = false) {
+  if (minimalFallback) {
+    return { responseMimeType: 'application/json' };
+  }
+  const lower = model.toLowerCase();
+  const isLite = lower.includes('lite');
+  const config: Record<string, any> = {
+    responseMimeType: 'application/json',
+    maxOutputTokens: isLite ? 900 : 1400,
+    responseSchema: POT_OCR_SCHEMA
+  };
+  if (!isLite) {
+    if (/gemini-3/.test(lower)) {
+      config.thinkingConfig = { thinkingLevel: 'minimal' };
+    } else if (/gemini-2\.5/.test(lower)) {
+      config.thinkingConfig = { thinkingBudget: 0 };
+    }
+  }
+  return config;
+}
+
+function extractSuggestedModel(errMsg: string, failedModel: string): string | null {
+  const regex = /models\/(gemini-[a-z0-9.-]+)/gi;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(errMsg || '')) !== null) {
+    const candidate = match[1].replace(/\.$/, '');
+    if (candidate && candidate !== failedModel && !candidate.includes('2.0-') && !candidate.includes('1.5-')) {
+      return candidate;
+    }
+  }
+  return null;
+}
+
+function filterVisionModels(modelsList: any[]): string[] {
+  const excluded = [
+    '2.0-', '1.5-', '1.0-', 'embedding', 'aqa', 'imagen', 'learnlm',
+    'tts', 'audio', 'live', 'thinking', 'robotics', 'computer-use',
+    'image', 'veo', 'gemma', 'pro', 'customtools'
+  ];
+  const valid = modelsList
+    .filter((m: any) => {
+      const name = String(m?.name || '').replace(/^models\//, '').toLowerCase();
+      const methods: string[] = m?.supportedGenerationMethods || [];
+      return (
+        methods.includes('generateContent') &&
+        name.startsWith('gemini-') &&
+        name.includes('flash') &&
+        !excluded.some((tok) => name.includes(tok))
+      );
+    })
+    .map((m: any) => String(m.name).replace(/^models\//, ''));
+
+  valid.sort((a, b) => {
+    const aL = a.toLowerCase();
+    const bL = b.toLowerCase();
+    const aLite = aL.includes('lite') ? 1 : 0;
+    const bLite = bL.includes('lite') ? 1 : 0;
+    if (bLite !== aLite) return bLite - aLite;
+    const aStable = !aL.includes('preview') && !aL.includes('exp') ? 1 : 0;
+    const bStable = !bL.includes('preview') && !bL.includes('exp') ? 1 : 0;
+    if (bStable !== aStable) return bStable - aStable;
+    const vA = parseFloat((aL.match(/gemini-(\d+(?:\.\d+)?)/) || [])[1] || '0');
+    const vB = parseFloat((bL.match(/gemini-(\d+(?:\.\d+)?)/) || [])[1] || '0');
+    return vB - vA;
+  });
+
+  return Array.from(new Set(valid)).slice(0, 2);
+}
+
+function extractJsonFromCandidate(data: any): any {
+  const parts: any[] = data?.candidates?.[0]?.content?.parts || [];
+  let rawText = '';
+  for (let i = parts.length - 1; i >= 0; i--) {
+    if (parts[i] && !parts[i].thought && typeof parts[i].text === 'string' && parts[i].text.trim()) {
+      rawText = parts[i].text;
+      break;
+    }
+  }
+  if (!rawText && typeof parts[0]?.text === 'string') rawText = parts[0].text;
+  if (!rawText) throw new Error('Respuesta vacía del modelo Gemini.');
+
+  const stripped = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+  try {
+    return JSON.parse(stripped);
+  } catch {
+    const start = stripped.indexOf('{');
+    const end = stripped.lastIndexOf('}');
+    if (start !== -1 && end > start) return JSON.parse(stripped.slice(start, end + 1));
+    throw new Error('JSON inválido devuelto por Gemini.');
+  }
+}
 
 export default async function handler(req: any, res: any) {
-  // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -11,13 +144,8 @@ export default async function handler(req: any, res: any) {
     'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
   );
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Método no permitido. Usa POST.' });
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Método no permitido. Usa POST.' });
 
   try {
     const { imageBase64, imagesBase64, mimeType = 'image/jpeg', apiKey: userApiKey } = req.body || {};
@@ -32,180 +160,148 @@ export default async function handler(req: any, res: any) {
       return res.status(400).json({ error: 'Falta la imagen en base64 (imageBase64 o imagesBase64).' });
     }
 
-    // Determine API Key: Environment variable or client-provided key
-    const apiKey =
+    const apiKey = (
       userApiKey ||
       process.env.GEMINI_API_KEY ||
       process.env.VITE_GEMINI_API_KEY ||
-      process.env.GOOGLE_API_KEY;
+      process.env.GOOGLE_API_KEY ||
+      ''
+    ).trim();
 
     if (!apiKey) {
       return res.status(401).json({
         error: 'MISSING_API_KEY',
         message:
-          'Se requiere una API Key de Google AI Studio (Gemini Flash). Configúrala en el servidor o ingrésala en la app.'
+          'Se requiere una API Key de Google AI Studio (Gemini Flash-Lite). Configúrala en el servidor o ingrésala en la app.'
       });
     }
 
-    // Clean base64 strings
-    const cleanImages = rawImages.map(img => img.replace(/^data:image\/[a-zA-Z]+;base64,/, ''));
+    const cleanImages = rawImages.map((img) => img.replace(/^data:image\/[a-zA-Z]+;base64,/, ''));
 
-    const systemPrompt = `You are an expert OCR vision AI specialized in extracting cooking pot and ingredient inventory data from "Pokémon Sleep" mobile screenshots.
-You may be provided with 1 or 2 screenshots showing the cooking pot screen or ingredient selection screen ("Elige los ingredientes" / "Añadido: X/Y").
-
-COMBINE AND SYNTHESIZE ALL PROVIDED SCREENSHOTS:
-1. POT CAPACITY ("Añadido: X/Y"):
-   - Look at the top banner (e.g. "Añadido: 0/59" or "Añadido: 0/45").
-   - The total pot capacity is the second number (e.g. 59, 45, 57, 69, 77, 118).
-   - If not found or obscured, return 57.
-
-2. INGREDIENTS LIST:
-   - Each ingredient card in the grid shows:
-     - An icon of the ingredient (apple, mushroom, tomato, egg, potato, ginger, cacao, leek, tail, honey, oil, sausage, milk, etc.)
-     - A counter below the image formatted as: "[ADDED] / [TOTAL_AVAILABLE]" (e.g. "0/4", "0/11", "0/6", "0/15", "0/22").
-     - The text label with the Spanish or English ingredient name below the counter (e.g. "Seta Sabrosa", "Huevo Selecto", "Patata", "Manzana Selecta", "Hierba Picante", "Fiambre Vegetariano", "Leche Mu-mu", "Siestomate", "Soja Verdegal", "Cacao Relajante", "Miel", "Aceite Puro", "Jengibre", "Maíz Verdegal", "Café Estimulante", "Puerro Grueso", "Cola de Slowpoke", "Calabaza Suculenta", "Aguacate").
-   - CRITICAL RULE: The player's available inventory count is the NUMBER AFTER THE SLASH (the denominator)!
-     For example:
-     - "0/4" means quantity: 4
-     - "0/11" means quantity: 11
-     - "0/22" means quantity: 22
-     - "0/15" means quantity: 15
-     - "0/6" means quantity: 6
-     - "0/5" means quantity: 5
-   - If multiple screenshots are provided (e.g. user scrolled down to show the rest of their ingredients), combine them into a single deduplicated list. If the same ingredient appears in both, use the larger/clearer count.
-
-CANONICAL INGREDIENT NAMES IN POKÉMON SLEEP (Spanish):
-- "Puerro Grueso"
-- "Seta Sabrosa"
-- "Huevo Selecto"
-- "Patata"
-- "Manzana Selecta"
-- "Hierba Picante"
-- "Fiambre Vegetariano"
-- "Leche Mu-mu"
-- "Miel"
-- "Aceite Puro"
-- "Jengibre"
-- "Siestomate"
-- "Cacao Relajante"
-- "Cola de Slowpoke"
-- "Soja Verdegal"
-- "Maíz Verdegal"
-- "Café Estimulante"
-- "Calabaza Suculenta"
-- "Aguacate"
-
-Expected JSON Output Schema:
-{
-  "potCapacity": number,        // e.g. 59, 45, 57
-  "currentAdded": number,       // e.g. 0
-  "dishType": string | null,    // "curry", "salad", "dessert" if visible on screen, else null
-  "ingredients": [
-    {
-      "name": string,           // Canonical Spanish name from the list above
-      "quantity": number        // Available count (the denominator)
-    }
-  ]
-}
-
-Output strictly valid JSON.`;
-
-    const candidateModels = [
-      'gemini-3.5-flash-lite',
-      'gemini-2.5-flash-lite',
-      'gemini-1.5-flash'
-    ];
-
+    const queue: string[] = cachedWinningPotModel
+      ? [cachedWinningPotModel, ...DEFAULT_MODELS.filter((m) => m !== cachedWinningPotModel)]
+      : [...DEFAULT_MODELS];
+    const tried = new Set<string>();
+    let catalogQueried = false;
     let lastError: any = null;
-    let resultJson = null;
+    let resultJson: any = null;
+    let attempts = 0;
 
-    for (const model of candidateModels) {
-      try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          signal: AbortSignal.timeout(15000),
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  { text: systemPrompt },
-                  ...cleanImages.map((data) => ({
-                    inline_data: {
-                      mime_type: mimeType,
-                      data
-                    }
-                  }))
-                ]
-              }
-            ],
-            generationConfig: {
-              responseMimeType: 'application/json'
+    while (queue.length > 0 && attempts < 3 && !resultJson) {
+      const model = queue.shift()!;
+      if (!model || tried.has(model)) continue;
+      tried.add(model);
+      attempts++;
+
+      for (const minimalFallback of [false, true]) {
+        try {
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
+          const response = await fetchWithTimeout(
+            url,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [
+                  {
+                    parts: [
+                      { text: POT_SYSTEM_PROMPT },
+                      ...cleanImages.map((data) => ({
+                        inline_data: { mime_type: mimeType, data }
+                      }))
+                    ]
+                  }
+                ],
+                generationConfig: buildGenerationConfig(model, minimalFallback)
+              })
+            },
+            12000
+          );
+
+          if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            const errMsg: string = errData?.error?.message || `HTTP ${response.status}`;
+            const lowerMsg = errMsg.toLowerCase();
+
+            if (
+              response.status === 401 ||
+              response.status === 403 ||
+              lowerMsg.includes('api_key_invalid') ||
+              lowerMsg.includes('api key not valid')
+            ) {
+              return res.status(401).json({
+                error: 'INVALID_API_KEY',
+                message: 'API Key de Google AI Studio inválida o sin permisos.'
+              });
             }
-          })
-        });
 
-        if (!response.ok) {
-          const errData = await response.json().catch(() => ({}));
-          throw new Error(errData.error?.message || `HTTP ${response.status}`);
-        }
+            if (response.status === 429 || lowerMsg.includes('quota') || lowerMsg.includes('resource_exhausted')) {
+              return res.status(429).json({
+                error: 'QUOTA_EXCEEDED',
+                message: 'Límite por minuto alcanzado en Google AI Studio. Intenta de nuevo en unos segundos.'
+              });
+            }
 
-        const data = await response.json();
-        const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (candidateText) {
-          const cleanText = candidateText
-            .replace(/```json/gi, '')
-            .replace(/```/g, '')
-            .trim();
-          resultJson = JSON.parse(cleanText);
+            if (
+              !minimalFallback &&
+              response.status === 400 &&
+              (lowerMsg.includes('responseschema') || lowerMsg.includes('thinking') || lowerMsg.includes('unknown name'))
+            ) {
+              continue;
+            }
+
+            if (
+              lowerMsg.includes('no longer available') ||
+              lowerMsg.includes('not found') ||
+              lowerMsg.includes('deprecated') ||
+              response.status === 404
+            ) {
+              if (cachedWinningPotModel === model) cachedWinningPotModel = null;
+              const hinted = extractSuggestedModel(errMsg, model);
+              if (hinted && !tried.has(hinted)) {
+                queue.unshift(hinted);
+              } else if (!catalogQueried) {
+                catalogQueried = true;
+                try {
+                  const catRes = await fetchWithTimeout(
+                    `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`,
+                    { method: 'GET' },
+                    5000
+                  );
+                  if (catRes.ok) {
+                    const catData = await catRes.json();
+                    const dynamic = filterVisionModels(catData.models || []);
+                    for (let k = dynamic.length - 1; k >= 0; k--) {
+                      if (!tried.has(dynamic[k])) queue.unshift(dynamic[k]);
+                    }
+                  }
+                } catch {
+                  // ignore catalog error
+                }
+              }
+            }
+
+            throw new Error(errMsg);
+          }
+
+          const data = await response.json();
+          resultJson = extractJsonFromCandidate(data);
+          cachedWinningPotModel = model;
+          break;
+        } catch (err: any) {
+          lastError = err;
           break;
         }
-      } catch (err: any) {
-        lastError = err;
       }
     }
 
-    // Dynamic auto-discovery fallback if hardcoded models are deprecated or not found
-    if (!resultJson && lastError && (String(lastError?.message).includes('no longer available') || String(lastError?.message).includes('not found'))) {
-      try {
-        const catRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-        if (catRes.ok) {
-          const catData = await catRes.json();
-          const dynamicModels = (catData.models || [])
-            .filter((m: any) => (m.supportedGenerationMethods || []).includes('generateContent') && (m.name || '').includes('flash'))
-            .map((m: any) => (m.name || '').replace('models/', ''));
-          for (const dModel of dynamicModels) {
-            if (candidateModels.includes(dModel)) continue;
-            try {
-              const url = `https://generativelanguage.googleapis.com/v1beta/models/${dModel}:generateContent?key=${apiKey}`;
-              const resp = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  contents: [{ parts: [{ text: systemPrompt }, ...cleanImages.map((data) => ({ inline_data: { mime_type: mimeType, data } }))] }],
-                  generationConfig: { temperature: 0.1, responseMimeType: 'application/json' }
-                })
-              });
-              if (resp.ok) {
-                const data = await resp.json();
-                const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (text) {
-                  resultJson = JSON.parse(text.replace(/```json/gi, '').replace(/```/g, '').trim());
-                  break;
-                }
-              }
-            } catch {}
-          }
-        }
-      } catch {}
-    }
-
     if (!resultJson) {
-      throw new Error(
-        lastError?.message ||
+      return res.status(502).json({
+        error: 'SCAN_FAILED',
+        message:
+          lastError?.message ||
           'Ningún modelo de Gemini pudo procesar la captura de la olla. Verifica tu API Key o la nitidez de la imagen.'
-      );
+      });
     }
 
     return res.status(200).json({

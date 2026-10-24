@@ -15,15 +15,17 @@ function ocrServerMiddleware(env: Record<string, string>) {
           req.on('end', async () => {
             try {
               const parsed = JSON.parse(body || '{}');
-              const { imageBase64, mimeType = 'image/jpeg', apiKey: userApiKey } = parsed;
+              const { imageBase64, imagesBase64, mimeType = 'image/jpeg', apiKey: userApiKey } = parsed;
 
-              const apiKey =
+              const apiKey = (
                 userApiKey ||
                 env.GEMINI_API_KEY ||
                 env.VITE_GEMINI_API_KEY ||
                 process.env.GEMINI_API_KEY ||
                 process.env.VITE_GEMINI_API_KEY ||
-                process.env.GOOGLE_API_KEY;
+                process.env.GOOGLE_API_KEY ||
+                ''
+              ).trim();
 
               if (!apiKey) {
                 res.statusCode = 401;
@@ -32,49 +34,33 @@ function ocrServerMiddleware(env: Record<string, string>) {
                   JSON.stringify({
                     error: 'MISSING_API_KEY',
                     message:
-                      'Se requiere una API Key de Google AI Studio (Gemini Flash). Configúrala en .env.local o en la app.'
+                      'Se requiere una API Key de Google AI Studio (Gemini Flash-Lite). Configúrala en .env.local o en la app.'
                   })
                 );
                 return;
               }
 
-              const cleanBase64 = (imageBase64 || '').replace(/^data:image\/[a-zA-Z]+;base64,/, '');
+              const rawImages: string[] = Array.isArray(imagesBase64) && imagesBase64.length > 0
+                ? imagesBase64
+                : imageBase64
+                ? [imageBase64]
+                : [];
+              const cleanImages = rawImages.map((img: string) =>
+                img.replace(/^data:image\/[a-zA-Z]+;base64,/, '')
+              );
 
-              const systemPrompt = `You are an expert OCR vision AI specialized in extracting data from "Pokémon Sleep" mobile screenshots.
-Analyze the provided screenshot of a Pokémon summary screen and extract all fields into strict JSON format with no markdown wrappers or codeblocks.
-IMPORTANT RULES:
-- SCROLLED SCREENSHOTS: If the top header or Pokémon species name is scrolled off-screen or cut off, look lower down at the candy text (e.g. "Caramelos Gastly", "Caramelos Pikachu", "Pikachu Candy") to accurately determine the species name!
-- INGREDIENT ICONS: In Pokémon Sleep, ingredient slots show icons with quantities (e.g. x1, x2, x4). Carefully inspect the shapes and colors of the ingredient icons.
-
-Expected JSON Schema:
-{
-  "name": string,
-  "isShiny": boolean,
-  "level": number,
-  "rp": number,
-  "nature": string,
-  "mainSkillName": string,
-  "mainSkillLevel": number,
-  "carryLimit": number,
-  "ingredients": [
-    { "slot": 1, "unlockLevel": 1, "name": string, "count": number },
-    { "slot": 2, "unlockLevel": 30, "name": string, "count": number },
-    { "slot": 3, "unlockLevel": 60, "name": string, "count": number }
-  ],
-  "subskills": [
-    { "slot": 1, "unlockLevel": 10, "name": string },
-    { "slot": 2, "unlockLevel": 25, "name": string },
-    { "slot": 3, "unlockLevel": 50, "name": string },
-    { "slot": 4, "unlockLevel": 75, "name": string },
-    { "slot": 5, "unlockLevel": 100, "name": string }
-  ]
-}
-Output strictly valid JSON.`;
+              const systemPrompt = `Extract Pokémon Sleep summary data from the image(s) into JSON.
+If the image contains 2 side-by-side or separate views (top stats + scrolled subskills/ingredients), merge all visible data for this single Pokémon.
+Rules:
+- name: species name; if top header is cut off, read candy text ("Caramelos <Name>" or "<Name> Candy").
+- isShiny: true only if golden sparkle/star icon is visible near name/avatar.
+- Read integer level, rp (PR/PA/RP), nature, mainSkillName, mainSkillLevel (1-7), carryLimit (bag size).
+- ingredients: up to 3 slots (slot 1 lv1, slot 2 lv30, slot 3 lv60) with name and integer count (x1, x2, x4...).
+- subskills: up to 5 slots (slot 1 lv10, slot 2 lv25, slot 3 lv50, slot 4 lv75, slot 5 lv100) with exact badge text.`;
 
               const candidateModels = [
                 'gemini-3.5-flash-lite',
-                'gemini-2.5-flash-lite',
-                'gemini-1.5-flash'
+                'gemini-2.5-flash-lite'
               ];
 
               let lastError: any = null;
@@ -83,27 +69,28 @@ Output strictly valid JSON.`;
               for (const model of candidateModels) {
                 try {
                   const geminiRes = await fetch(
-                    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+                    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`,
                     {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
-                      signal: AbortSignal.timeout(15000),
+                      signal: AbortSignal.timeout(12000),
                       body: JSON.stringify({
                         contents: [
                           {
                             parts: [
                               { text: systemPrompt },
-                              {
+                              ...cleanImages.map((data: string) => ({
                                 inline_data: {
                                   mime_type: mimeType,
-                                  data: cleanBase64
+                                  data
                                 }
-                              }
+                              }))
                             ]
                           }
                         ],
                         generationConfig: {
-                          responseMimeType: 'application/json'
+                          responseMimeType: 'application/json',
+                          maxOutputTokens: 900
                         }
                       })
                     }
@@ -111,7 +98,9 @@ Output strictly valid JSON.`;
 
                   if (geminiRes.ok) {
                     const data = await geminiRes.json();
-                    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                    const parts = data.candidates?.[0]?.content?.parts || [];
+                    const textPart = [...parts].reverse().find((p: any) => p && !p.thought && typeof p.text === 'string' && p.text.trim()) || parts[0];
+                    const text = textPart?.text;
                     if (text) {
                       const cleanText = text.replace(/```json/gi, '').replace(/```/g, '').trim();
                       resultJson = JSON.parse(cleanText);
@@ -129,7 +118,12 @@ Output strictly valid JSON.`;
               if (!resultJson) {
                 res.statusCode = 502;
                 res.setHeader('Content-Type', 'application/json');
-                res.end(JSON.stringify({ error: lastError?.message || 'Error de Google AI Studio' }));
+                res.end(
+                  JSON.stringify({
+                    error: 'VISION_FAILED',
+                    message: lastError?.message || 'Error de Google AI Studio'
+                  })
+                );
                 return;
               }
 

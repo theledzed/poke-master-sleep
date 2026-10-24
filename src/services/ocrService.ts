@@ -1,5 +1,5 @@
 import { getSpeciesMasterData, MasterSpecies } from '../data/speciesMaster';
-import { INGREDIENTS, normalizeIngredientName, parseNature, KNOWN_SUBSKILLS, BERRIES, NATURES } from '../data/gameData';
+import { normalizeIngredientName, parseNature, KNOWN_SUBSKILLS, NATURES } from '../data/gameData';
 import { formatFrequencySeconds } from '../services/evolutionService';
 import { Specialty } from '../types/pokemon';
 
@@ -59,56 +59,164 @@ export type ScanProgressCallback = (
 ) => void;
 
 /**
- * Resizes and compresses an image to max 960px maintaining aspect ratio.
- * Checks both width and height to guarantee lightweight transport (<90KB per mobile screenshot).
+ * Gemini Vision Single-Tile Threshold:
+ * Gemini splits images >768px into multiple 768x768 tiles (258 tokens each).
+ * Keeping maxDimension = 768 ensures 1 screenshot (~350x768) OR 2 side-by-side portrait
+ * screenshots (~708x768) fit inside ONE SINGLE 768x768 ViT tile (258 tokens total instead of 1,548!).
+ */
+const SINGLE_TILE_MAX_DIM = 768;
+const DEFAULT_JPEG_QUALITY = 0.82;
+
+interface CompressedCanvasEntry {
+  dataUrl: string;
+  canvas: HTMLCanvasElement;
+  width: number;
+  height: number;
+}
+
+const compressedBlobCache = new WeakMap<Blob, Promise<CompressedCanvasEntry>>();
+
+async function decodeImageSource(
+  file: File | Blob
+): Promise<{ source: CanvasImageSource; width: number; height: number; cleanup: () => void }> {
+  if (typeof createImageBitmap === 'function') {
+    try {
+      const bitmap = await createImageBitmap(file);
+      return {
+        source: bitmap,
+        width: bitmap.width,
+        height: bitmap.height,
+        cleanup: () => bitmap.close()
+      };
+    } catch {
+      // Fallback to HTMLImageElement if createImageBitmap fails on exotic format
+    }
+  }
+
+  return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      resolve({
+        source: img,
+        width: img.naturalWidth || img.width,
+        height: img.naturalHeight || img.height,
+        cleanup: () => URL.revokeObjectURL(objectUrl)
+      });
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('No se pudo decodificar la imagen seleccionada.'));
+    };
+    img.src = objectUrl;
+  });
+}
+
+async function compressScreenshotToEntry(
+  file: File | Blob,
+  maxDimension = SINGLE_TILE_MAX_DIM,
+  quality = DEFAULT_JPEG_QUALITY
+): Promise<CompressedCanvasEntry> {
+  const isDefaultConfig = maxDimension === SINGLE_TILE_MAX_DIM && quality === DEFAULT_JPEG_QUALITY;
+  if (isDefaultConfig) {
+    const cached = compressedBlobCache.get(file);
+    if (cached) return cached;
+  }
+
+  const job = (async (): Promise<CompressedCanvasEntry> => {
+    const decoded = await decodeImageSource(file);
+    try {
+      let { width, height } = decoded;
+      if (width > maxDimension || height > maxDimension) {
+        if (width >= height) {
+          height = Math.max(1, Math.round((height * maxDimension) / width));
+          width = maxDimension;
+        } else {
+          width = Math.max(1, Math.round((width * maxDimension) / height));
+          height = maxDimension;
+        }
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext('2d', { alpha: false });
+      if (ctx) {
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(decoded.source, 0, 0, width, height);
+      }
+
+      const dataUrl = canvas.toDataURL('image/jpeg', quality);
+      return { dataUrl, canvas, width, height };
+    } finally {
+      decoded.cleanup();
+    }
+  })();
+
+  if (isDefaultConfig) {
+    compressedBlobCache.set(file, job);
+    job.catch(() => compressedBlobCache.delete(file));
+  }
+
+  return job;
+}
+
+/**
+ * Resizes and compresses an image to max 768px maintaining aspect ratio (~35 KB JPEG).
+ * Uses off-thread createImageBitmap + WeakMap memoization for near-0ms repeat access.
  */
 export async function compressScreenshot(
   file: File | Blob,
-  maxDimension = 960,
-  quality = 0.80
+  maxDimension = SINGLE_TILE_MAX_DIM,
+  quality = DEFAULT_JPEG_QUALITY
 ): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        let width = img.width;
-        let height = img.height;
+  const entry = await compressScreenshotToEntry(file, maxDimension, quality);
+  return entry.dataUrl;
+}
 
-        // Downscale proportionally checking both width and height
-        if (width > maxDimension || height > maxDimension) {
-          if (width >= height) {
-            height = Math.round((height * maxDimension) / width);
-            width = maxDimension;
-          } else {
-            width = Math.round((width * maxDimension) / height);
-            height = maxDimension;
-          }
-        }
+/**
+ * Pre-warms screenshot compression in the background as soon as the user selects/pastes files,
+ * eliminating local compression latency when clicking "Analizar con IA".
+ */
+export function prewarmScreenshotCompression(files: (File | Blob)[]): void {
+  if (typeof window === 'undefined') return;
+  for (const file of files) {
+    compressScreenshotToEntry(file).catch(() => {
+      // Ignore background prewarm errors; handled on explicit scan
+    });
+  }
+}
 
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
+/**
+ * Prepares 1 or 2 screenshots for Gemini Vision.
+ * When 2 portrait phone screenshots fit side-by-side within 768x768 (e.g. 348 + 8 + 348 = 704x768),
+ * fuses them onto a single canvas so Gemini encodes BOTH screens in 1 single 258-token ViT tile!
+ */
+async function prepareVisionPayloads(files: (File | Blob)[]): Promise<string[]> {
+  const entries = await Promise.all(files.map((f) => compressScreenshotToEntry(f)));
+  if (entries.length === 2) {
+    const [left, right] = entries;
+    const gap = 8;
+    const combinedWidth = left.width + gap + right.width;
+    const combinedHeight = Math.max(left.height, right.height);
 
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          return resolve(e.target?.result as string);
-        }
-
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        ctx.drawImage(img, 0, 0, width, height);
-
-        // Ultra fast, high clarity JPEG compression
-        const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
-        resolve(compressedBase64);
-      };
-      img.onerror = () => reject(new Error('No se pudo cargar la imagen seleccionada.'));
-      img.src = e.target?.result as string;
-    };
-    reader.onerror = () => reject(new Error('Error al leer el archivo de imagen.'));
-    reader.readAsDataURL(file);
-  });
+    if (combinedWidth <= SINGLE_TILE_MAX_DIM && combinedHeight <= SINGLE_TILE_MAX_DIM) {
+      const stitched = document.createElement('canvas');
+      stitched.width = combinedWidth;
+      stitched.height = combinedHeight;
+      const ctx = stitched.getContext('2d', { alpha: false });
+      if (ctx) {
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, combinedWidth, combinedHeight);
+        ctx.drawImage(left.canvas, 0, 0);
+        ctx.drawImage(right.canvas, left.width + gap, 0);
+        return [stitched.toDataURL('image/jpeg', DEFAULT_JPEG_QUALITY)];
+      }
+    }
+  }
+  return entries.map((e) => e.dataUrl);
 }
 
 /**
@@ -133,6 +241,8 @@ export function matchCanonicalSubskill(rawName: string): string {
     'bonusayuda': 'Bonus ayuda',
     'velocidadayudas': 'Velocidad ayuda S',
     'velocidadayudam': 'Velocidad ayuda M',
+    'velocidaddeayudas': 'Velocidad ayuda S',
+    'velocidaddeayudam': 'Velocidad ayuda M',
     'helpingspeeds': 'Velocidad ayuda S',
     'helpingspeedm': 'Velocidad ayuda M',
     'masingredientes': 'Más ingredientes S',
@@ -327,313 +437,630 @@ export function normalizeOcrPokemonData(raw: RawOcrData): PreFilledPokemonData {
   };
 }
 
-/**
- * Primary function: Takes a screenshot image and scans it via serverless API or direct Gemini.
- * Supports real-time progress callbacks for responsive progress bars.
- */
-export async function scanPokemonScreenshot(
-  imageInput: File | Blob | (File | Blob)[],
-  customApiKey?: string,
-  onProgress?: ScanProgressCallback
-): Promise<PreFilledPokemonData> {
-  const files = Array.isArray(imageInput) ? imageInput : [imageInput];
-  if (files.length === 0) {
-    throw new Error('No se proporcionó ninguna imagen.');
-  }
+// ============================================================================
+// SHARED HIGH-SPEED GEMINI VISION ENGINE (CLIENT + FALLBACK COORDINATION)
+// ============================================================================
 
-  // 1. Stage: Compressing (<90KB per image)
-  onProgress?.(10, 'Optimizando captura (<100 KB ultra ligero)...', 'compressing');
-  const base64List = await Promise.all(files.map((f) => compressScreenshot(f)));
-  onProgress?.(28, 'Captura optimizada. Conectando con Gemini 2.0 Flash...', 'uploading');
-
-  // 2. Simulated progress ticker during network inference
-  let ticker: any = null;
-  let currentPct = 30;
-  const startProgressTicker = () => {
-    ticker = setInterval(() => {
-      currentPct = Math.min(86, currentPct + Math.floor(Math.random() * 7) + 3);
-      if (currentPct < 52) {
-        onProgress?.(currentPct, 'Gemini 2.0 Flash analizando pantalla...', 'analyzing');
-      } else if (currentPct < 72) {
-        onProgress?.(currentPct, 'Extrayendo nivel, RP, naturaleza e ingredientes...', 'analyzing');
-      } else {
-        onProgress?.(currentPct, 'Detectando subhabilidades y sinergias...', 'analyzing');
-      }
-    }, 400);
-  };
-  const stopProgressTicker = () => {
-    if (ticker) clearInterval(ticker);
-  };
-
-  // 3. Check for custom API key in argument or localStorage
-  const savedApiKey =
-    customApiKey ||
-    (typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY_GEMINI_KEY) || undefined : undefined);
-
-  startProgressTicker();
-
-  // 4. Fast path: If client has personal API key, call Google directly (single-hop, no serverless cold-start, <2.5s!)
-  if (savedApiKey) {
-    try {
-      const result = await callGeminiDirectly(base64List, savedApiKey, onProgress);
-      stopProgressTicker();
-      onProgress?.(100, '¡Lectura completada con éxito!', 'done');
-      return result;
-    } catch (directErr) {
-      console.warn('Direct Google AI Studio call failed, attempting serverless fallback:', directErr);
-    }
-  }
-
-  // 5. Attempt Serverless endpoint fallback
-  try {
-    const response = await fetch('/api/scan-pokemon', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      signal: AbortSignal.timeout(20000),
-      body: JSON.stringify({
-        imageBase64: base64List[0],
-        imagesBase64: base64List,
-        mimeType: 'image/jpeg',
-        apiKey: savedApiKey
-      })
-    });
-
-    if (response.ok) {
-      const resData = await response.json();
-      if (resData.success && resData.data) {
-        stopProgressTicker();
-        onProgress?.(92, 'Validando datos con el Pokédex canónico oficial...', 'validating');
-        const normalized = normalizeOcrPokemonData(resData.data);
-        onProgress?.(100, '¡Lectura completada con éxito!', 'done');
-        return normalized;
-      }
-    }
-
-    const errJson = await response.json().catch(() => ({}));
-    if (errJson.message) {
-      stopProgressTicker();
-      throw new Error(errJson.message);
-    }
-  } catch (err: any) {
-    stopProgressTicker();
-    throw err;
-  }
-
-  stopProgressTicker();
-  throw new Error('No se pudo procesar la captura con el servicio de IA.');
-}
-
-const GEMINI_MODELS_CACHE_KEY = 'gemini_active_vision_models_v4';
+const GEMINI_MODELS_CACHE_KEY = 'gemini_active_vision_models_v5';
 
 export const DEFAULT_GEMINI_MODELS = [
   'gemini-3.5-flash-lite',
-  'gemini-2.5-flash-lite',
-  'gemini-1.5-flash'
+  'gemini-2.5-flash-lite'
 ];
+
+const POKEMON_SYSTEM_PROMPT = `Extract Pokémon Sleep summary data from the image(s) into JSON.
+If the image contains 2 side-by-side or separate views (top stats + scrolled subskills/ingredients), merge all visible data for this single Pokémon.
+Rules:
+- name: species name; if top header is cut off, read candy text ("Caramelos <Name>" or "<Name> Candy").
+- isShiny: true only if golden sparkle/star icon is visible near name/avatar.
+- Read integer level, rp (PR/PA/RP), nature, mainSkillName, mainSkillLevel (1-7), carryLimit (bag size).
+- ingredients: up to 3 slots (slot 1 lv1, slot 2 lv30, slot 3 lv60) with name and integer count (x1, x2, x4...).
+- subskills: up to 5 slots (slot 1 lv10, slot 2 lv25, slot 3 lv50, slot 4 lv75, slot 5 lv100) with exact badge text.`;
+
+const POKEMON_OCR_SCHEMA = {
+  type: 'OBJECT',
+  properties: {
+    name: { type: 'STRING' },
+    isShiny: { type: 'BOOLEAN' },
+    level: { type: 'INTEGER' },
+    rp: { type: 'INTEGER' },
+    nature: { type: 'STRING' },
+    mainSkillName: { type: 'STRING' },
+    mainSkillLevel: { type: 'INTEGER' },
+    carryLimit: { type: 'INTEGER' },
+    ingredients: {
+      type: 'ARRAY',
+      items: {
+        type: 'OBJECT',
+        properties: {
+          slot: { type: 'INTEGER' },
+          unlockLevel: { type: 'INTEGER' },
+          name: { type: 'STRING' },
+          count: { type: 'INTEGER' }
+        },
+        required: ['slot', 'name', 'count']
+      }
+    },
+    subskills: {
+      type: 'ARRAY',
+      items: {
+        type: 'OBJECT',
+        properties: {
+          slot: { type: 'INTEGER' },
+          unlockLevel: { type: 'INTEGER' },
+          name: { type: 'STRING' }
+        },
+        required: ['slot', 'name']
+      }
+    }
+  },
+  required: ['name']
+};
+
+const POT_SYSTEM_PROMPT = `Extract Pokémon Sleep cooking pot & ingredient stock from the image(s) into JSON.
+Rules:
+- potCapacity: second integer Y in "Añadido: X/Y" or "Added: X/Y" (default 57 if hidden); currentAdded = X.
+- dishType: "curry", "salad", or "dessert" if visible, else null.
+- ingredients: read every ingredient card in the grid. Counter "A/B" means available quantity = B (the denominator AFTER the slash!). Deduplicate across scrolled views.
+Canonical Spanish names: Puerro Grueso, Seta Sabrosa, Huevo Selecto, Patata, Manzana Selecta, Hierba Picante, Fiambre Vegetariano, Leche Mu-mu, Miel, Aceite Puro, Jengibre, Siestomate, Cacao Relajante, Cola de Slowpoke, Soja Verdegal, Maíz Verdegal, Café Estimulante, Calabaza Suculenta, Aguacate.`;
+
+const POT_OCR_SCHEMA = {
+  type: 'OBJECT',
+  properties: {
+    potCapacity: { type: 'INTEGER' },
+    currentAdded: { type: 'INTEGER' },
+    dishType: { type: 'STRING', nullable: true },
+    ingredients: {
+      type: 'ARRAY',
+      items: {
+        type: 'OBJECT',
+        properties: {
+          name: { type: 'STRING' },
+          quantity: { type: 'INTEGER' }
+        },
+        required: ['name', 'quantity']
+      }
+    }
+  },
+  required: ['potCapacity', 'ingredients']
+};
+
+/**
+ * Cross-browser fetch with AbortController timeout and optional user cancel signal.
+ */
+async function fetchWithTimeout(
+  url: string,
+  init: RequestInit,
+  timeoutMs: number,
+  externalSignal?: AbortSignal
+): Promise<Response> {
+  if (externalSignal?.aborted) {
+    const abortErr = new Error('Escaneo cancelado por el usuario.');
+    abortErr.name = 'AbortError';
+    throw abortErr;
+  }
+
+  const controller = new AbortController();
+  let timedOut = false;
+
+  const timer = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, timeoutMs);
+
+  const onExternalAbort = () => {
+    clearTimeout(timer);
+    controller.abort();
+  };
+  externalSignal?.addEventListener('abort', onExternalAbort, { once: true });
+
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } catch (err: any) {
+    if (externalSignal?.aborted) {
+      const abortErr = new Error('Escaneo cancelado por el usuario.');
+      abortErr.name = 'AbortError';
+      throw abortErr;
+    }
+    if (timedOut) {
+      throw new Error(`Tiempo de espera agotado (${Math.round(timeoutMs / 1000)}s).`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+    externalSignal?.removeEventListener('abort', onExternalAbort);
+  }
+}
+
+/**
+ * Strict filter & ranker for /v1beta/models so we ONLY keep top 2 fast multimodal Flash models
+ * and NEVER loop over TTS, audio, live, thinking, Pro, or retired 1.x / 2.0 models.
+ */
+function filterAndRankVisionModels(modelsList: any[]): string[] {
+  const excludedTokens = [
+    '2.0-',
+    '1.5-',
+    '1.0-',
+    'embedding',
+    'aqa',
+    'imagen',
+    'learnlm',
+    'tts',
+    'audio',
+    'live',
+    'thinking',
+    'robotics',
+    'computer-use',
+    'image',
+    'veo',
+    'gemma',
+    'pro',
+    'customtools'
+  ];
+
+  const valid = modelsList
+    .filter((m: any) => {
+      const name = String(m?.name || '').replace(/^models\//, '').toLowerCase();
+      const methods: string[] = m?.supportedGenerationMethods || [];
+      if (!methods.includes('generateContent')) return false;
+      if (!name.startsWith('gemini-') || !name.includes('flash')) return false;
+      return !excludedTokens.some((tok) => name.includes(tok));
+    })
+    .map((m: any) => String(m.name).replace(/^models\//, ''));
+
+  valid.sort((a, b) => {
+    const aLow = a.toLowerCase();
+    const bLow = b.toLowerCase();
+
+    // 1. Prefer Flash-Lite (zero thinking overhead, lowest latency)
+    const aLite = aLow.includes('lite') ? 1 : 0;
+    const bLite = bLow.includes('lite') ? 1 : 0;
+    if (bLite !== aLite) return bLite - aLite;
+
+    // 2. Prefer stable GA releases over preview/experimental
+    const aStable = !aLow.includes('preview') && !aLow.includes('exp') ? 1 : 0;
+    const bStable = !bLow.includes('preview') && !bLow.includes('exp') ? 1 : 0;
+    if (bStable !== aStable) return bStable - aStable;
+
+    // 3. Prefer newer major.minor Gemini version (e.g. 3.5 > 2.5)
+    const vA = parseFloat((aLow.match(/gemini-(\d+(?:\.\d+)?)/) || [])[1] || '0');
+    const vB = parseFloat((bLow.match(/gemini-(\d+(?:\.\d+)?)/) || [])[1] || '0');
+    return vB - vA;
+  });
+
+  return Array.from(new Set(valid)).slice(0, 2);
+}
+
+/**
+ * Extracts Google's explicit replacement model suggestion from deprecation error messages,
+ * e.g. "Please update your code to use models/gemini-3.5-flash-lite" -> "gemini-3.5-flash-lite" (0ms!)
+ */
+function extractSuggestedModelFromError(errMsg: string, failedModel: string): string | null {
+  if (!errMsg) return null;
+  const regex = /models\/(gemini-[a-z0-9.-]+)/gi;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(errMsg)) !== null) {
+    const candidate = match[1].replace(/\.$/, '');
+    if (
+      candidate &&
+      candidate !== failedModel &&
+      !candidate.includes('2.0-') &&
+      !candidate.includes('1.5-')
+    ) {
+      return candidate;
+    }
+  }
+  return null;
+}
+
+function saveWinningModelToCache(winningModel: string): void {
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  try {
+    const nextList = [
+      winningModel,
+      ...DEFAULT_GEMINI_MODELS.filter((m) => m !== winningModel)
+    ].slice(0, 2);
+    localStorage.setItem(GEMINI_MODELS_CACHE_KEY, JSON.stringify(nextList));
+  } catch {
+    // ignore storage quota errors
+  }
+}
 
 /**
  * Event-Driven Dynamic Gemini Model Discovery:
- * Keeps the active model cached indefinitely (0ms overhead on every single scan)
- * until an actual error from Google triggers a fresh catalog discovery.
+ * Keeps the active winning model cached indefinitely (0ms overhead on every scan)
+ * until an actual deprecation/404 error from Google triggers a fresh catalog discovery.
  */
 export async function resolveGeminiVisionModels(
   apiKey: string,
-  forceRefresh = false
+  forceRefresh = false,
+  signal?: AbortSignal
 ): Promise<string[]> {
   if (!apiKey) return DEFAULT_GEMINI_MODELS;
 
-  // 1. If not forcing a refresh, return cached models if present, or DEFAULT_GEMINI_MODELS immediately (0ms latency!)
   if (!forceRefresh && typeof window !== 'undefined' && window.localStorage) {
     try {
       const raw = localStorage.getItem(GEMINI_MODELS_CACHE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          return parsed.slice(0, 2);
         }
       }
     } catch {
       // ignore storage parsing errors
     }
-    // Zero latency: return defaults without hitting network
     return DEFAULT_GEMINI_MODELS;
   }
 
-  // 2. Only on forceRefresh (triggered by an API error): query Google AI Studio catalog
   try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+    const res = await fetchWithTimeout(
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`,
+      { method: 'GET' },
+      6000,
+      signal
+    );
     if (res.ok) {
       const json = await res.json();
       if (Array.isArray(json.models)) {
-        const available = json.models
-          .filter((m: any) => {
-            const name = (m.name || '').replace('models/', '').toLowerCase();
-            const methods = m.supportedGenerationMethods || [];
-            return (
-              methods.includes('generateContent') &&
-              name.includes('gemini') &&
-              !name.includes('embedding') &&
-              !name.includes('aqa') &&
-              !name.includes('imagen') &&
-              !name.includes('learnlm')
-            );
-          })
-          .map((m: any) => (m.name || '').replace('models/', ''));
-
-        if (available.length > 0) {
-          // Sort: flash-lite models first (lowest latency, zero thinking overhead)
-          available.sort((a: string, b: string) => {
-            const isALite = a.includes('lite') ? 1 : 0;
-            const isBLite = b.includes('lite') ? 1 : 0;
-            if (isBLite !== isALite) return isBLite - isALite;
-
-            const isAFlash = a.includes('flash') ? 1 : 0;
-            const isBFlash = b.includes('flash') ? 1 : 0;
-            if (isBFlash !== isAFlash) return isBFlash - isAFlash;
-
-            const vA = parseFloat((a.match(/gemini-(\d+(?:\.\d+)?)/i) || [])[1] || '1.0');
-            const vB = parseFloat((b.match(/gemini-(\d+(?:\.\d+)?)/i) || [])[1] || '1.0');
-            return vB - vA;
-          });
-
+        const ranked = filterAndRankVisionModels(json.models);
+        if (ranked.length > 0) {
           if (typeof window !== 'undefined' && window.localStorage) {
             try {
-              localStorage.setItem(GEMINI_MODELS_CACHE_KEY, JSON.stringify(available));
+              localStorage.setItem(GEMINI_MODELS_CACHE_KEY, JSON.stringify(ranked));
             } catch {
               // ignore
             }
           }
-
-          return available;
+          return ranked;
         }
       }
     }
-  } catch (err) {
-    console.warn('Auto-discovery of Gemini models failed, falling back to defaults:', err);
+  } catch (err: any) {
+    if (err?.name === 'AbortError') throw err;
+    console.warn('Auto-discovery of Gemini models failed, using defaults:', err);
   }
 
   return DEFAULT_GEMINI_MODELS;
 }
 
 /**
- * Fallback direct client call to Google AI Studio if running on static hosting without serverless functions.
- * Uses cached dynamic model discovery with error-triggered recovery and progress notification.
+ * Builds model-aware generationConfig:
+ * - On *-flash-lite models: DO NOT pass thinkingConfig (Flash-Lite defaults to 0 thinking; passing thinkingLevel activates it!).
+ * - On non-lite Gemini 3.x: clamp thinkingLevel to "minimal".
+ * - On non-lite Gemini 2.5: disable thinking with thinkingBudget: 0.
  */
-async function callGeminiDirectly(
-  base64Input: string | string[],
-  apiKey: string,
-  onProgress?: ScanProgressCallback
-): Promise<PreFilledPokemonData> {
-  const rawList = Array.isArray(base64Input) ? base64Input : [base64Input];
-  const cleanImages = rawList.map((b) => b.replace(/^data:image\/[a-zA-Z]+;base64,/, ''));
+function buildGenerationConfig(model: string, schema?: Record<string, any>, minimalFallback = false) {
+  if (minimalFallback) {
+    return { responseMimeType: 'application/json' };
+  }
 
-  const systemPrompt = `You are an expert OCR vision AI specialized in extracting data from "Pokémon Sleep" mobile screenshots.
-You may be provided with 1 or 2 screenshots of the same Pokémon (e.g. top section with Level/RP/Nature and a second scrolled section showing all 5 Subskills and 3 Ingredient slots).
-Combine and synthesize all visible information across all provided screenshots to create a single complete JSON representation of the Pokémon.
-IMPORTANT RULES:
-- SCROLLED SCREENSHOTS: If the top header or Pokémon species name is scrolled off-screen or cut off, look lower down at the candy text (e.g. "Caramelos Gastly", "Caramelos Pikachu", "Pikachu Candy") to accurately determine the species name!
-- INGREDIENT ICONS: In Pokémon Sleep, ingredient slots show icons with quantities (e.g. x1, x2, x4). Carefully inspect the shapes and colors of the ingredient icons.
+  const lower = model.toLowerCase();
+  const isLite = lower.includes('lite');
+  const config: Record<string, any> = {
+    responseMimeType: 'application/json',
+    maxOutputTokens: isLite ? 900 : 1400
+  };
 
-Expected JSON Schema:
-{
-  "name": string,              // Official species name in Spanish or English (e.g. "Ribombee", "Pikachu", "Gastly", "Slowpoke", "Charizard")
-  "isShiny": boolean,          // true if there is a golden sparkles / star icon near the name or avatar, else false
-  "level": number,             // integer level (e.g. 20, 33, 50)
-  "rp": number,                // total RP / PA (Puntos de Ayuda, e.g. 989, 1420, 2723)
-  "nature": string,            // nature name (e.g. "Audaz", "Huraña", "Firme", "Alegre", "Adamant", "Modest", etc.)
-  "mainSkillName": string,     // main skill name if visible (e.g. "Afortunado", "Imán ingredientes S", "Carga vigor S")
-  "mainSkillLevel": number,    // main skill level (integer 1-7, default 1)
-  "carryLimit": number,        // bag / inventory capacity if visible (integer, e.g. 19, 24, 30)
-  "ingredients": [             // up to 3 ingredient slots:
-    { "slot": 1, "unlockLevel": 1, "name": string, "count": number },
-    { "slot": 2, "unlockLevel": 30, "name": string, "count": number },
-    { "slot": 3, "unlockLevel": 60, "name": string, "count": number }
-  ],
-  "subskills": [               // up to 5 subskills unlocked at levels 10, 25, 50, 75, 100:
-    { "slot": 1, "unlockLevel": 10, "name": string },
-    { "slot": 2, "unlockLevel": 25, "name": string },
-    { "slot": 3, "unlockLevel": 50, "name": string },
-    { "slot": 4, "unlockLevel": 75, "name": string },
-    { "slot": 5, "unlockLevel": 100, "name": string }
-  ]
-}
+  if (schema) {
+    config.responseSchema = schema;
+  }
 
-Ensure accurate reading of ingredient counts (e.g. x1, x2, x4) and subskill tier names.
-Output strictly valid JSON.`;
-
-  // Targeted production models in priority order (Fastest first, with zero-latency event-driven cache)
-  let candidateModels = await resolveGeminiVisionModels(apiKey);
-  let lastError: any = null;
-
-  for (let i = 0; i < candidateModels.length; i++) {
-    const model = candidateModels[i];
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(15000),
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                { text: systemPrompt },
-                ...cleanImages.map((data) => ({
-                  inline_data: {
-                    mime_type: 'image/jpeg',
-                    data
-                  }
-                }))
-              ]
-            }
-          ],
-          generationConfig: {
-            responseMimeType: 'application/json'
-          }
-        })
-      });
-
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        const errMsg = errData.error?.message || `HTTP ${response.status}`;
-
-        // Event-Driven Auto-Recovery: If model is deprecated / not available / 404, query catalog and notify progress bar
-        if (
-          errMsg.includes('no longer available') ||
-          errMsg.includes('not found') ||
-          errMsg.includes('deprecated') ||
-          response.status === 404
-        ) {
-          if (typeof window !== 'undefined' && window.localStorage) {
-            localStorage.removeItem(GEMINI_MODELS_CACHE_KEY);
-          }
-          if (i === 0) {
-            onProgress?.(38, 'Detectando modelo más nuevo de Gemini en Google AI Studio...', 'uploading');
-            const freshModels = await resolveGeminiVisionModels(apiKey, true);
-            if (freshModels.length > 0 && freshModels[0] !== model) {
-              candidateModels = freshModels;
-              onProgress?.(50, `Conectando con ${freshModels[0]}...`, 'analyzing');
-            }
-          }
-        }
-        throw new Error(errMsg);
-      }
-
-      const data = await response.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (text) {
-        const cleanText = text.replace(/```json/gi, '').replace(/```/g, '').trim();
-        const parsed = JSON.parse(cleanText);
-        return normalizeOcrPokemonData(parsed);
-      }
-    } catch (err: any) {
-      lastError = err;
+  if (!isLite) {
+    if (/gemini-3/.test(lower)) {
+      config.thinkingConfig = { thinkingLevel: 'minimal' };
+    } else if (/gemini-2\.5/.test(lower)) {
+      config.thinkingConfig = { thinkingBudget: 0 };
     }
   }
 
-  throw new Error(`Error de Google AI Studio: ${lastError?.message || 'No se pudo generar respuesta'}`);
+  return config;
+}
+
+/**
+ * Safely extracts the JSON text part from Gemini candidates, skipping any `thought: true` parts.
+ */
+function extractJsonPayloadFromGeminiResponse(data: any): any {
+  const parts: any[] = data?.candidates?.[0]?.content?.parts;
+  if (!Array.isArray(parts) || parts.length === 0) {
+    throw new Error('Respuesta vacía del modelo Gemini.');
+  }
+
+  let rawText = '';
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const part = parts[i];
+    if (part && !part.thought && typeof part.text === 'string' && part.text.trim()) {
+      rawText = part.text;
+      break;
+    }
+  }
+  if (!rawText && typeof parts[0]?.text === 'string') {
+    rawText = parts[0].text;
+  }
+  if (!rawText) {
+    throw new Error('El modelo no devolvió contenido JSON.');
+  }
+
+  const stripped = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+  try {
+    return JSON.parse(stripped);
+  } catch {
+    const start = stripped.indexOf('{');
+    const end = stripped.lastIndexOf('}');
+    if (start !== -1 && end > start) {
+      return JSON.parse(stripped.slice(start, end + 1));
+    }
+    throw new Error('Formato JSON inválido en la respuesta de IA.');
+  }
+}
+
+interface FatalApiError extends Error {
+  isFatalApiError?: boolean;
+}
+
+/**
+ * Core direct Google AI Studio vision executor used by BOTH Pokémon and Cooking Pot scanners.
+ * Capped strictly at max 3 attempts, instant hint recovery, fast-fail on bad API keys, and 12s per-call timeout.
+ */
+async function executeDirectGeminiVision(params: {
+  base64Images: string[];
+  apiKey: string;
+  systemPrompt: string;
+  schema: Record<string, any>;
+  onProgress?: ScanProgressCallback;
+  signal?: AbortSignal;
+}): Promise<any> {
+  const { base64Images, apiKey, systemPrompt, schema, onProgress, signal } = params;
+  const cleanKey = apiKey.trim();
+  const cleanImages = base64Images.map((b) => b.replace(/^data:image\/[a-zA-Z]+;base64,/, ''));
+
+  const initialModels = await resolveGeminiVisionModels(cleanKey, false, signal);
+  const queue: string[] = [...initialModels];
+  const tried = new Set<string>();
+  let catalogRefreshed = false;
+  let lastError: any = null;
+  let attempts = 0;
+  const MAX_ATTEMPTS = 3;
+
+  while (queue.length > 0 && attempts < MAX_ATTEMPTS) {
+    const model = queue.shift()!;
+    if (!model || tried.has(model)) continue;
+    tried.add(model);
+    attempts++;
+
+    for (const minimalFallback of [false, true]) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(cleanKey)}`;
+        const response = await fetchWithTimeout(
+          url,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [
+                    { text: systemPrompt },
+                    ...cleanImages.map((data) => ({
+                      inline_data: { mime_type: 'image/jpeg', data }
+                    }))
+                  ]
+                }
+              ],
+              generationConfig: buildGenerationConfig(model, schema, minimalFallback)
+            })
+          },
+          12000,
+          signal
+        );
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          const errMsg: string = errData?.error?.message || `HTTP ${response.status}`;
+          const lowerMsg = errMsg.toLowerCase();
+
+          // Fast-fail immediately on invalid API key, auth, or quota exhaustion (do not loop models!)
+          if (
+            response.status === 401 ||
+            response.status === 403 ||
+            lowerMsg.includes('api_key_invalid') ||
+            lowerMsg.includes('api key not valid') ||
+            lowerMsg.includes('permission denied')
+          ) {
+            const authErr: FatalApiError = new Error(
+              'Tu API Key de Google AI Studio no es válida o fue revocada. Verifícala en "Configurar clave de IA".'
+            );
+            authErr.isFatalApiError = true;
+            throw authErr;
+          }
+
+          if (response.status === 429 || lowerMsg.includes('quota') || lowerMsg.includes('resource_exhausted')) {
+            const quotaErr: FatalApiError = new Error(
+              'Límite gratuito por minuto alcanzado en Google AI Studio. Espera unos segundos e intenta de nuevo.'
+            );
+            quotaErr.isFatalApiError = true;
+            throw quotaErr;
+          }
+
+          // If a new model rejects responseSchema or thinkingConfig (400), retry same model once with minimal config
+          if (
+            !minimalFallback &&
+            response.status === 400 &&
+            (lowerMsg.includes('responseschema') ||
+              lowerMsg.includes('thinking') ||
+              lowerMsg.includes('unknown name'))
+          ) {
+            continue;
+          }
+
+          // Event-Driven Auto-Recovery on deprecated / 404 model
+          if (
+            lowerMsg.includes('no longer available') ||
+            lowerMsg.includes('not found') ||
+            lowerMsg.includes('deprecated') ||
+            response.status === 404
+          ) {
+            if (typeof window !== 'undefined' && window.localStorage) {
+              localStorage.removeItem(GEMINI_MODELS_CACHE_KEY);
+            }
+
+            // 1. Instant 0ms recovery if Google's error names the successor model directly!
+            const hintedModel = extractSuggestedModelFromError(errMsg, model);
+            if (hintedModel && !tried.has(hintedModel)) {
+              onProgress?.(44, `Actualizando automáticamente a ${hintedModel}...`, 'uploading');
+              queue.unshift(hintedModel);
+            } else if (!catalogRefreshed) {
+              // 2. Otherwise query /v1beta/models once (strictly filtered to top 2 Flash models)
+              catalogRefreshed = true;
+              onProgress?.(42, 'Detectando modelo Flash activo en Google AI Studio...', 'uploading');
+              const freshModels = await resolveGeminiVisionModels(cleanKey, true, signal);
+              for (let k = freshModels.length - 1; k >= 0; k--) {
+                if (!tried.has(freshModels[k])) {
+                  queue.unshift(freshModels[k]);
+                }
+              }
+            }
+          }
+
+          const modelErr: FatalApiError = new Error(errMsg);
+          modelErr.isFatalApiError = true;
+          throw modelErr;
+        }
+
+        const data = await response.json();
+        const parsed = extractJsonPayloadFromGeminiResponse(data);
+        saveWinningModelToCache(model);
+        return parsed;
+      } catch (err: any) {
+        if (err?.name === 'AbortError') throw err;
+        lastError = err;
+        // Break inner minimalFallback loop unless we explicitly `continue`d above
+        break;
+      }
+    }
+
+    // Stop immediately on auth / quota errors instead of trying backup models
+    if (
+      lastError?.message?.includes('API Key') ||
+      lastError?.message?.includes('Límite gratuito')
+    ) {
+      throw lastError;
+    }
+  }
+
+  const finalErr: FatalApiError = new Error(
+    `Error de Google AI Studio: ${lastError?.message || 'No se pudo generar respuesta'}`
+  );
+  if (lastError?.isFatalApiError) {
+    finalErr.isFatalApiError = true;
+  }
+  throw finalErr;
+}
+
+/**
+ * Primary function: Takes 1 or 2 Pokémon Sleep summary screenshots and scans them via
+ * single-hop direct Gemini Flash-Lite (if personal key exists) or serverless /api/scan-pokemon.
+ */
+export async function scanPokemonScreenshot(
+  imageInput: File | Blob | (File | Blob)[],
+  customApiKey?: string,
+  onProgress?: ScanProgressCallback,
+  signal?: AbortSignal
+): Promise<PreFilledPokemonData> {
+  const files = Array.isArray(imageInput) ? imageInput : [imageInput];
+  if (files.length === 0) {
+    throw new Error('No se proporcionó ninguna imagen.');
+  }
+
+  onProgress?.(12, 'Preparando captura en mosaico único (768px)...', 'compressing');
+  const base64List = await prepareVisionPayloads(files);
+  onProgress?.(28, 'Conectando con Gemini 3.5 Flash-Lite...', 'uploading');
+
+  let ticker: ReturnType<typeof setInterval> | null = null;
+  let currentPct = 32;
+  const startProgressTicker = () => {
+    ticker = setInterval(() => {
+      currentPct = Math.min(88, currentPct + Math.floor(Math.random() * 6) + 4);
+      if (currentPct < 54) {
+        onProgress?.(currentPct, 'Gemini Flash-Lite leyendo captura...', 'analyzing');
+      } else if (currentPct < 74) {
+        onProgress?.(currentPct, 'Extrayendo nivel, PR, naturaleza e ingredientes...', 'analyzing');
+      } else {
+        onProgress?.(currentPct, 'Detectando subhabilidades (Nv. 10–100)...', 'analyzing');
+      }
+    }, 350);
+  };
+  const stopProgressTicker = () => {
+    if (ticker) {
+      clearInterval(ticker);
+      ticker = null;
+    }
+  };
+
+  const savedApiKey =
+    customApiKey?.trim() ||
+    (typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY_GEMINI_KEY)?.trim() || undefined : undefined);
+
+  startProgressTicker();
+
+  try {
+    // Fast path: Direct single-hop to Google AI Studio when user has configured an API Key
+    if (savedApiKey) {
+      try {
+        const rawParsed = await executeDirectGeminiVision({
+          base64Images: base64List,
+          apiKey: savedApiKey,
+          systemPrompt: POKEMON_SYSTEM_PROMPT,
+          schema: POKEMON_OCR_SCHEMA,
+          onProgress,
+          signal
+        });
+        stopProgressTicker();
+        onProgress?.(94, 'Validando datos con el Pokédex canónico oficial...', 'validating');
+        const normalized = normalizeOcrPokemonData(rawParsed);
+        onProgress?.(100, '¡Lectura completada con éxito!', 'done');
+        return normalized;
+      } catch (directErr: any) {
+        // Never double-waterfall if user cancelled or Google already responded with an API error!
+        if (directErr?.name === 'AbortError' || directErr?.isFatalApiError) {
+          throw directErr;
+        }
+        console.warn('Direct browser fetch blocked, falling back to /api/scan-pokemon:', directErr);
+      }
+    }
+
+    // Serverless endpoint path (uses Vercel GEMINI_API_KEY)
+    const response = await fetchWithTimeout(
+      '/api/scan-pokemon',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageBase64: base64List[0],
+          imagesBase64: base64List,
+          mimeType: 'image/jpeg',
+          apiKey: savedApiKey
+        })
+      },
+      22000,
+      signal
+    );
+
+    const resData = await response.json().catch(() => ({}));
+    if (response.ok && resData.success && resData.data) {
+      stopProgressTicker();
+      onProgress?.(94, 'Validando datos con el Pokédex canónico oficial...', 'validating');
+      const normalized = normalizeOcrPokemonData(resData.data);
+      onProgress?.(100, '¡Lectura completada con éxito!', 'done');
+      return normalized;
+    }
+
+    throw new Error(
+      resData.message || resData.error || `Error del servidor HTTP ${response.status}`
+    );
+  } finally {
+    stopProgressTicker();
+  }
 }
 
 export interface ScannedPotData {
@@ -650,7 +1077,7 @@ export interface ScannedPotData {
 export function normalizeOcrPotData(raw: any): ScannedPotData {
   const potCapacity = typeof raw.potCapacity === 'number' && raw.potCapacity > 0 ? raw.potCapacity : 57;
   const currentAdded = typeof raw.currentAdded === 'number' ? raw.currentAdded : 0;
-  
+
   let dishType: 'curry' | 'salad' | 'dessert' | null = null;
   if (raw.dishType) {
     const dt = String(raw.dishType).toLowerCase();
@@ -685,175 +1112,104 @@ export function normalizeOcrPotData(raw: any): ScannedPotData {
 }
 
 /**
- * Scans cooking pot / ingredient selection screenshot(s) using /api/scan-pot or direct Gemini.
- * Supports real-time progress callbacks for responsive progress bars.
+ * Scans cooking pot / ingredient selection screenshot(s) using single-hop Gemini Flash-Lite
+ * (when client API key exists) or serverless /api/scan-pot.
  */
 export async function scanPotScreenshots(
   imageInput: File | Blob | (File | Blob)[],
   customApiKey?: string,
-  onProgress?: ScanProgressCallback
+  onProgress?: ScanProgressCallback,
+  signal?: AbortSignal
 ): Promise<ScannedPotData> {
   const files = Array.isArray(imageInput) ? imageInput : [imageInput];
   if (files.length === 0) {
     throw new Error('No se proporcionó ninguna imagen.');
   }
 
-  onProgress?.(10, 'Optimizando captura de la olla (<100 KB)...', 'compressing');
-  const base64List = await Promise.all(files.map((f) => compressScreenshot(f)));
-  onProgress?.(28, 'Conectando con Gemini 2.0 Flash...', 'uploading');
+  onProgress?.(12, 'Preparando captura de la olla (768px)...', 'compressing');
+  const base64List = await prepareVisionPayloads(files);
+  onProgress?.(28, 'Conectando con Gemini 3.5 Flash-Lite...', 'uploading');
 
-  let ticker: any = null;
-  let currentPct = 30;
+  let ticker: ReturnType<typeof setInterval> | null = null;
+  let currentPct = 32;
   const startProgressTicker = () => {
     ticker = setInterval(() => {
-      currentPct = Math.min(86, currentPct + Math.floor(Math.random() * 7) + 3);
-      if (currentPct < 55) {
-        onProgress?.(currentPct, 'Gemini 2.0 Flash leyendo capacidad de la olla...', 'analyzing');
+      currentPct = Math.min(88, currentPct + Math.floor(Math.random() * 6) + 4);
+      if (currentPct < 56) {
+        onProgress?.(currentPct, 'Gemini Flash-Lite leyendo capacidad de la olla...', 'analyzing');
       } else {
         onProgress?.(currentPct, 'Detectando cuadrícula y cantidades de ingredientes...', 'analyzing');
       }
-    }, 400);
+    }, 350);
   };
   const stopProgressTicker = () => {
-    if (ticker) clearInterval(ticker);
+    if (ticker) {
+      clearInterval(ticker);
+      ticker = null;
+    }
   };
 
   const savedApiKey =
-    customApiKey ||
-    (typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY_GEMINI_KEY) || undefined : undefined);
+    customApiKey?.trim() ||
+    (typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY_GEMINI_KEY)?.trim() || undefined : undefined);
 
   startProgressTicker();
 
-  // 1. Try serverless endpoint /api/scan-pot
   try {
-    const response = await fetch('/api/scan-pot', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        imageBase64: base64List[0],
-        imagesBase64: base64List,
-        mimeType: 'image/jpeg',
-        apiKey: savedApiKey
-      })
-    });
-
-    if (response.ok) {
-      const resData = await response.json();
-      if (resData.success && resData.data) {
-        stopProgressTicker();
-        onProgress?.(92, 'Normalizando inventario de ingredientes...', 'validating');
-        const normalized = normalizeOcrPotData(resData.data);
-        onProgress?.(100, '¡Olla escaneada con éxito!', 'done');
-        return normalized;
-      }
-    }
-
-    const errJson = await response.json().catch(() => ({}));
-    if (errJson.error === 'MISSING_API_KEY' && savedApiKey) {
-      const result = await callGeminiPotDirectly(base64List, savedApiKey, onProgress);
-      stopProgressTicker();
-      onProgress?.(100, '¡Olla escaneada con éxito!', 'done');
-      return result;
-    }
-
-    stopProgressTicker();
-    throw new Error(errJson.message || `Error del servidor HTTP ${response.status}`);
-  } catch (err: any) {
+    // 1. Fast path: Direct single-hop to Google AI Studio when user has configured an API Key
     if (savedApiKey) {
       try {
-        const result = await callGeminiPotDirectly(base64List, savedApiKey, onProgress);
+        const rawParsed = await executeDirectGeminiVision({
+          base64Images: base64List,
+          apiKey: savedApiKey,
+          systemPrompt: POT_SYSTEM_PROMPT,
+          schema: POT_OCR_SCHEMA,
+          onProgress,
+          signal
+        });
         stopProgressTicker();
+        onProgress?.(94, 'Normalizando inventario de ingredientes...', 'validating');
+        const normalized = normalizeOcrPotData(rawParsed);
         onProgress?.(100, '¡Olla escaneada con éxito!', 'done');
-        return result;
-      } catch (directErr) {
-        stopProgressTicker();
-        throw directErr;
+        return normalized;
+      } catch (directErr: any) {
+        if (directErr?.name === 'AbortError' || directErr?.isFatalApiError) {
+          throw directErr;
+        }
+        console.warn('Direct pot OCR blocked, falling back to /api/scan-pot:', directErr);
       }
     }
-    stopProgressTicker();
-    throw err;
-  }
-}
 
-/**
- * Direct client-side Gemini fallback for pot OCR with error-triggered dynamic recovery.
- */
-async function callGeminiPotDirectly(
-  base64Images: string[],
-  apiKey: string,
-  onProgress?: ScanProgressCallback
-): Promise<ScannedPotData> {
-  const cleanImages = base64Images.map(img => img.replace(/^data:image\/[a-zA-Z]+;base64,/, ''));
-  const systemPrompt = `You are an expert OCR vision AI specialized in extracting cooking pot and ingredient inventory data from "Pokémon Sleep" mobile screenshots.
-Look for the pot capacity in "Añadido: X/Y" (return Y as potCapacity) and list every ingredient in the grid with the quantity after the slash (denominator in "0/X").
-Expected JSON: { "potCapacity": number, "currentAdded": number, "dishType": string|null, "ingredients": [{ "name": string, "quantity": number }] }
-Output strictly valid JSON.`;
-
-  let models = await resolveGeminiVisionModels(apiKey);
-  let lastError: any = null;
-
-  for (let i = 0; i < models.length; i++) {
-    const model = models[i];
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-      const response = await fetch(url, {
+    // 2. Serverless endpoint /api/scan-pot
+    const response = await fetchWithTimeout(
+      '/api/scan-pot',
+      {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(15000),
         body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                { text: systemPrompt },
-                ...cleanImages.map((data) => ({
-                  inline_data: { mime_type: 'image/jpeg', data }
-                }))
-              ]
-            }
-          ],
-          generationConfig: {
-            responseMimeType: 'application/json'
-          }
+          imageBase64: base64List[0],
+          imagesBase64: base64List,
+          mimeType: 'image/jpeg',
+          apiKey: savedApiKey
         })
-      });
+      },
+      22000,
+      signal
+    );
 
-      if (response.ok) {
-        const data = await response.json();
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (text) {
-          const cleanText = text.replace(/```json/gi, '').replace(/```/g, '').trim();
-          const parsed = JSON.parse(cleanText);
-          return normalizeOcrPotData(parsed);
-        }
-      } else {
-        const errData = await response.json().catch(() => ({}));
-        const errMsg = errData.error?.message || `HTTP ${response.status}`;
-        if (
-          errMsg.includes('no longer available') ||
-          errMsg.includes('not found') ||
-          errMsg.includes('deprecated') ||
-          response.status === 404
-        ) {
-          if (typeof window !== 'undefined' && window.localStorage) {
-            localStorage.removeItem(GEMINI_MODELS_CACHE_KEY);
-          }
-          if (i === 0) {
-            onProgress?.(38, 'Detectando modelo más nuevo de Gemini en Google AI Studio...', 'uploading');
-            const fresh = await resolveGeminiVisionModels(apiKey, true);
-            if (fresh.length > 0 && fresh[0] !== model) {
-              models = fresh;
-              onProgress?.(50, `Conectando con ${fresh[0]}...`, 'analyzing');
-            }
-          }
-        }
-        lastError = new Error(errMsg);
-      }
-    } catch (e: any) {
-      lastError = e;
+    const resData = await response.json().catch(() => ({}));
+    if (response.ok && resData.success && resData.data) {
+      stopProgressTicker();
+      onProgress?.(94, 'Normalizando inventario de ingredientes...', 'validating');
+      const normalized = normalizeOcrPotData(resData.data);
+      onProgress?.(100, '¡Olla escaneada con éxito!', 'done');
+      return normalized;
     }
-  }
 
-  throw new Error(`Error de Google AI Studio: ${lastError?.message || 'No se pudo procesar la captura de la olla'}`);
+    throw new Error(
+      resData.message || resData.error || `Error del servidor HTTP ${response.status}`
+    );
+  } finally {
+    stopProgressTicker();
+  }
 }

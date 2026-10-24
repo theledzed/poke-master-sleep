@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { DishType, SnorlaxConfig } from '../types/pokemon';
 import { INGREDIENTS } from '../data/gameData';
 import { getIngredientSpriteUrl, getDishImageUrl } from '../services/pokeApiService';
-import { scanPotScreenshots, ScannedPotData } from '../services/ocrService';
+import { scanPotScreenshots, prewarmScreenshotCompression, ScannedPotData } from '../services/ocrService';
 import { solveOptimalRecipes, SolvedRecipeResult } from '../services/recipeSolver';
 import {
   Camera,
@@ -73,17 +73,26 @@ export const ChefAssistantView: React.FC<ChefAssistantViewProps> = ({
   const [copiedRecipe, setCopiedRecipe] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const scanAbortRef = useRef<AbortController | null>(null);
 
   // Handle files selection (1 or 2 screenshots)
   const handleFilesSelected = (files: FileList | null) => {
     if (!files || files.length === 0) return;
     const newFiles = Array.from(files).slice(0, 2); // max 2 screenshots
+    prewarmScreenshotCompression(newFiles);
     setSelectedFiles(newFiles);
 
     const urls = newFiles.map(f => URL.createObjectURL(f));
     setPreviewUrls(urls);
     setScanError(null);
     setScanSuccess(false);
+  };
+
+  const handleCancelScan = () => {
+    scanAbortRef.current?.abort();
+    scanAbortRef.current = null;
+    setIsScanning(false);
+    setScanStatus('');
   };
 
   const handleRemoveFile = (index: number) => {
@@ -100,11 +109,15 @@ export const ChefAssistantView: React.FC<ChefAssistantViewProps> = ({
   // Perform OCR Scan with Gemini Vision
   const handleScan = async () => {
     if (selectedFiles.length === 0) return;
+    scanAbortRef.current?.abort();
+    const controller = new AbortController();
+    scanAbortRef.current = controller;
+
     setIsScanning(true);
     setScanError(null);
     setScanSuccess(false);
-    setScanPercent(10);
-    setScanStatus('Comprimiendo capturas a tamaño ultra ligero...');
+    setScanPercent(12);
+    setScanStatus('Preparando captura de la olla (768px)...');
 
     try {
       const result: ScannedPotData = await scanPotScreenshots(
@@ -113,7 +126,8 @@ export const ChefAssistantView: React.FC<ChefAssistantViewProps> = ({
         (percent, status) => {
           setScanPercent(percent);
           setScanStatus(status);
-        }
+        },
+        controller.signal
       );
 
       setScanPercent(100);
@@ -134,9 +148,13 @@ export const ChefAssistantView: React.FC<ChefAssistantViewProps> = ({
         throw new Error('No se detectaron ingredientes en la captura. Asegúrate de que la cuadrícula sea visible.');
       }
     } catch (err: any) {
+      if (err?.name === 'AbortError') return;
       console.error('Scan error:', err);
       setScanError(err.message || 'Error al procesar la captura.');
     } finally {
+      if (scanAbortRef.current === controller) {
+        scanAbortRef.current = null;
+      }
       setIsScanning(false);
     }
   };
@@ -319,6 +337,13 @@ export const ChefAssistantView: React.FC<ChefAssistantViewProps> = ({
                       ⏱️ {(elapsedMs / 1000).toFixed(1)}s
                     </span>
                     <span className="text-sm font-black text-white">{scanPercent}%</span>
+                    <button
+                      type="button"
+                      onClick={handleCancelScan}
+                      className="text-[11px] px-2 py-0.5 rounded-full bg-white/10 hover:bg-rose-500/30 text-slate-300 hover:text-rose-200 border border-white/10 transition-colors"
+                    >
+                      Cancelar
+                    </button>
                   </div>
                 </div>
 
