@@ -146,6 +146,18 @@ export const SpeciesComparisonModal: React.FC<SpeciesComparisonModalProps> = ({
             </div>
           </div>
 
+          {/* Educational Callout on Normalized Comparison & ROI */}
+          <div className="p-3.5 rounded-2xl bg-gradient-to-r from-sky-950/40 via-purple-950/30 to-indigo-950/40 border border-sky-400/25 flex items-start gap-3 text-xs text-sky-200 shadow-inner">
+            <Info className="w-4 h-4 text-sky-400 flex-shrink-0 mt-0.5" />
+            <div className="space-y-0.5">
+              <span className="font-black text-white text-xs">Normalización Evolutiva y Retorno de Inversión (ROI)</span>
+              <p className="text-slate-300 text-[11px] leading-relaxed">
+                Para una comparación justa, los Pokémon no evolucionados se proyectan a su versión evolucionada (<strong className="text-purple-300">What-If</strong>).
+                El análisis de <strong className="text-amber-300">ROI</strong> evalúa si la ganancia en velocidad y capacidad de carga justifica los caramelos necesarios frente al titular en servicio.
+              </p>
+            </div>
+          </div>
+
           {/* Comparative Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {summary.peers.map((peer) => {
@@ -251,6 +263,129 @@ export const SpeciesComparisonModal: React.FC<SpeciesComparisonModalProps> = ({
                         </div>
                       </div>
                     </div>
+
+                    {/* Evolutionary Projection (What-If) & Candy ROI Section */}
+                    {peer.isIncumbent ? (
+                      <div className="mb-3 p-2.5 rounded-xl bg-amber-500/10 border border-amber-400/30 text-xs">
+                        <div className="flex items-center justify-between text-amber-300 font-black mb-1">
+                          <span className="flex items-center gap-1.5">
+                            <Crown className="w-3.5 h-3.5 fill-amber-300" />
+                            <span>Titular Activo (En Servicio)</span>
+                          </span>
+                          <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-400/20 border border-amber-300/30 text-amber-200">
+                            0 caramelos
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-300 leading-relaxed font-medium">
+                          {peer.roiAnalysis?.advice}
+                        </p>
+                      </div>
+                    ) : peer.projectedEvolution ? (
+                      <div className="mb-3 p-2.5 rounded-xl bg-purple-500/10 border border-purple-400/30 space-y-2">
+                        <div className="flex items-center justify-between text-purple-200 font-black text-xs">
+                          <span className="flex items-center gap-1.5">
+                            <Sparkles className="w-3.5 h-3.5 text-purple-300" />
+                            <span>🔮 Proyección como {peer.projectedEvolution.targetSpeciesName}</span>
+                          </span>
+                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-purple-500/30 text-purple-200 uppercase font-black tracking-wider">
+                            What-If
+                          </span>
+                        </div>
+
+                        {/* Projected metrics */}
+                        <div className="grid grid-cols-2 gap-2 text-[11px]">
+                          <div className="p-1.5 rounded-lg bg-black/40 border border-white/5">
+                            <div className="text-[9px] text-slate-400 font-semibold">Velocidad Proyectada</div>
+                            <div className="font-bold text-white flex items-center justify-between">
+                              <span className="truncate">{peer.projectedEvolution.frequencyStr}</span>
+                              {peer.projectedEvolution.speedAdvantageVsIncumbentPercent !== undefined && (
+                                <span className={`text-[10px] font-black ml-1 flex-shrink-0 ${
+                                  peer.projectedEvolution.speedAdvantageVsIncumbentPercent > 0
+                                    ? 'text-emerald-400'
+                                    : peer.projectedEvolution.speedAdvantageVsIncumbentPercent < 0
+                                    ? 'text-rose-400'
+                                    : 'text-slate-400'
+                                }`}>
+                                  {peer.projectedEvolution.speedAdvantageVsIncumbentPercent > 0 ? '+' : ''}
+                                  {peer.projectedEvolution.speedAdvantageVsIncumbentPercent}%
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="p-1.5 rounded-lg bg-black/40 border border-white/5">
+                            <div className="text-[9px] text-slate-400 font-semibold">Capacidad de Carga</div>
+                            <div className="font-bold text-white flex items-center justify-between">
+                              <span>{peer.projectedEvolution.carryLimit} slots</span>
+                              {peer.projectedEvolution.carryAdvantageVsIncumbent !== undefined && (
+                                <span className={`text-[10px] font-black ml-1 flex-shrink-0 ${
+                                  peer.projectedEvolution.carryAdvantageVsIncumbent > 0
+                                    ? 'text-emerald-400'
+                                    : peer.projectedEvolution.carryAdvantageVsIncumbent < 0
+                                    ? 'text-rose-400'
+                                    : 'text-slate-400'
+                                }`}>
+                                  {peer.projectedEvolution.carryAdvantageVsIncumbent > 0 ? '+' : ''}
+                                  {peer.projectedEvolution.carryAdvantageVsIncumbent}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Candy & Shard cost */}
+                        {peer.investmentCost && (
+                          <div className="p-1.5 rounded-lg bg-black/30 border border-white/5 text-[11px] text-slate-300 space-y-1">
+                            <div className="flex items-center justify-between font-bold">
+                              <span className="text-amber-200">
+                                🍬 Inversión: ~{peer.investmentCost.totalCandies} caramelos
+                              </span>
+                              <span className="text-[10px] text-slate-400 font-normal">
+                                ({peer.investmentCost.evolutionCandies} evol. + {peer.investmentCost.levelCatchUpCandies} nivel)
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between text-[10px] text-slate-400 flex-wrap gap-1">
+                              <span>✨ ~{peer.investmentCost.estimatedDreamShards.toLocaleString()} fragmentos</span>
+                              {peer.investmentCost.evolutionItem && (
+                                <span className="text-sky-300 font-semibold">
+                                  💎 {peer.investmentCost.evolutionItem}
+                                </span>
+                              )}
+                              {peer.investmentCost.sleepHoursNeeded && (
+                                <span className="text-indigo-300 font-semibold">
+                                  💤 {peer.investmentCost.sleepHoursNeeded}h sueño
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* ROI Verdict badge & explanation */}
+                        {peer.roiAnalysis && (
+                          <div className={`p-2 rounded-xl text-xs border ${peer.roiAnalysis.badgeColor}`}>
+                            <div className="font-black flex items-center gap-1.5 mb-1">
+                              <span>{peer.roiAnalysis.badgeIcon}</span>
+                              <span>{peer.roiAnalysis.badgeLabel}</span>
+                            </div>
+                            <p className="text-[11px] opacity-95 leading-relaxed font-medium">
+                              {peer.roiAnalysis.advice}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    ) : peer.roiAnalysis ? (
+                      <div className="mb-3">
+                        <div className={`p-2 rounded-xl text-xs border ${peer.roiAnalysis.badgeColor}`}>
+                          <div className="font-black flex items-center gap-1.5 mb-0.5">
+                            <span>{peer.roiAnalysis.badgeIcon}</span>
+                            <span>{peer.roiAnalysis.badgeLabel}</span>
+                          </div>
+                          <p className="text-[11px] opacity-95 leading-relaxed">
+                            {peer.roiAnalysis.advice}
+                          </p>
+                        </div>
+                      </div>
+                    ) : null}
 
                     {/* Naturaleza */}
                     <div className="p-2 rounded-xl bg-white/[0.03] border border-white/5 text-xs mb-2">

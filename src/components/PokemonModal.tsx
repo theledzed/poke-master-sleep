@@ -828,7 +828,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                       </button>
                     </div>
 
-                    <div className="text-xs">
+                    <div className="text-xs space-y-2">
                       {dynamicLiveEvaluation.isSpeciesBest ? (
                         <p className="text-amber-200 font-semibold flex items-center gap-1.5">
                           <span>👑</span>
@@ -839,6 +839,61 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                           Queda en puesto <strong className="text-white">#{dynamicLiveEvaluation.speciesRank} de {dynamicLiveEvaluation.speciesTotal}</strong>. Tu mejor ejemplar registrado es <strong className="text-amber-300">{dynamicLiveEvaluation.familyComparison.bestMemberName}</strong>.
                         </p>
                       )}
+
+                      {(() => {
+                        const currentCandidatePeer = dynamicLiveEvaluation.familyComparison.peers.find(
+                          p => p.isCurrent || p.id === dynamicLiveEvaluation.pokemon.id
+                        );
+                        if (!currentCandidatePeer) return null;
+
+                        return (
+                          <div className="pt-1 space-y-1.5">
+                            {currentCandidatePeer.projectedEvolution ? (
+                              <div className="p-2 rounded-lg bg-black/40 border border-purple-400/20 space-y-1">
+                                <div className="flex items-center justify-between text-[11px] font-black text-purple-200">
+                                  <span>🔮 Proyección como {currentCandidatePeer.projectedEvolution.targetSpeciesName}</span>
+                                  <span className="text-[10px] text-purple-300">
+                                    {currentCandidatePeer.projectedEvolution.frequencyStr} • {currentCandidatePeer.projectedEvolution.carryLimit} slots
+                                  </span>
+                                </div>
+
+                                {currentCandidatePeer.investmentCost && (
+                                  <div className="text-[10px] text-slate-300 flex items-center justify-between">
+                                    <span className="text-amber-200 font-semibold">
+                                      🍬 Inversión: ~{currentCandidatePeer.investmentCost.totalCandies} caramelos
+                                    </span>
+                                    <span className="text-slate-400">
+                                      ({currentCandidatePeer.investmentCost.evolutionCandies} evol. + {currentCandidatePeer.investmentCost.levelCatchUpCandies} nivel)
+                                    </span>
+                                  </div>
+                                )}
+
+                                {currentCandidatePeer.roiAnalysis && (
+                                  <div className={`p-1.5 rounded-lg border text-[11px] mt-1 ${currentCandidatePeer.roiAnalysis.badgeColor}`}>
+                                    <div className="font-bold flex items-center gap-1">
+                                      <span>{currentCandidatePeer.roiAnalysis.badgeIcon}</span>
+                                      <span>{currentCandidatePeer.roiAnalysis.badgeLabel}</span>
+                                    </div>
+                                    <p className="text-[10px] opacity-90 mt-0.5 leading-snug">
+                                      {currentCandidatePeer.roiAnalysis.advice}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            ) : currentCandidatePeer.roiAnalysis ? (
+                              <div className={`p-1.5 rounded-lg border text-[11px] ${currentCandidatePeer.roiAnalysis.badgeColor}`}>
+                                <div className="font-bold flex items-center gap-1">
+                                  <span>{currentCandidatePeer.roiAnalysis.badgeIcon}</span>
+                                  <span>{currentCandidatePeer.roiAnalysis.badgeLabel}</span>
+                                </div>
+                                <p className="text-[10px] opacity-90 mt-0.5 leading-snug">
+                                  {currentCandidatePeer.roiAnalysis.advice}
+                                </p>
+                              </div>
+                            ) : null}
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 ) : (

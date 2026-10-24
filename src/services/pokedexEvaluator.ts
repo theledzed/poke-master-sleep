@@ -1,6 +1,8 @@
 import { Pokemon, Specialty } from '../types/pokemon';
 import { isSpecialPokemon } from './pokeApiService';
 import { NATURES } from '../data/gameData';
+import { getSpeciesMasterData, MasterSpecies } from '../data/speciesMaster';
+import { calculateEvolutionPreview, formatFrequencySeconds, SLEEP_EVOLUTION_MAP } from './evolutionService';
 
 export type PokedexTier = 'S+' | 'S' | 'A' | 'B' | 'C' | 'D';
 
@@ -11,6 +13,36 @@ export type PokedexVerdict =
   | 'UTIL_TEMPORAL'      // 🛡️ Único proveedor de su baya/ingrediente o puente temporal
   | 'UTIL_NICHO'         // 🛠️ Buen rol secundario o de rotación específica
   | 'CAMBIAR_CARAMELOS'; // 🍬 Duplicado inferior o saboteado, enviar al Profesor por caramelos
+
+export interface EvolutionProjectedStats {
+  targetSpeciesName: string;
+  targetStage: number;
+  frequencyStr: string;
+  frequencySeconds: number;
+  carryLimit: number;
+  speedGainPercent: number; // vs candidate's unevolved base
+  speedAdvantageVsIncumbentPercent?: number; // e.g. +12% faster than incumbent Charmeleon
+  carryAdvantageVsIncumbent?: number; // e.g. +20 slots
+}
+
+export interface InvestmentCostEstimate {
+  evolutionCandies: number;
+  levelCatchUpCandies: number;
+  totalCandies: number;
+  estimatedDreamShards: number;
+  evolutionItem?: string;
+  sleepHoursNeeded?: number;
+}
+
+export type RoiVerdict = 'INCUMBENT' | 'HIGH_ROI' | 'MARGINAL_ROI' | 'LOW_ROI';
+
+export interface RoiAnalysisResult {
+  verdict: RoiVerdict;
+  badgeLabel: string;
+  badgeColor: string;
+  badgeIcon: string;
+  advice: string;
+}
 
 export interface SpeciesPeerComparison {
   id: string;
@@ -31,6 +63,11 @@ export interface SpeciesPeerComparison {
   isCurrent: boolean;
   speciesRank: number;
   isWinner: boolean;
+  evolutionStage?: number;
+  isIncumbent?: boolean;
+  projectedEvolution?: EvolutionProjectedStats;
+  investmentCost?: InvestmentCostEstimate;
+  roiAnalysis?: RoiAnalysisResult;
 }
 
 export interface FamilyComparisonSummary {
@@ -40,6 +77,10 @@ export interface FamilyComparisonSummary {
   bestMemberId: string;
   bestMemberName: string;
   winnerReason: string;
+  hasRealIncumbent?: boolean;
+  incumbentName?: string;
+  incumbentLevel?: number;
+  targetStageName?: string;
   peers: SpeciesPeerComparison[];
 }
 
@@ -301,6 +342,119 @@ export function getSpeciesMeta(name: string): EvolutionMeta {
 
 export function getPokemonFamilyKey(name: string): string {
   return getSpeciesMeta(name).family;
+}
+
+/**
+ * Estimate candies required to level up in Pokémon Sleep from fromLevel to toLevel.
+ * Calibrated against official Pokémon Sleep exp curve.
+ */
+export function estimateLevelUpCandies(fromLevel: number, toLevel: number): number {
+  if (!fromLevel || !toLevel || toLevel <= fromLevel) return 0;
+  let candies = 0;
+  for (let lvl = fromLevel; lvl < toLevel; lvl++) {
+    if (lvl < 10) candies += 2;
+    else if (lvl < 20) candies += 3;
+    else if (lvl < 30) candies += 5;
+    else if (lvl < 40) candies += 7;
+    else candies += 10;
+  }
+  return candies;
+}
+
+export interface EvolutionCostResult {
+  candies: number;
+  item?: string;
+  sleepHours?: number;
+}
+
+/**
+ * Estimate evolution candy, item and sleep requirements in Pokémon Sleep
+ */
+export function estimateEvolutionCost(
+  fromSpeciesName: string,
+  toSpeciesName: string,
+  fromStage: number,
+  toStage: number
+): EvolutionCostResult {
+  if (toStage <= fromStage) {
+    return { candies: 0 };
+  }
+
+  const fromClean = fromSpeciesName.toLowerCase().replace(/[^a-z0-9]/g, '').trim();
+  const toClean = toSpeciesName.toLowerCase().replace(/[^a-z0-9]/g, '').trim();
+  const fromMeta = getSpeciesMeta(fromSpeciesName);
+  const toMeta = getSpeciesMeta(toSpeciesName);
+
+  let candies = 0;
+  const item: string | undefined = fromMeta.evolvesWithItem || toMeta.evolvesWithItem;
+  const sleepHours: number | undefined = fromMeta.sleepHoursRequired;
+
+  // Baby stages
+  const isBaby = fromMeta.sleepHoursRequired !== undefined ||
+    ['pichu', 'cleffa', 'igglybuff', 'togepi', 'wynaut', 'bonsly', 'mimejr', 'happiny', 'riolu'].includes(fromClean);
+
+  // Pseudo-legendaries
+  const isPseudo = ['dratini', 'dragonair', 'dragonite', 'larvitar', 'pupitar', 'tyranitar', 'bagon', 'shelgon', 'salamence'].includes(fromClean);
+
+  // 2-stage expensive evolutions (80 candies like Swablu->Altaria, Noibat->Noivern, Magikarp->Gyarados)
+  const isExpensiveTwoStage = ['swablu', 'noibat', 'magikarp', 'onix'].includes(fromClean);
+
+  if (fromStage === 1 && toStage === 2) {
+    if (isBaby) {
+      candies = 20;
+    } else if (isExpensiveTwoStage) {
+      candies = 80;
+    } else {
+      candies = 40;
+    }
+  } else if (fromStage === 2 && toStage === 3) {
+    if (isPseudo) {
+      candies = 100;
+    } else {
+      candies = 80;
+    }
+  } else if (fromStage === 1 && toStage === 3) {
+    const s1To2 = isBaby ? 20 : 40;
+    const s2To3 = isPseudo ? 100 : 80;
+    candies = s1To2 + s2To3;
+  } else {
+    candies = 40;
+  }
+
+  return { candies, item, sleepHours };
+}
+
+/**
+ * Find canonical species name in SPECIES_META for a family and stage
+ */
+export function getSpeciesNameByFamilyAndStage(family: string, stage: number): string | null {
+  const famClean = family.toLowerCase().replace(/[^a-z0-9]/g, '').trim();
+  for (const [key, meta] of Object.entries(SPECIES_META)) {
+    if (meta.family.toLowerCase().replace(/[^a-z0-9]/g, '') === famClean && meta.stage === stage) {
+      const master = getSpeciesMasterData(key);
+      if (master) return master.name;
+      return key.charAt(0).toUpperCase() + key.slice(1);
+    }
+  }
+  return null;
+}
+
+/**
+ * Calculate evolution preview with multi-stage support (+5 carry limit and +1 skill level per stage)
+ */
+export function calculateMultiStageEvolutionPreview(
+  pokemon: Pokemon,
+  targetMaster: MasterSpecies,
+  stageDiff: number = 1
+) {
+  const preview = calculateEvolutionPreview(pokemon, targetMaster);
+  if (stageDiff > 1) {
+    const extraStages = stageDiff - 1;
+    preview.carryLimitAfter += extraStages * 5;
+    preview.carryLimitDelta += extraStages * 5;
+    preview.skillLevelAfter = Math.min(7, preview.skillLevelAfter + extraStages);
+  }
+  return preview;
 }
 
 // 2. Mapeo Oficial de Bayas a Zonas de Estudio de Pokémon Sleep (WikiDex)
@@ -950,7 +1104,7 @@ export function auditPokedexCollection(allPokemons: Pokemon[]): PokemonAuditResu
 
   for (const [familyKey, group] of familyGroups.entries()) {
     if (group.length > 1) {
-      // Ordenamiento dentro de la familia:
+      // Ordenamiento inicial dentro de la familia:
       // Prioridad: 1. geneticScore desc, 2. ceilingScore desc, 3. currentPowerScore desc, 4. level desc
       group.sort((a, b) => {
         if (b.geneticScore !== a.geneticScore) return b.geneticScore - a.geneticScore;
@@ -962,6 +1116,55 @@ export function auditPokedexCollection(allPokemons: Pokemon[]): PokemonAuditResu
       const best = group[0];
       const secondBest = group[1];
       const winnerReason = generateWinnerReason(best, secondBest);
+
+      // 1. Encontrar el estadio evolutivo más alto presente en la caja para esta familia
+      let maxStageInGroup = 1;
+      for (const m of group) {
+        const meta = getSpeciesMeta(m.pokemon.name);
+        if (meta.stage > maxStageInGroup) {
+          maxStageInGroup = meta.stage;
+        }
+      }
+
+      const canAnyEvolve = group.some(m => getSpeciesMeta(m.pokemon.name).maxStage > 1);
+      const targetStage = maxStageInGroup > 1 ? maxStageInGroup : (canAnyEvolve ? 2 : 1);
+
+      // 2. Identificar al Titular Activo (Incumbent):
+      const membersAtMaxStage = group.filter(m => getSpeciesMeta(m.pokemon.name).stage === maxStageInGroup);
+      membersAtMaxStage.sort((a, b) => {
+        if ((b.pokemon.level || 0) !== (a.pokemon.level || 0)) {
+          return (b.pokemon.level || 0) - (a.pokemon.level || 0);
+        }
+        return b.geneticScore - a.geneticScore;
+      });
+      const incumbent = membersAtMaxStage[0];
+      const hasRealIncumbent = maxStageInGroup > 1;
+
+      // 3. Determinar especie objetivo para normalizar proyecciones
+      let targetSpeciesName = hasRealIncumbent ? incumbent.pokemon.name : '';
+      if (!targetSpeciesName) {
+        const nameFromMeta = getSpeciesNameByFamilyAndStage(familyKey, targetStage);
+        if (nameFromMeta) {
+          targetSpeciesName = nameFromMeta;
+        } else {
+          const firstEvol = SLEEP_EVOLUTION_MAP[group[0].pokemon.name];
+          targetSpeciesName = (firstEvol && firstEvol.length > 0) ? firstEvol[0] : group[0].pokemon.name;
+        }
+      }
+      const targetMaster = getSpeciesMasterData(targetSpeciesName);
+
+      // Estadísticas de referencia del titular
+      const incumbentMaster = getSpeciesMasterData(incumbent.pokemon.name);
+      const incumbentFreqSec = incumbent.pokemon.frequencySeconds || (incumbentMaster ? incumbentMaster.baseFrequency : 3000);
+      let incumbentCarry = incumbent.pokemon.carryLimit || (incumbentMaster ? incumbentMaster.carryLimit : 15);
+      if (!incumbent.pokemon.carryLimit && incumbent.pokemon.subskills) {
+        for (const sub of incumbent.pokemon.subskills) {
+          if (!sub.enabled) continue;
+          if (sub.name === 'Inventario S') incumbentCarry += 6;
+          if (sub.name === 'Inventario M') incumbentCarry += 12;
+          if (sub.name === 'Inventario L') incumbentCarry += 18;
+        }
+      }
 
       const peers: SpeciesPeerComparison[] = group.map((member, idx) => {
         const nat = NATURES[member.pokemon.nature || ''];
@@ -976,6 +1179,150 @@ export function auditPokedexCollection(allPokemons: Pokemon[]): PokemonAuditResu
         const subskillsSummary = member.pokemon.subskills && member.pokemon.subskills.length > 0
           ? member.pokemon.subskills.map(s => `${s.name}${s.unlockLevel ? ` (Nv.${s.unlockLevel})` : ''}`)
           : [];
+
+        const memberMeta = getSpeciesMeta(member.pokemon.name);
+        const memberStage = memberMeta.stage;
+        const isThisIncumbent = hasRealIncumbent && member.pokemon.id === incumbent.pokemon.id;
+
+        // Proyección evolutiva si está por debajo del estadio objetivo
+        let projectedEvolution: EvolutionProjectedStats | undefined = undefined;
+        if (memberStage < targetStage && targetMaster) {
+          const stageDiff = targetStage - memberStage;
+          try {
+            const preview = calculateMultiStageEvolutionPreview(member.pokemon, targetMaster, stageDiff);
+            const speedAdvantageVsIncumbentPercent = incumbentFreqSec > 0
+              ? Math.round(((incumbentFreqSec - preview.frequencySecondsAfter) / incumbentFreqSec) * 100)
+              : 0;
+            const carryAdvantageVsIncumbent = preview.carryLimitAfter - incumbentCarry;
+
+            projectedEvolution = {
+              targetSpeciesName,
+              targetStage,
+              frequencyStr: preview.frequencyStrAfter,
+              frequencySeconds: preview.frequencySecondsAfter,
+              carryLimit: preview.carryLimitAfter,
+              speedGainPercent: preview.speedGainPercent,
+              speedAdvantageVsIncumbentPercent: hasRealIncumbent ? speedAdvantageVsIncumbentPercent : undefined,
+              carryAdvantageVsIncumbent: hasRealIncumbent ? carryAdvantageVsIncumbent : undefined
+            };
+          } catch (e) {
+            console.error('Error calculando proyección evolutiva:', e);
+          }
+        }
+
+        // Estimación de costo en caramelos y fragmentos
+        let investmentCost: InvestmentCostEstimate | undefined = undefined;
+        if (isThisIncumbent) {
+          investmentCost = {
+            evolutionCandies: 0,
+            levelCatchUpCandies: 0,
+            totalCandies: 0,
+            estimatedDreamShards: 0
+          };
+        } else {
+          const evolCost = estimateEvolutionCost(member.pokemon.name, targetSpeciesName, memberStage, targetStage);
+          const levelCatchUp = hasRealIncumbent
+            ? estimateLevelUpCandies(member.pokemon.level, incumbent.pokemon.level)
+            : 0;
+          const totalCandies = evolCost.candies + levelCatchUp;
+          const dreamShards = Math.round(totalCandies * 45 + ((targetStage - memberStage) * 1500));
+
+          investmentCost = {
+            evolutionCandies: evolCost.candies,
+            levelCatchUpCandies: levelCatchUp,
+            totalCandies,
+            estimatedDreamShards: dreamShards,
+            evolutionItem: evolCost.item,
+            sleepHoursNeeded: evolCost.sleepHours
+          };
+        }
+
+        // Análisis de Retorno de Inversión (ROI)
+        let roiAnalysis: RoiAnalysisResult;
+
+        if (isThisIncumbent) {
+          const helpingBonusActive = member.pokemon.subskills?.some(
+            s => s.name === 'Bonus ayuda' && ((member.pokemon.level >= (s.unlockLevel || 10)) || s.enabled)
+          );
+          const bonusStr = helpingBonusActive ? ' con Bono Ayuda activo (+5% vel equipo)' : '';
+          roiAnalysis = {
+            verdict: 'INCUMBENT',
+            badgeLabel: '👑 Titular Activo (En Servicio)',
+            badgeColor: 'bg-amber-400/20 text-amber-200 border-amber-300/40',
+            badgeIcon: '👑',
+            advice: `Consolidado a Nv. ${member.pokemon.level} (${member.pokemon.frequencyStr || formatFrequencySeconds(incumbentFreqSec)}, ${incumbentCarry} slots)${bonusStr}. Inversión ya amortizada (0 caramelos requeridos). Tu referencia activa.`
+          };
+        } else if (hasRealIncumbent) {
+          const speedAdv = projectedEvolution?.speedAdvantageVsIncumbentPercent || 0;
+          const carryAdv = projectedEvolution?.carryAdvantageVsIncumbent || 0;
+          const totalCandies = investmentCost.totalCandies;
+
+          const isSpeedSignificantlyBetter = speedAdv >= 5;
+          const isCarrySignificantlyBetter = carryAdv >= 8;
+          const isMonoSuperior = member.isMonoIngredient && !incumbent.isMonoIngredient;
+          const hasBfsUpgrade = (member.pokemon.subskills || []).some(s => s.name === 'Busca bayas S') &&
+            !(incumbent.pokemon.subskills || []).some(s => s.name === 'Busca bayas S');
+
+          if ((isSpeedSignificantlyBetter || isCarrySignificantlyBetter || isMonoSuperior || hasBfsUpgrade) && member.geneticScore >= 55) {
+            const perks: string[] = [];
+            if (isSpeedSignificantlyBetter) perks.push(`+${speedAdv}% vel (${projectedEvolution?.frequencyStr})`);
+            if (isCarrySignificantlyBetter) perks.push(`+${carryAdv} slots (${projectedEvolution?.carryLimit} total)`);
+            if (isMonoSuperior) perks.push('mono-ingrediente puro');
+            if (hasBfsUpgrade) perks.push('Busca bayas S');
+
+            roiAnalysis = {
+              verdict: 'HIGH_ROI',
+              badgeLabel: '🚀 Inversión Muy Rentable (Reemplazo)',
+              badgeColor: 'bg-emerald-500/20 text-emerald-200 border-emerald-400/40',
+              badgeIcon: '🚀',
+              advice: `Como ${targetSpeciesName} superará al titular (${perks.join(', ')}). Vale totalmente la pena invertir los ~${totalCandies} caramelos como proyecto prioritario.`
+            };
+          } else if (member.geneticScore < 48 || speedAdv < -6) {
+            roiAnalysis = {
+              verdict: 'LOW_ROI',
+              badgeLabel: '🛑 No Invertir (Descartable)',
+              badgeColor: 'bg-rose-500/20 text-rose-200 border-rose-400/30',
+              badgeIcon: '🛑',
+              advice: `Rendimiento proyectado notablemente inferior a tu titular en velocidad o genética. Mejor enviarlo al Profesor para obtener caramelos y financiar al titular.`
+            };
+          } else {
+            const diffStr = speedAdv >= 0 ? `+${speedAdv}% velocidad` : `${speedAdv}% velocidad`;
+            roiAnalysis = {
+              verdict: 'MARGINAL_ROI',
+              badgeLabel: '⚖️ Inversión Marginal (No Prioritaria)',
+              badgeColor: 'bg-amber-500/20 text-amber-200 border-amber-400/40',
+              badgeIcon: '⚖️',
+              advice: `La mejora proyectada (${diffStr}${carryAdv !== 0 ? `, ${carryAdv > 0 ? '+' : ''}${carryAdv} slots` : ''}) es modesta y no compensa el gasto de ~${totalCandies} caramelos cuando tu ${incumbent.pokemon.name} ya está activo. Conservar de reserva o enviar por caramelos.`
+            };
+          }
+        } else {
+          // No hay titular evolucionado aún en la caja (ej. 3 Charmanders)
+          if (idx === 0) {
+            roiAnalysis = {
+              verdict: 'HIGH_ROI',
+              badgeLabel: '💎 Mejor Candidato para Evolucionar',
+              badgeColor: 'bg-emerald-500/20 text-emerald-200 border-emerald-400/40',
+              badgeIcon: '💎',
+              advice: `El ejemplar con mayor potencial de la familia. Prioridad #1 para invertir los ~${investmentCost.evolutionCandies} caramelos y evolucionar a ${targetSpeciesName}.`
+            };
+          } else if (member.geneticScore >= best.geneticScore - 5) {
+            roiAnalysis = {
+              verdict: 'MARGINAL_ROI',
+              badgeLabel: '🥈 Alternativa Secundaria',
+              badgeColor: 'bg-slate-400/20 text-slate-200 border-slate-300/40',
+              badgeIcon: '🥈',
+              advice: `Buen ejemplar de reserva para otra receta, pero prioriza tus caramelos en ${best.pokemon.name} (#1).`
+            };
+          } else {
+            roiAnalysis = {
+              verdict: 'LOW_ROI',
+              badgeLabel: '🛑 Descartable (Caramelos)',
+              badgeColor: 'bg-rose-500/20 text-rose-200 border-rose-400/30',
+              badgeIcon: '🛑',
+              advice: `Superado por el ejemplar #1. Conviértelo en caramelos para financiar la evolución de tu mejor ${best.pokemon.name}.`
+            };
+          }
+        }
 
         return {
           id: member.pokemon.id,
@@ -995,7 +1342,12 @@ export function auditPokedexCollection(allPokemons: Pokemon[]): PokemonAuditResu
           natureEffect,
           isCurrent: false,
           speciesRank: idx + 1,
-          isWinner: idx === 0
+          isWinner: idx === 0,
+          evolutionStage: memberStage,
+          isIncumbent: isThisIncumbent,
+          projectedEvolution,
+          investmentCost,
+          roiAnalysis
         };
       });
 
@@ -1006,6 +1358,10 @@ export function auditPokedexCollection(allPokemons: Pokemon[]): PokemonAuditResu
         bestMemberId: best.pokemon.id,
         bestMemberName: best.pokemon.name,
         winnerReason,
+        hasRealIncumbent,
+        incumbentName: incumbent.pokemon.name,
+        incumbentLevel: incumbent.pokemon.level,
+        targetStageName: targetSpeciesName,
         peers
       };
 
