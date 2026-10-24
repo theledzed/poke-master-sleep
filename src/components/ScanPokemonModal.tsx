@@ -17,7 +17,12 @@ import {
   Layers,
   Check
 } from 'lucide-react';
-import { scanPokemonScreenshot, PreFilledPokemonData, STORAGE_KEY_GEMINI_KEY } from '../services/ocrService';
+import {
+  scanPokemonScreenshot,
+  PreFilledPokemonData,
+  STORAGE_KEY_GEMINI_KEY,
+  ScanProgressStage
+} from '../services/ocrService';
 
 interface ScanPokemonModalProps {
   isOpen: boolean;
@@ -35,7 +40,25 @@ export const ScanPokemonModal: React.FC<ScanPokemonModalProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [scanStatus, setScanStatus] = useState<string>('');
+  const [scanPercent, setScanPercent] = useState<number>(0);
+  const [scanStage, setScanStage] = useState<ScanProgressStage>('compressing');
+  const [elapsedMs, setElapsedMs] = useState<number>(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Live timer during scan
+  useEffect(() => {
+    let interval: any = null;
+    if (isScanning) {
+      const startTime = Date.now();
+      setElapsedMs(0);
+      interval = setInterval(() => {
+        setElapsedMs(Date.now() - startTime);
+      }, 100);
+    } else {
+      setElapsedMs(0);
+    }
+    return () => clearInterval(interval);
+  }, [isScanning]);
 
   // Optional custom API key configuration
   const [showKeyConfig, setShowKeyConfig] = useState(false);
@@ -168,29 +191,29 @@ export const ScanPokemonModal: React.FC<ScanPokemonModalProps> = ({
 
     setErrorMsg(null);
     setIsScanning(true);
-
-    const isDual = selectedFiles.length === 2;
-    setScanStatus(
-      isDual
-        ? 'Optimizando y fusionando 2 capturas...'
-        : 'Optimizando captura...'
-    );
+    setScanPercent(10);
+    setScanStage('compressing');
+    setScanStatus('Comprimiendo capturas a tamaño ultra ligero...');
 
     try {
-      setScanStatus(
-        isDual
-          ? 'Gemini Flash Vision leyendo datos y combinando subskills...'
-          : 'Gemini Flash Vision analizando la pantalla...'
+      const result = await scanPokemonScreenshot(
+        selectedFiles,
+        apiKey.trim() || undefined,
+        (percent, status, stage) => {
+          setScanPercent(percent);
+          setScanStatus(status);
+          setScanStage(stage);
+        }
       );
 
-      const result = await scanPokemonScreenshot(selectedFiles, apiKey.trim() || undefined);
-
+      setScanPercent(100);
+      setScanStage('done');
       setScanStatus('¡Lectura exitosa! Abriendo ficha del Pokémon...');
       setTimeout(() => {
         setIsScanning(false);
         onScanSuccess(result);
         onClose();
-      }, 500);
+      }, 400);
     } catch (err: any) {
       console.error('Scan error:', err);
       setIsScanning(false);
@@ -297,30 +320,90 @@ export const ScanPokemonModal: React.FC<ScanPokemonModalProps> = ({
 
           {/* SCANNING IN PROGRESS DISPLAY */}
           {isScanning ? (
-            <div className="border-2 border-indigo-400/50 bg-indigo-950/40 rounded-3xl p-6 text-center relative overflow-hidden flex flex-col items-center justify-center min-h-[260px]">
-              {/* Preview thumbnails during scan */}
+            <div className="border border-purple-500/40 bg-gradient-to-b from-indigo-950/70 via-purple-950/40 to-slate-950/90 rounded-3xl p-5 sm:p-6 text-center relative overflow-hidden flex flex-col items-center justify-center min-h-[310px] shadow-2xl animate-fade-in">
+              {/* Laser scanner thumbnail preview */}
               <div className="flex items-center justify-center gap-3 w-full mb-4">
                 {previewUrls.map((url, i) => (
                   <div
                     key={i}
-                    className="w-28 h-36 rounded-2xl overflow-hidden relative border border-white/25 shadow-2xl bg-black/50"
+                    className="w-24 sm:w-28 h-32 sm:h-36 rounded-2xl overflow-hidden relative border border-white/25 shadow-2xl bg-black/60"
                   >
-                    <img src={url} alt={`Captura ${i + 1}`} className="w-full h-full object-cover opacity-80" />
+                    <img src={url} alt={`Captura ${i + 1}`} className="w-full h-full object-cover opacity-85" />
                     {/* Animated Laser Scanner Line */}
-                    <div className="absolute inset-x-0 h-1.5 bg-gradient-to-r from-transparent via-cyan-300 to-transparent shadow-[0_0_12px_#38bdf8] animate-[bounce_2s_infinite]" />
-                    <div className="absolute bottom-1 inset-x-1 bg-black/70 backdrop-blur-sm rounded px-1.5 py-0.5 text-[9px] font-bold text-slate-200">
-                      {i === 0 ? 'Parte 1' : 'Parte 2 (Scroll)'}
+                    <div className="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-cyan-300 to-transparent shadow-[0_0_12px_#38bdf8] animate-[bounce_1.5s_infinite]" />
+                    <div className="absolute bottom-1 inset-x-1 bg-black/75 backdrop-blur-sm rounded px-1.5 py-0.5 text-[9px] font-bold text-slate-200">
+                      {i === 0 ? 'Parte 1 (Principal)' : 'Parte 2 (Scroll)'}
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div className="flex items-center gap-2 text-sm font-bold text-purple-200 mb-1">
-                <Loader2 className="w-4 h-4 animate-spin text-purple-300 flex-shrink-0" />
-                <span>{scanStatus}</span>
+              {/* Status & Live Timer Header */}
+              <div className="w-full max-w-md flex items-center justify-between text-xs mb-1.5 font-bold">
+                <span className="text-purple-200 flex items-center gap-1.5 truncate max-w-[280px]">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-400 flex-shrink-0" />
+                  <span className="truncate">{scanStatus}</span>
+                </span>
+                <div className="flex items-center gap-2 tabular-nums flex-shrink-0">
+                  <span className="text-[11px] text-cyan-300 font-mono bg-cyan-950/60 px-2 py-0.5 rounded-full border border-cyan-500/30 font-bold">
+                    ⏱️ {(elapsedMs / 1000).toFixed(1)}s
+                  </span>
+                  <span className="text-sm font-black text-white">{scanPercent}%</span>
+                </div>
               </div>
+
+              {/* High-visibility Progress Bar with Glow */}
+              <div className="w-full max-w-md h-3.5 bg-slate-900/90 rounded-full border border-white/15 p-0.5 relative overflow-hidden mb-4 shadow-inner">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-indigo-400 to-purple-400 transition-all duration-300 ease-out relative shadow-[0_0_12px_rgba(56,189,248,0.5)]"
+                  style={{ width: `${Math.min(100, Math.max(6, scanPercent))}%` }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+                </div>
+              </div>
+
+              {/* 4-Step Milestone Stepper */}
+              <div className="w-full max-w-md grid grid-cols-2 sm:grid-cols-4 gap-1.5 text-left mb-3">
+                {[
+                  { key: 'compressing', label: '1. Compresión', sub: '<90 KB' },
+                  { key: 'uploading', label: '2. Conexión', sub: 'Gemini Flash' },
+                  { key: 'analyzing', label: '3. Lectura IA', sub: 'Nivel & Skills' },
+                  { key: 'validating', label: '4. Pokédex', sub: 'Cotejo oficial' }
+                ].map((step, idx) => {
+                  const stepOrder = ['compressing', 'uploading', 'analyzing', 'validating', 'done'];
+                  const currentIdx = stepOrder.indexOf(scanStage);
+                  const isDone = currentIdx > idx;
+                  const isActive = currentIdx === idx;
+
+                  return (
+                    <div
+                      key={step.key}
+                      className={`p-2 rounded-xl border text-[10px] transition-all ${
+                        isDone
+                          ? 'bg-emerald-950/40 border-emerald-500/50 text-emerald-200'
+                          : isActive
+                          ? 'bg-purple-950/60 border-purple-400/60 text-white shadow-sm ring-1 ring-purple-400/40'
+                          : 'bg-white/[0.02] border-white/5 text-slate-500'
+                      }`}
+                    >
+                      <div className="font-bold flex items-center gap-1 leading-tight">
+                        {isDone ? (
+                          <Check className="w-3 h-3 text-emerald-400 stroke-[3]" />
+                        ) : isActive ? (
+                          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+                        ) : (
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-600" />
+                        )}
+                        <span className="truncate">{step.label}</span>
+                      </div>
+                      <div className="text-[9px] text-slate-400 truncate mt-0.5">{step.sub}</div>
+                    </div>
+                  );
+                })}
+              </div>
+
               <p className="text-[11px] text-slate-400 max-w-sm">
-                Extrayendo especie, nivel, RP, naturaleza, 3 ingredientes y las 5 subhabilidades...
+                💡 <strong className="text-white">Velocidad Pro:</strong> Redimensionado inteligente a 960px y Gemini 2.0 Flash para procesar en ~2 a 4 segundos.
               </p>
             </div>
           ) : selectedFiles.length === 0 ? (

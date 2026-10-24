@@ -71,98 +71,59 @@ Expected JSON Schema:
 }
 Output strictly valid JSON.`;
 
-              async function getAvailableModels(key: string): Promise<string[]> {
-                try {
-                  const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
-                  if (listRes.ok) {
-                    const listData = await listRes.json();
-                    if (Array.isArray(listData.models)) {
-                      const supported = listData.models
-                        .filter((m: any) => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
-                        .map((m: any) => m.name.replace(/^models\//, ''));
+              const candidateModels = [
+                'gemini-2.0-flash',
+                'gemini-1.5-flash',
+                'gemini-2.0-flash-lite'
+              ];
 
-                      const score = (name: string) => {
-                        const lower = name.toLowerCase();
-                        if (lower.includes('2.5-flash')) return 100;
-                        if (lower.includes('2.0-flash')) return 90;
-                        if (lower.includes('1.5-flash')) return 80;
-                        if (lower.includes('flash')) return 70;
-                        if (lower.includes('2.5-pro')) return 60;
-                        if (lower.includes('2.0-pro')) return 50;
-                        if (lower.includes('1.5-pro')) return 40;
-                        return 10;
-                      };
-
-                      const sorted = supported.sort((a: string, b: string) => score(b) - score(a));
-                      if (sorted.length > 0) return sorted;
-                    }
-                  }
-                } catch (e) {}
-
-                return [
-                  'gemini-2.5-flash',
-                  'gemini-2.0-flash',
-                  'gemini-2.0-flash-exp',
-                  'gemini-1.5-flash-latest',
-                  'gemini-1.5-flash',
-                  'gemini-1.5-pro'
-                ];
-              }
-
-              const candidateModels = await getAvailableModels(apiKey);
               let lastError: any = null;
               let resultJson = null;
 
               for (const model of candidateModels) {
-                const cleanModel = model.replace(/^models\//, '');
-                let success = false;
-                for (const apiVer of ['v1beta', 'v1']) {
-                  try {
-                    const geminiRes = await fetch(
-                      `https://generativelanguage.googleapis.com/${apiVer}/models/${cleanModel}:generateContent?key=${apiKey}`,
-                      {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          contents: [
-                            {
-                              parts: [
-                                { text: systemPrompt },
-                                {
-                                  inline_data: {
-                                    mime_type: mimeType,
-                                    data: cleanBase64
-                                  }
+                try {
+                  const geminiRes = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+                    {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        contents: [
+                          {
+                            parts: [
+                              { text: systemPrompt },
+                              {
+                                inline_data: {
+                                  mime_type: mimeType,
+                                  data: cleanBase64
                                 }
-                              ]
-                            }
-                          ],
-                          generationConfig: {
-                            temperature: 0.1,
-                            responseMimeType: 'application/json'
+                              }
+                            ]
                           }
-                        })
-                      }
-                    );
-
-                    if (geminiRes.ok) {
-                      const data = await geminiRes.json();
-                      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                      if (text) {
-                        const cleanText = text.replace(/```json/gi, '').replace(/```/g, '').trim();
-                        resultJson = JSON.parse(cleanText);
-                        success = true;
-                        break;
-                      }
-                    } else {
-                      const err = await geminiRes.json().catch(() => ({}));
-                      lastError = new Error(err.error?.message || `HTTP ${geminiRes.status}`);
+                        ],
+                        generationConfig: {
+                          temperature: 0.1,
+                          responseMimeType: 'application/json'
+                        }
+                      })
                     }
-                  } catch (err: any) {
-                    lastError = err;
+                  );
+
+                  if (geminiRes.ok) {
+                    const data = await geminiRes.json();
+                    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (text) {
+                      const cleanText = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+                      resultJson = JSON.parse(cleanText);
+                      break;
+                    }
+                  } else {
+                    const err = await geminiRes.json().catch(() => ({}));
+                    lastError = new Error(err.error?.message || `HTTP ${geminiRes.status}`);
                   }
+                } catch (err: any) {
+                  lastError = err;
                 }
-                if (success) break;
               }
 
               if (!resultJson) {

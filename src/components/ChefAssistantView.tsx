@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { DishType, SnorlaxConfig } from '../types/pokemon';
 import { INGREDIENTS } from '../data/gameData';
 import { getIngredientSpriteUrl, getDishImageUrl } from '../services/pokeApiService';
@@ -39,8 +39,26 @@ export const ChefAssistantView: React.FC<ChefAssistantViewProps> = ({
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isScanning, setIsScanning] = useState<boolean>(false);
+  const [scanPercent, setScanPercent] = useState<number>(0);
+  const [scanStatus, setScanStatus] = useState<string>('');
+  const [elapsedMs, setElapsedMs] = useState<number>(0);
   const [scanError, setScanError] = useState<string | null>(null);
   const [scanSuccess, setScanSuccess] = useState<boolean>(false);
+
+  // Live timer during pot scan
+  useEffect(() => {
+    let interval: any = null;
+    if (isScanning) {
+      const startTime = Date.now();
+      setElapsedMs(0);
+      interval = setInterval(() => {
+        setElapsedMs(Date.now() - startTime);
+      }, 100);
+    } else {
+      setElapsedMs(0);
+    }
+    return () => clearInterval(interval);
+  }, [isScanning]);
 
   // Pot & Dish settings
   const [potSize, setPotSize] = useState<number>(() => config?.potSize || 57);
@@ -85,9 +103,21 @@ export const ChefAssistantView: React.FC<ChefAssistantViewProps> = ({
     setIsScanning(true);
     setScanError(null);
     setScanSuccess(false);
+    setScanPercent(10);
+    setScanStatus('Comprimiendo capturas a tamaño ultra ligero...');
 
     try {
-      const result: ScannedPotData = await scanPotScreenshots(selectedFiles);
+      const result: ScannedPotData = await scanPotScreenshots(
+        selectedFiles,
+        undefined,
+        (percent, status) => {
+          setScanPercent(percent);
+          setScanStatus(status);
+        }
+      );
+
+      setScanPercent(100);
+      setScanStatus('¡Olla analizada con éxito!');
 
       if (result.potCapacity && result.potCapacity > 0) {
         setPotSize(result.potCapacity);
@@ -264,7 +294,7 @@ export const ChefAssistantView: React.FC<ChefAssistantViewProps> = ({
                   {isScanning ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      <span>Analizando con IA...</span>
+                      <span>Analizando con Gemini ({scanPercent}%)...</span>
                     </>
                   ) : (
                     <>
@@ -273,6 +303,31 @@ export const ChefAssistantView: React.FC<ChefAssistantViewProps> = ({
                     </>
                   )}
                 </button>
+              </div>
+            )}
+
+            {/* Live Progress Bar during Scan */}
+            {isScanning && (
+              <div className="mt-3 p-3.5 rounded-2xl bg-gradient-to-r from-purple-950/50 to-indigo-950/50 border border-purple-400/30 space-y-2 animate-fade-in">
+                <div className="flex items-center justify-between text-xs font-bold">
+                  <span className="text-purple-200 flex items-center gap-1.5 truncate">
+                    <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-spin flex-shrink-0" />
+                    <span>{scanStatus}</span>
+                  </span>
+                  <div className="flex items-center gap-2 tabular-nums flex-shrink-0">
+                    <span className="text-[11px] text-cyan-300 font-mono bg-cyan-950/60 px-2 py-0.5 rounded-full border border-cyan-500/30 font-bold">
+                      ⏱️ {(elapsedMs / 1000).toFixed(1)}s
+                    </span>
+                    <span className="text-sm font-black text-white">{scanPercent}%</span>
+                  </div>
+                </div>
+
+                <div className="w-full h-2.5 bg-black/50 rounded-full border border-white/10 p-0.5 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-indigo-400 to-purple-400 transition-all duration-300 ease-out"
+                    style={{ width: `${Math.min(100, Math.max(8, scanPercent))}%` }}
+                  />
+                </div>
               </div>
             )}
 
