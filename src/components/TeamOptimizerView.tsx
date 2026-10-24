@@ -5,7 +5,7 @@ import { PokemonCard } from './PokemonCard';
 import { getIngredientSpriteUrl, getDishImageUrl, getRankPokeballUrl, SpriteStyle } from '../services/pokeApiService';
 import { Zap, Trophy, Utensils, Sparkles, Flame, ShieldAlert, ArrowRight, CheckCircle2, Swords, Star, LayoutGrid, Smartphone, Check } from 'lucide-react';
 import { WeeklyRankProjectionView } from './WeeklyRankProjectionView';
-import { proyectarSemanaEquipo } from '../services/weeklyProjector';
+import { proyectarSemanaEquipo, getPokemonSleepDayIndex } from '../services/weeklyProjector';
 
 interface TeamOptimizerViewProps {
   results: OptimizedTeamResult[];
@@ -89,16 +89,40 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
 
   const isMidWeekCalibrated = Boolean(config.midWeekProgress?.isCalibrated && (config.midWeekProgress?.currentVigor ?? 0) > 0);
   const effectiveVigor = isMidWeekCalibrated ? (config.midWeekProgress?.currentVigor || 0) : 0;
-  const effectiveDay = isMidWeekCalibrated ? (config.midWeekProgress?.currentDayIdx ?? 0) : 0;
+  const effectiveDay = isMidWeekCalibrated ? (config.midWeekProgress?.currentDayIdx ?? getPokemonSleepDayIndex()) : 0;
+  const effectiveUpdatedAt = isMidWeekCalibrated ? config.midWeekProgress?.updatedAt : undefined;
+  const effectiveDinner = isMidWeekCalibrated ? config.midWeekProgress?.dinnerEaten : undefined;
+  const effectiveBreakfast = isMidWeekCalibrated ? config.midWeekProgress?.breakfastEaten : undefined;
+  const effectiveLunch = isMidWeekCalibrated ? config.midWeekProgress?.lunchEaten : undefined;
 
   const customSavedTeamWeeklyProj = useMemo(() => {
     if (!customSavedTeamResult) return null;
-    return proyectarSemanaEquipo(customSavedTeamResult.team, config, effectiveVigor, effectiveDay);
-  }, [customSavedTeamResult, config, effectiveVigor, effectiveDay]);
+    return proyectarSemanaEquipo(
+      customSavedTeamResult.team,
+      config,
+      effectiveVigor,
+      effectiveDay,
+      effectiveUpdatedAt,
+      effectiveDinner,
+      effectiveBreakfast,
+      effectiveLunch
+    );
+  }, [customSavedTeamResult, config, effectiveVigor, effectiveDay, effectiveUpdatedAt, effectiveDinner, effectiveBreakfast, effectiveLunch]);
 
   const weeklyProjections = useMemo(() => {
-    return results.map(res => proyectarSemanaEquipo(res.team, config, effectiveVigor, effectiveDay));
-  }, [results, config, effectiveVigor, effectiveDay]);
+    return results.map(res =>
+      proyectarSemanaEquipo(
+        res.team,
+        config,
+        effectiveVigor,
+        effectiveDay,
+        effectiveUpdatedAt,
+        effectiveDinner,
+        effectiveBreakfast,
+        effectiveLunch
+      )
+    );
+  }, [results, config, effectiveVigor, effectiveDay, effectiveUpdatedAt, effectiveDinner, effectiveBreakfast, effectiveLunch]);
 
   if (!results || results.length === 0) {
     return (

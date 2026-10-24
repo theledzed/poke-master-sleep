@@ -40,7 +40,7 @@ import {
   Check
 } from 'lucide-react';
 import { WeeklyRankProjectionView } from './WeeklyRankProjectionView';
-import { proyectarSemanaEquipo } from '../services/weeklyProjector';
+import { proyectarSemanaEquipo, getPokemonSleepDayIndex } from '../services/weeklyProjector';
 
 interface TeamSimulatorViewProps {
   pokemons: Pokemon[];
@@ -135,18 +135,40 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
 
   const isMidWeekCalibrated = Boolean(config.midWeekProgress?.isCalibrated && (config.midWeekProgress?.currentVigor ?? 0) > 0);
   const effectiveVigor = isMidWeekCalibrated ? (config.midWeekProgress?.currentVigor || 0) : 0;
-  const effectiveDay = isMidWeekCalibrated ? (config.midWeekProgress?.currentDayIdx ?? 0) : 0;
+  const effectiveDay = isMidWeekCalibrated ? (config.midWeekProgress?.currentDayIdx ?? getPokemonSleepDayIndex()) : 0;
+  const effectiveUpdatedAt = isMidWeekCalibrated ? config.midWeekProgress?.updatedAt : undefined;
+  const effectiveDinner = isMidWeekCalibrated ? config.midWeekProgress?.dinnerEaten : undefined;
+  const effectiveBreakfast = isMidWeekCalibrated ? config.midWeekProgress?.breakfastEaten : undefined;
+  const effectiveLunch = isMidWeekCalibrated ? config.midWeekProgress?.lunchEaten : undefined;
 
   // Weekly projections (including Sunday x2 pot and 30% x3 extra tasty)
   const customWeeklyProj = useMemo(() => {
     if (currentTeamPokemons.length === 0) return null;
-    return proyectarSemanaEquipo(currentTeamPokemons, config, effectiveVigor, effectiveDay);
-  }, [currentTeamPokemons, config, effectiveVigor, effectiveDay]);
+    return proyectarSemanaEquipo(
+      currentTeamPokemons,
+      config,
+      effectiveVigor,
+      effectiveDay,
+      effectiveUpdatedAt,
+      effectiveDinner,
+      effectiveBreakfast,
+      effectiveLunch
+    );
+  }, [currentTeamPokemons, config, effectiveVigor, effectiveDay, effectiveUpdatedAt, effectiveDinner, effectiveBreakfast, effectiveLunch]);
 
   const recommendedWeeklyProj = useMemo(() => {
     if (!recommendedResult || !recommendedResult.team || recommendedResult.team.length === 0) return null;
-    return proyectarSemanaEquipo(recommendedResult.team, config, effectiveVigor, effectiveDay);
-  }, [recommendedResult, config, effectiveVigor, effectiveDay]);
+    return proyectarSemanaEquipo(
+      recommendedResult.team,
+      config,
+      effectiveVigor,
+      effectiveDay,
+      effectiveUpdatedAt,
+      effectiveDinner,
+      effectiveBreakfast,
+      effectiveLunch
+    );
+  }, [recommendedResult, config, effectiveVigor, effectiveDay, effectiveUpdatedAt, effectiveDinner, effectiveBreakfast, effectiveLunch]);
 
   // Handle slot assignment
   const handleSelectPokemonForSlot = (pokemonId: string) => {

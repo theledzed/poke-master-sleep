@@ -81,6 +81,8 @@ export interface ProyeccionSemanalCompleta {
   promedioDiarioTeorico: number;           // Puntos teóricos esperados por día
   vigorProyectadoAdaptado: number;         // Vigor proyectado al domingo según el ritmo real empírico
   estadoRangoAdaptado: EstadoRango;        // Rango al que apunta según su rendimiento real
+  vigorTeoricoSinCalibrar: number;         // Techo teórico ideal (100% óptimo de laboratorio)
+  estadoRangoTeorico: EstadoRango;         // Rango teórico ideal
 }
 
 export const DIAS_SEMANA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
@@ -378,19 +380,25 @@ export function proyectarSemanaEquipo(
       pendingDinnerVigor = faltaCena ? daySingleMeal : 0;
       pendingBreakfastVigor = faltaDesayuno ? daySingleMeal : 0;
 
-      vigorGanadoEsperado = pendingNightVigor + pendingMealsVigor;
+      // Para el día actual calibrado, aplicamos eficiencia al tiempo restante de recolección
+      const adaptedPendingNight = Math.round(pendingNightVigor * etaClamped);
+      vigorGanadoEsperado = adaptedPendingNight + pendingMealsVigor;
       vigorGanadoMin = Math.round(
-        (dayEval.berryVigorDaily * 0.95 + dayEval.skillVigorDaily * 0.80) * remainingTeamFraction +
+        (dayEval.berryVigorDaily * 0.95 + dayEval.skillVigorDaily * 0.80) * remainingTeamFraction * etaClamped +
         (pendingMealsVigor * 0.90)
       );
       vigorGanadoMax = Math.round(
-        (dayEval.berryVigorDaily * 1.05 + dayEval.skillVigorDaily * 1.20) * remainingTeamFraction +
+        (dayEval.berryVigorDaily * 1.05 + dayEval.skillVigorDaily * 1.20) * remainingTeamFraction * etaClamped +
         (pendingMealsVigor * 1.35)
       );
 
-      remainingAdaptedSum += Math.round(pendingNightVigor * etaClamped) + pendingMealsVigor;
+      remainingAdaptedSum += adaptedPendingNight + pendingMealsVigor;
     } else if (isCalibrated && d > diaInicioIdx) {
-      remainingAdaptedSum += Math.round(normalDailyExpected * etaClamped);
+      // Días futuros adaptados al rendimiento real del campamento (etaClamped)
+      vigorGanadoEsperado = Math.round(normalDailyExpected * etaClamped);
+      vigorGanadoMin = Math.round(normalDailyMin * etaClamped);
+      vigorGanadoMax = Math.round(normalDailyMax * etaClamped);
+      remainingAdaptedSum += vigorGanadoEsperado;
     }
 
     remainingMinSum += vigorGanadoMin;
@@ -406,8 +414,9 @@ export function proyectarSemanaEquipo(
       ? timelineDias[timelineDias.length - 1].vigorAcumuladoFinDia
       : (d > 0 ? (d * vigorDiaNormal) : 0);
 
-    const day10AM = Math.round((1 * daySingleMeal) + (dayTeamDaily * 0.25));
-    const day10PM = Math.round((3 * daySingleMeal) + (dayTeamDaily * 0.75));
+    const adaptedDayScale = (isCalibrated && d > diaInicioIdx) ? etaClamped : 1.0;
+    const day10AM = Math.round(((1 * daySingleMeal) + (dayTeamDaily * 0.25)) * adaptedDayScale);
+    const day10PM = Math.round(((3 * daySingleMeal) + (dayTeamDaily * 0.75)) * adaptedDayScale);
     const metaAcum10AM = prevDayAcum + day10AM;
     const metaAcum10PM = prevDayAcum + day10PM;
     const estado10AM = calcularRangoSnorlax(islaId, metaAcum10AM);
@@ -456,6 +465,10 @@ export function proyectarSemanaEquipo(
     ? Math.round(vigorInicial + remainingAdaptedSum)
     : vigorFinalSemana;
   const estadoRangoAdaptado = calcularRangoSnorlax(islaId, vigorProyectadoAdaptado);
+
+  // Techo Teórico Sin Calibrar (Papel / Laboratorio 100%)
+  const vigorTeoricoSinCalibrar = Math.round((vigorDiaNormal * 6) + vigorDiaDomingo);
+  const estadoRangoTeorico = calcularRangoSnorlax(islaId, vigorTeoricoSinCalibrar);
 
   // 5. Evaluar Hitos Clave de la Isla:
   const hitosDef = [
@@ -516,6 +529,8 @@ export function proyectarSemanaEquipo(
     promedioDiarioReal,
     promedioDiarioTeorico,
     vigorProyectadoAdaptado,
-    estadoRangoAdaptado
+    estadoRangoAdaptado,
+    vigorTeoricoSinCalibrar,
+    estadoRangoTeorico
   };
 }

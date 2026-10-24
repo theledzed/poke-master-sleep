@@ -439,7 +439,18 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
             {/* 1. Dia de la semana */}
             <div>
-              <label className="block text-[11px] text-slate-300 font-bold mb-1">Día de la Semana</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-[11px] text-slate-300 font-bold">Día de la Semana</label>
+                {currentDayIdx !== detectedSleepDayIdx && (
+                  <button
+                    type="button"
+                    onClick={() => setCurrentDayIdx(detectedSleepDayIdx)}
+                    className="text-[10px] text-purple-300 hover:text-purple-100 font-bold underline"
+                  >
+                    Fijar a Hoy ({DIAS_NOMBRES[detectedSleepDayIdx]})
+                  </button>
+                )}
+              </div>
               <select
                 value={currentDayIdx}
                 onChange={(e) => setCurrentDayIdx(parseInt(e.target.value, 10))}
@@ -447,7 +458,7 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
               >
                 {DIAS_NOMBRES.map((d, idx) => (
                   <option key={idx} value={idx} className="bg-slate-900">
-                    {d} {idx === detectedSleepDayIdx ? '(Hoy en juego)' : idx === 6 ? '(Súper Domingo)' : ''}
+                    {d} {idx === detectedSleepDayIdx ? '(Hoy en juego 🎮)' : idx === 6 ? '(Súper Domingo)' : ''}
                   </option>
                 ))}
               </select>
@@ -733,7 +744,11 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
                 <span className="text-white font-black text-lg">
                   ~{vigorFinalSemana.toLocaleString()} pts
                 </span>
-                <span className="text-[var(--text-muted)]">acumulados al cerrar el domingo (04:00 AM)</span>
+                <span className="text-[var(--text-muted)]">
+                  {isCalibrated
+                    ? `proyectados al domingo a tu ritmo real (${eficienciaCampamento}% de eficiencia)`
+                    : 'acumulados al cerrar el domingo (04:00 AM)'}
+                </span>
               </div>
             </div>
           </div>
@@ -803,12 +818,12 @@ export const WeeklyRankProjectionView: React.FC<WeeklyRankProjectionViewProps> =
                     ✨ Techo Teórico Máximo (100% Energía)
                   </span>
                   <span className="text-sm font-bold text-slate-200">
-                    {estadoRangoFinal.rangoActual}
+                    {proyeccion.estadoRangoTeorico?.rangoActual || estadoRangoFinal.rangoActual}
                   </span>
                 </div>
                 <div className="text-right">
                   <span className="text-sm text-slate-300 font-bold tabular-nums block">
-                    ~{vigorFinalSemana.toLocaleString()} pts
+                    ~{(proyeccion.vigorTeoricoSinCalibrar || vigorFinalSemana).toLocaleString()} pts
                   </span>
                   <span className="text-[10px] text-slate-500">ideal</span>
                 </div>

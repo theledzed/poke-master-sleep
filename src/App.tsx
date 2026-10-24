@@ -312,24 +312,33 @@ export const App: React.FC = () => {
 
   // Mid-week progress calibration handler
   const handleUpdateMidWeekProgress = useCallback((progress: MidWeekProgress) => {
-    setConfig(prev => ({
-      ...prev,
-      midWeekProgress: {
-        ...progress,
-        updatedAt: progress.updatedAt || new Date().toISOString(),
-        isCalibrated: progress.isCalibrated ?? true
-      }
-    }));
-  }, []);
+    setConfig(prev => {
+      const updatedConfig: SnorlaxConfig = {
+        ...prev,
+        midWeekProgress: {
+          ...progress,
+          updatedAt: progress.updatedAt || new Date().toISOString(),
+          isCalibrated: progress.isCalibrated ?? true
+        }
+      };
+      saveProfileData(activeProfile, pokemons, updatedConfig).then(res => {
+        if (res.cloudSynced) setSyncStatus('synced');
+      });
+      return updatedConfig;
+    });
+  }, [activeProfile, pokemons]);
 
   // Reset mid-week calibration to theoretical
   const handleResetMidWeekProgress = useCallback(() => {
     setConfig(prev => {
       const copy = { ...prev };
       delete copy.midWeekProgress;
+      saveProfileData(activeProfile, pokemons, copy).then(res => {
+        if (res.cloudSynced) setSyncStatus('synced');
+      });
       return copy;
     });
-  }, []);
+  }, [activeProfile, pokemons]);
 
   // Delete / Transfer Pokemon handler
   const handleDeletePokemon = useCallback((id: string) => {
