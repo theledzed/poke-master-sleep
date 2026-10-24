@@ -425,12 +425,12 @@ export async function scanPokemonScreenshot(
   throw new Error('No se pudo procesar la captura con el servicio de IA.');
 }
 
-const GEMINI_MODELS_CACHE_KEY = 'gemini_active_vision_models_v3';
+const GEMINI_MODELS_CACHE_KEY = 'gemini_active_vision_models_v4';
 
 export const DEFAULT_GEMINI_MODELS = [
+  'gemini-3.5-flash-lite',
   'gemini-2.5-flash-lite',
-  'gemini-1.5-flash',
-  'gemini-2.5-flash'
+  'gemini-1.5-flash'
 ];
 
 /**
@@ -590,11 +590,7 @@ Output strictly valid JSON.`;
             }
           ],
           generationConfig: {
-            temperature: 0.1,
-            responseMimeType: 'application/json',
-            thinkingConfig: {
-              thinkingBudget: 0
-            }
+            responseMimeType: 'application/json'
           }
         })
       });
@@ -818,11 +814,7 @@ Output strictly valid JSON.`;
             }
           ],
           generationConfig: {
-            temperature: 0.1,
-            responseMimeType: 'application/json',
-            thinkingConfig: {
-              thinkingBudget: 0
-            }
+            responseMimeType: 'application/json'
           }
         })
       });
