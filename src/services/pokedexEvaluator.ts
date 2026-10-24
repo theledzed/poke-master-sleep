@@ -608,6 +608,14 @@ export function evaluateSinglePokemonGenetics(pokemon: Pokemon): {
       const monoPts = slot2Info.tier === 'GOURMET' ? 14 : slot2Info.tier === 'HIGH' ? 11 : 9;
       baseGeneticScore += monoPts;
       pros.push(`🎯 Especialista Mono-ingrediente (${ing1}): suministro 100% predecible (+${monoPts} pts)`);
+
+      // Trifecta de oro: Mono-ingrediente + Velocidad alta + Gran Inventario para recolección nocturna sin desborde
+      const hasSpeedUp = (nat?.speedMod && nat.speedMod < 1.0) || getSubWeight('Velocidad ayuda M').weight > 0 || getSubWeight('Velocidad ayuda S').weight > 0;
+      const hasHighCarry = invL.weight > 0 || invM.weight > 0 || (pokemon.carryLimit || 0) >= 24;
+      if (hasSpeedUp && hasHighCarry) {
+        baseGeneticScore += 5;
+        pros.push(`⚡ Trifecta de Farmeo: Mono-ingrediente + Velocidad alta + Inventario amplio para no saturarse de noche (+5 pts)`);
+      }
     } else if (ing2) {
       if (slot2Info.tier === 'GOURMET') {
         const activeBonus = isSlot2Unlocked ? 3 : 0;
