@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOMServer from 'react-dom/server';
 import { App } from './App';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 export interface RenderResult {
   html: string;
@@ -13,7 +14,9 @@ export interface RenderResult {
 export function render(): RenderResult {
   const html = ReactDOMServer.renderToString(
     <React.StrictMode>
-      <App />
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
     </React.StrictMode>
   );
 

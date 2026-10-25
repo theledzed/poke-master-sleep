@@ -35,11 +35,10 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
   onConfirmEvolution,
   spriteStyle = 'sleep'
 }) => {
-  if (!isOpen || !pokemon) return null;
-
   const availableEvolutions = useMemo(() => {
+    if (!pokemon) return [];
     return getAvailableEvolutions(pokemon.name);
-  }, [pokemon.name]);
+  }, [pokemon?.name]);
 
   const [selectedTargetIndex, setSelectedTargetIndex] = useState(0);
   const [isEvolvingAnimation, setIsEvolvingAnimation] = useState(false);
@@ -50,7 +49,7 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
     availableEvolutions[selectedTargetIndex] || availableEvolutions[0];
 
   const preview: EvolutionPreview | null = useMemo(() => {
-    if (!targetMaster) return null;
+    if (!pokemon || !targetMaster) return null;
     return calculateEvolutionPreview(pokemon, targetMaster);
   }, [pokemon, targetMaster]);
 
@@ -61,7 +60,7 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
   useEffect(() => {
     setCurrentImgError(false);
     setTargetImgError(false);
-  }, [pokemon.name, targetMaster?.name, spriteStyle]);
+  }, [pokemon?.name, targetMaster?.name, spriteStyle]);
 
   useEffect(() => {
     if (isOpen) {
@@ -72,6 +71,8 @@ export const EvolutionModal: React.FC<EvolutionModalProps> = ({
       };
     }
   }, [isOpen]);
+
+  if (!isOpen || !pokemon) return null;
 
   if (!targetMaster || !preview) {
     return null;

@@ -124,7 +124,31 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
     );
   }, [results, config, effectiveVigor, effectiveDay, effectiveUpdatedAt, effectiveDinner, effectiveBreakfast, effectiveLunch]);
 
-  if (!results || results.length === 0) {
+  const currentResult: OptimizedTeamResult | undefined =
+    selectedRank === -1 && customSavedTeamResult
+      ? customSavedTeamResult
+      : results[selectedRank] || results[0];
+
+  // Count active Bonus ayuda stacks across the 5 team members (5% speed per stack)
+  // Must be declared BEFORE any early returns to respect React Rules of Hooks
+  const teamBonusAyudaCount = useMemo(() => {
+    if (!currentResult?.team) return 0;
+    return currentResult.team.reduce(
+      (acc, p) =>
+        acc +
+        (p.subskills || []).filter(
+          (s) => {
+            if (!s) return false;
+            const isEnabled = Boolean(s.enabled || (typeof s.unlockLevel === 'number' && s.unlockLevel <= p.level));
+            const name = (typeof s === 'string' ? s : s?.name || '').toLowerCase();
+            return isEnabled && (name.includes('bonus ayuda') || name.includes('helping bonus'));
+          }
+        ).length,
+      0
+    );
+  }, [currentResult?.team]);
+
+  if (!results || results.length === 0 || !currentResult) {
     return (
       <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-10 text-center my-6">
         <div className="text-5xl mb-3">😴</div>
@@ -135,24 +159,6 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
       </div>
     );
   }
-
-  const currentResult: OptimizedTeamResult =
-    selectedRank === -1 && customSavedTeamResult
-      ? customSavedTeamResult
-      : results[selectedRank] || results[0];
-
-  // Count active Bonus ayuda stacks across the 5 team members (5% speed per stack)
-  const teamBonusAyudaCount = useMemo(() => {
-    if (!currentResult?.team) return 0;
-    return currentResult.team.reduce(
-      (acc, p) =>
-        acc +
-        (p.subskills || []).filter(
-          (s) => (s.enabled || s.unlockLevel <= p.level) && s.name === 'Bonus ayuda'
-        ).length,
-      0
-    );
-  }, [currentResult?.team]);
 
   const currentWeeklyProj =
     selectedRank === -1 && customSavedTeamWeeklyProj
