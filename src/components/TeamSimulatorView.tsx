@@ -127,6 +127,17 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
       .filter((p): p is Pokemon => p !== null);
   }, [currentTeamIds, pokemonMap]);
 
+  // Total team Helping Bonus stacks (+5% help speed to team per stack, max 25%)
+  const teamBonusAyudaCount = useMemo(() => {
+    return currentTeamPokemons.reduce((count, p) => {
+      const hasBonus = (p.subskills || []).some(s => {
+        const name = (typeof s === 'string' ? s : s?.name || '').toLowerCase();
+        return name.includes('bonus ayuda') || name.includes('helping bonus');
+      });
+      return count + (hasBonus ? 1 : 0);
+    }, 0);
+  }, [currentTeamPokemons]);
+
   // Evaluate Custom Team
   const customEvaluation = useMemo(() => {
     if (currentTeamPokemons.length === 0) return null;
@@ -615,14 +626,20 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
 
       {/* 5-Slot Interactive Pokemon Builder */}
       <div className="poke-card p-5 sm:p-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div>
-            <h3 className="font-black text-white text-base flex items-center gap-2">
+            <h3 className="font-black text-white text-base flex flex-wrap items-center gap-2">
               <span>{activeCustomTeamIndex === 0 ? '🔵' : '🟣'}</span>
               <span>Alineación de {activeCustomTeamIndex === 0 ? 'Mi Equipo 1' : 'Mi Equipo 2'}</span>
               <span className="text-xs px-3 py-1 rounded-full bg-white/10 text-white tabular-nums font-black border border-white/15">
                 {currentTeamPokemons.length} / 5 Compañeros
               </span>
+              {teamBonusAyudaCount > 0 && (
+                <span className="text-xs px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/40 font-bold flex items-center gap-1.5 shadow-sm">
+                  <span>🤝</span>
+                  <span>Bonus ayuda: +{teamBonusAyudaCount * 5}% vel. a los 5 compañeros ({teamBonusAyudaCount} stack{teamBonusAyudaCount > 1 ? 's' : ''})</span>
+                </span>
+              )}
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
               Haz clic en cualquier espacio para elegir o cambiar de Pokémon de tu colección
@@ -666,6 +683,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                   onEdit={onEditPokemon}
                   compact={true}
                   spriteStyle={spriteStyle}
+                  teamBonusAyudaCount={teamBonusAyudaCount}
                 />
                 {/* Overlay Action Buttons: Swap & Remove */}
                 <div className="absolute top-2.5 right-2.5 flex items-center gap-1 z-20 opacity-0 group-hover:opacity-100 transition-opacity">

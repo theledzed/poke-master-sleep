@@ -1662,24 +1662,45 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
               <span>Subhabilidades</span>
               <span className="text-[10px] text-white/50 font-medium">Nv 10, 25, 50, 75, 100</span>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {[10, 25, 50, 75, 100].map((unlockLvl, idx) => (
-                <div key={idx} className="flex items-center gap-2 text-xs">
-                  <span className="w-14 text-white/60 text-[11px] tabular-nums font-bold">Nv. {unlockLvl}:</span>
-                  <select
-                    value={subskills[idx] || ''}
-                    onChange={(e) => {
-                      const newSubs = [...subskills];
-                      newSubs[idx] = e.target.value;
-                      setSubskills(newSubs);
-                    }}
-                    className="flex-1 px-3 py-1.5 bg-white/[0.06] hover:bg-white/[0.09] border border-white/10 rounded-xl text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-white/30 transition-all font-medium"
-                  >
-                    <option value="" className="bg-slate-900 text-white font-medium">(Ninguna)</option>
-                    {allSubskillNames.map(s => (
-                      <option key={s} value={s} className="bg-slate-900 text-white font-medium">{s}</option>
-                    ))}
-                  </select>
+                <div key={idx} className="space-y-1">
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="w-14 text-white/60 text-[11px] tabular-nums font-bold">Nv. {unlockLvl}:</span>
+                    <select
+                      value={subskills[idx] || ''}
+                      onChange={(e) => {
+                        const newSubs = [...subskills];
+                        newSubs[idx] = e.target.value;
+                        setSubskills(newSubs);
+                      }}
+                      className="flex-1 px-3 py-1.5 bg-white/[0.06] hover:bg-white/[0.09] border border-white/10 rounded-xl text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-white/30 transition-all font-medium"
+                    >
+                      <option value="" className="bg-slate-900 text-white font-medium">(Ninguna)</option>
+                      {allSubskillNames.map(s => (
+                        <option key={s} value={s} className="bg-slate-900 text-white font-medium">{s}</option>
+                      ))}
+                    </select>
+                  </div>
+                  {subskills[idx] && KNOWN_SUBSKILLS[subskills[idx]] && (
+                    <div className="pl-16 text-[10px] leading-tight flex flex-wrap items-center gap-1.5">
+                      <span className={
+                        KNOWN_SUBSKILLS[subskills[idx]].tier === 'gold'
+                          ? 'text-amber-300 font-semibold'
+                          : KNOWN_SUBSKILLS[subskills[idx]].tier === 'blue'
+                          ? 'text-sky-300 font-semibold'
+                          : 'text-slate-300'
+                      }>
+                        {KNOWN_SUBSKILLS[subskills[idx]].description}
+                      </span>
+                      {subskills[idx].toLowerCase().includes('bonus ayuda') && (
+                        <span className="px-1.5 py-0.5 rounded text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold inline-flex items-center gap-1">
+                          <span>🤝</span>
+                          <span>Aura de Equipo (-5% vel.)</span>
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

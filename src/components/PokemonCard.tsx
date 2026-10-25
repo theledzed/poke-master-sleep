@@ -14,7 +14,7 @@ import {
 } from '../services/pokeApiService';
 import { getPokemonSkillLevel } from '../services/optimizer';
 import { evaluateSinglePokemonGenetics } from '../services/pokedexEvaluator';
-import { canPokemonEvolve } from '../services/evolutionService';
+import { canPokemonEvolve, formatFrequencySeconds } from '../services/evolutionService';
 import { getSpeciesMasterData } from '../data/speciesMaster';
 import { EvolutionModal } from './EvolutionModal';
 import {
@@ -41,6 +41,7 @@ export interface PokemonCardProps {
   compact?: boolean;
   spriteStyle?: SpriteStyle;
   slotIndex?: number;
+  teamBonusAyudaCount?: number;
 }
 
 export const PokemonCard: React.FC<PokemonCardProps> = ({
@@ -50,7 +51,8 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
   onEvolve,
   compact = false,
   spriteStyle = 'showdown',
-  slotIndex
+  slotIndex,
+  teamBonusAyudaCount = 0
 }) => {
   const [imageError, setImageError] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -82,6 +84,14 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
 
   // Intrinsic genetic evaluation for quick grade display
   const genetic = useMemo(() => evaluateSinglePokemonGenetics(pokemon), [pokemon]);
+
+  // Dynamic effective frequency when boosted by team Helping Bonus (Bonus ayuda: -5% per stack)
+  const boostedFrequencyStr = useMemo(() => {
+    if (!teamBonusAyudaCount || teamBonusAyudaCount <= 0 || !pokemon.frequencySeconds) return null;
+    const speedReduction = Math.min(0.25, teamBonusAyudaCount * 0.05);
+    const boostedSec = Math.round(pokemon.frequencySeconds * (1 - speedReduction));
+    return formatFrequencySeconds(boostedSec);
+  }, [teamBonusAyudaCount, pokemon.frequencySeconds]);
 
   // Specialty badge colors
   const specialtyBadge = {
@@ -309,7 +319,18 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
                 <span className="text-slate-500 mx-0.5">•</span>
                 <span className="flex items-center gap-0.5 text-slate-300 tabular-nums text-[9px] font-semibold">
                   <Clock className="w-2.5 h-2.5 text-[var(--accent-primary)]" />
-                  <span>{pokemon.frequencyStr}</span>
+                  {boostedFrequencyStr ? (
+                    <span className="flex items-center gap-1">
+                      <span className="text-emerald-300 font-bold" title={`Frecuencia acelerada por Bonus ayuda (-${teamBonusAyudaCount * 5}%): ${boostedFrequencyStr} (Base: ${pokemon.frequencyStr})`}>
+                        {boostedFrequencyStr}
+                      </span>
+                      <span className="text-[8px] font-black text-amber-300 bg-amber-500/20 px-1 py-0.2 rounded-full border border-amber-400/30">
+                        -{teamBonusAyudaCount * 5}% 🤝
+                      </span>
+                    </span>
+                  ) : (
+                    <span>{pokemon.frequencyStr}</span>
+                  )}
                 </span>
               </div>
 
@@ -390,7 +411,18 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
                     <span>•</span>
                     <span className="text-slate-400 tabular-nums font-medium flex items-center gap-1">
                       <Clock className="w-3 h-3 text-[var(--accent-primary)]" />
-                      {pokemon.frequencyStr}
+                      {boostedFrequencyStr ? (
+                        <span className="flex items-center gap-1">
+                          <span className="text-emerald-300 font-bold" title={`Frecuencia en equipo (-${teamBonusAyudaCount * 5}%): ${boostedFrequencyStr} (Base: ${pokemon.frequencyStr})`}>
+                            {boostedFrequencyStr}
+                          </span>
+                          <span className="text-[9px] font-black text-amber-300 bg-amber-500/20 px-1 py-0.2 rounded-full border border-amber-400/30">
+                            -{teamBonusAyudaCount * 5}% 🤝
+                          </span>
+                        </span>
+                      ) : (
+                        <span>{pokemon.frequencyStr}</span>
+                      )}
                     </span>
                     <span>•</span>
                     <span className="text-sky-300 tabular-nums font-bold" title="Capacidad de la bolsa">

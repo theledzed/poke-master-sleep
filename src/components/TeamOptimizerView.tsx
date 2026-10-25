@@ -141,6 +141,19 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
       ? customSavedTeamResult
       : results[selectedRank] || results[0];
 
+  // Count active Bonus ayuda stacks across the 5 team members (5% speed per stack)
+  const teamBonusAyudaCount = useMemo(() => {
+    if (!currentResult?.team) return 0;
+    return currentResult.team.reduce(
+      (acc, p) =>
+        acc +
+        (p.subskills || []).filter(
+          (s) => (s.enabled || s.unlockLevel <= p.level) && s.name === 'Bonus ayuda'
+        ).length,
+      0
+    );
+  }, [currentResult?.team]);
+
   const currentWeeklyProj =
     selectedRank === -1 && customSavedTeamWeeklyProj
       ? customSavedTeamWeeklyProj
@@ -331,6 +344,14 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
             <span className="px-3.5 py-1 rounded-full bg-white/[0.06] backdrop-blur-md border border-white/10 text-purple-200 text-[11px] font-bold flex items-center gap-1.5">
               <span>⚡</span> Skill: <strong className="tabular-nums text-white font-black">{currentResult.skillVigorDaily.toLocaleString()}</strong> ({Math.round((currentResult.skillVigorDaily / currentResult.totalDailyVigor) * 100)}%)
             </span>
+            {teamBonusAyudaCount > 0 && (
+              <span className="px-3.5 py-1 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-200 text-[11px] font-bold flex items-center gap-1.5 shadow-sm">
+                <span>🤝</span>
+                <span>
+                  <strong>Bonus ayuda:</strong> +{teamBonusAyudaCount * 5}% vel. a los 5 compañeros ({teamBonusAyudaCount} {teamBonusAyudaCount === 1 ? 'stack' : 'stacks'})
+                </span>
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
@@ -426,6 +447,7 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
                 onEdit={onEditPokemon}
                 compact={true}
                 spriteStyle={spriteStyle}
+                teamBonusAyudaCount={teamBonusAyudaCount}
               />
             ))}
           </div>
@@ -440,6 +462,7 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
                 onEdit={onEditPokemon}
                 compact={false}
                 spriteStyle={spriteStyle}
+                teamBonusAyudaCount={teamBonusAyudaCount}
               />
             ))}
           </div>
