@@ -10,6 +10,7 @@ import { RecipesView } from './components/RecipesView';
 import { ExcelManager } from './components/ExcelManager';
 import { PokemonModal } from './components/PokemonModal';
 import { PushNotificationModal } from './components/PushNotificationModal';
+import { PushNotificationBanner } from './components/PushNotificationBanner';
 import { mergeWithDefaultPushConfig } from './services/pushNotificationService';
 import { WeatherBackground, WeatherMode, getAutoWeather } from './components/WeatherBackground';
 import {
@@ -488,6 +489,19 @@ export const App: React.FC = () => {
         {/* TAB 1: OPTIMIZADOR */}
         {activeTab === 'optimizer' && (
           <div key="optimizer" className="animate-dreamy-tab-enter space-y-6">
+            {/* Proactive Smart Push Notification Opt-in Banner */}
+            <PushNotificationBanner
+              activeProfile={activeProfile}
+              pokemons={pokemons}
+              config={config}
+              onUpdatePushConfig={handleUpdatePushConfig}
+              onOpenPushModal={() => setIsPushModalOpen(true)}
+              onShowToast={(msg) => {
+                setPushToastMsg(msg);
+                setTimeout(() => setPushToastMsg(null), 5000);
+              }}
+            />
+
             <SnorlaxSetup
               config={config}
               onChangeConfig={setConfig}

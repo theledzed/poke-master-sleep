@@ -407,7 +407,7 @@ export async function subscribeDeviceToWebPush(
   // Ensure Service Worker is registered (in dev or production)
   let registration = await navigator.serviceWorker.getRegistration();
   if (!registration) {
-    registration = await navigator.serviceWorker.register('/push-sw.js');
+    registration = await navigator.serviceWorker.register('/sw.js');
   }
   await navigator.serviceWorker.ready;
 

@@ -181,12 +181,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <button
                   type="button"
                   onClick={onOpenPushModal}
-                  title="Alertas Push de Pokémon Sleep"
+                  title={isPushEnabled ? "Alertas Push activadas" : "Activar Alertas Push de Pokémon Sleep"}
                   className="relative p-2 rounded-full bg-white/[0.06] hover:bg-white/[0.14] text-slate-200 hover:text-white border border-white/10 transition-all shadow-sm active:scale-95"
                 >
                   <Bell className="w-4 h-4 stroke-[2.2]" />
-                  {isPushEnabled && (
+                  {isPushEnabled ? (
                     <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-indigo-950" />
+                  ) : (
+                    <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-amber-400 animate-pulse ring-2 ring-indigo-950 shadow-sm" />
                   )}
                 </button>
               )}
