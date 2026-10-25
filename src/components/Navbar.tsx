@@ -5,7 +5,8 @@ import {
   UtensilsCrossed,
   FileSpreadsheet,
   Swords,
-  Sparkles
+  Sparkles,
+  Bell
 } from 'lucide-react';
 import { WeatherMode } from './WeatherBackground';
 import { ProfileSelector } from './ProfileSelector';
@@ -30,6 +31,8 @@ interface NavbarProps {
   onCardViewModeChange: (mode: CardViewMode) => void;
   pokedexViewMode?: 'cards' | 'audit';
   onPokedexViewModeChange?: (mode: 'cards' | 'audit') => void;
+  isPushEnabled?: boolean;
+  onOpenPushModal?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -46,7 +49,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   cardViewMode,
   onCardViewModeChange,
   pokedexViewMode,
-  onPokedexViewModeChange
+  onPokedexViewModeChange,
+  isPushEnabled,
+  onOpenPushModal
 }) => {
   const tabs = [
     { id: 'optimizer' as ActiveTab, label: 'Campamento', shortLabel: 'Campamento', icon: Tent, badge: 'Snorlax' },
@@ -170,6 +175,21 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onSelectProfile={onSelectProfile}
                 syncStatus={syncStatus}
               />
+
+              {/* Push Notification Center Trigger */}
+              {onOpenPushModal && (
+                <button
+                  type="button"
+                  onClick={onOpenPushModal}
+                  title="Alertas Push de Pokémon Sleep"
+                  className="relative p-2 rounded-full bg-white/[0.06] hover:bg-white/[0.14] text-slate-200 hover:text-white border border-white/10 transition-all shadow-sm active:scale-95"
+                >
+                  <Bell className="w-4 h-4 stroke-[2.2]" />
+                  {isPushEnabled && (
+                    <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-indigo-950" />
+                  )}
+                </button>
+              )}
 
               {/* Unified Interface & Display Settings (Sprites, Cards & Weather Atmosphere) */}
               <ViewSettingsDropdown

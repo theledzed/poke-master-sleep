@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { Pokemon, SnorlaxConfig, OptimizedTeamResult, MidWeekProgress } from './types/pokemon';
+import { Pokemon, SnorlaxConfig, OptimizedTeamResult, MidWeekProgress, PushNotificationConfig } from './types/pokemon';
 import { optimizeTeam } from './services/optimizer';
 import { Navbar, ActiveTab } from './components/Navbar';
 import { SnorlaxSetup } from './components/SnorlaxSetup';
@@ -9,6 +9,8 @@ import { PokedexView } from './components/PokedexView';
 import { RecipesView } from './components/RecipesView';
 import { ExcelManager } from './components/ExcelManager';
 import { PokemonModal } from './components/PokemonModal';
+import { PushNotificationModal } from './components/PushNotificationModal';
+import { mergeWithDefaultPushConfig } from './services/pushNotificationService';
 import { WeatherBackground, WeatherMode, getAutoWeather } from './components/WeatherBackground';
 import {
   ProfileId,
@@ -132,6 +134,8 @@ export const App: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pokemonToEdit, setPokemonToEdit] = useState<Pokemon | null>(null);
   const [preFillPokemonData, setPreFillPokemonData] = useState<PreFilledPokemonData | null>(null);
+  const [isPushModalOpen, setIsPushModalOpen] = useState(false);
+  const [pushToastMsg, setPushToastMsg] = useState<string | null>(null);
 
   // Background cloud fetch on initial mount
   useEffect(() => {
@@ -310,6 +314,92 @@ export const App: React.FC = () => {
     }));
   }, []);
 
+  // Push Notification Configuration & Bag Timer Reset handlers
+  const handleUpdatePushConfig = useCallback(
+    (nextPushConfig: PushNotificationConfig) => {
+      setConfig((prev) => {
+        const updatedConfig: SnorlaxConfig = {
+          ...prev,
+          pushConfig: nextPushConfig
+        };
+        saveProfileData(activeProfile, pokemons, updatedConfig).then((res) => {
+          if (res.cloudSynced) setSyncStatus('synced');
+        });
+        return updatedConfig;
+      });
+    },
+    [activeProfile, pokemons]
+  );
+
+  const handleBagCollectedReset = useCallback(
+    (showToast = false) => {
+      setConfig((prev) => {
+        const mergedPush = mergeWithDefaultPushConfig(prev.pushConfig);
+        const nextPush: PushNotificationConfig = {
+          ...mergedPush,
+          lastBagCollectedAt: new Date().toISOString()
+        };
+        delete nextPush.snoozedUntil;
+        const updatedConfig: SnorlaxConfig = {
+          ...prev,
+          pushConfig: nextPush
+        };
+        saveProfileData(activeProfile, pokemons, updatedConfig).then((res) => {
+          if (res.cloudSynced) setSyncStatus('synced');
+        });
+        return updatedConfig;
+      });
+      if (showToast) {
+        setPushToastMsg('✅ ¡Reloj de bolsa reiniciado! Te avisaremos cuando vuelva a llenarse.');
+        setTimeout(() => setPushToastMsg(null), 4500);
+      }
+    },
+    [activeProfile, pokemons]
+  );
+
+  // Handle deep-links from Web Push notifications (?tab=recipes | ?tab=optimizer | ?push_action=bag-collected)
+  // and live postMessage events from Service Worker
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const applyUrlParams = (urlStr: string) => {
+      try {
+        const parsed = new URL(urlStr, window.location.origin);
+        const tabParam = parsed.searchParams.get('tab');
+        const pushAction = parsed.searchParams.get('push_action');
+
+        if (tabParam === 'recipes' || tabParam === 'optimizer' || tabParam === 'pokedex' || tabParam === 'simulator') {
+          setActiveTab(tabParam as ActiveTab);
+        }
+        if (pushAction === 'bag-collected') {
+          handleBagCollectedReset(true);
+        }
+        if (tabParam || pushAction) {
+          window.history.replaceState({}, '', window.location.pathname);
+        }
+      } catch {
+        // ignore URL parse issues
+      }
+    };
+
+    applyUrlParams(window.location.href);
+
+    const onSwMessage = (event: MessageEvent) => {
+      const msg = event.data;
+      if (!msg || typeof msg !== 'object') return;
+      if (msg.type === 'PUSH_BAG_COLLECTED') {
+        handleBagCollectedReset(true);
+      } else if (msg.type === 'PUSH_NAVIGATE' && msg.url) {
+        applyUrlParams(msg.url);
+      }
+    };
+
+    navigator.serviceWorker?.addEventListener('message', onSwMessage);
+    return () => {
+      navigator.serviceWorker?.removeEventListener('message', onSwMessage);
+    };
+  }, [handleBagCollectedReset]);
+
   // Mid-week progress calibration handler
   const handleUpdateMidWeekProgress = useCallback((progress: MidWeekProgress) => {
     setConfig(prev => {
@@ -364,6 +454,15 @@ export const App: React.FC = () => {
       {/* PWA Install Banner & Guide (Android / iOS) */}
       <PwaInstallPrompt />
 
+      {/* Push Action Confirmation Toast */}
+      {pushToastMsg && (
+        <div className="fixed top-16 sm:top-20 inset-x-4 z-50 flex justify-center pointer-events-none animate-fade-in">
+          <div className="bg-emerald-950/90 backdrop-blur-xl border border-emerald-400/50 text-emerald-100 px-4 py-2.5 rounded-2xl shadow-2xl text-xs font-bold flex items-center gap-2 pointer-events-auto">
+            <span>{pushToastMsg}</span>
+          </div>
+        </div>
+      )}
+
       {/* Navbar */}
       <Navbar
         activeTab={activeTab}
@@ -380,6 +479,8 @@ export const App: React.FC = () => {
         onCardViewModeChange={handleCardViewModeChange}
         pokedexViewMode={pokedexViewMode}
         onPokedexViewModeChange={setPokedexViewMode}
+        isPushEnabled={Boolean(config.pushConfig?.enabled && (config.pushConfig?.subscriptions?.length || 0) > 0)}
+        onOpenPushModal={() => setIsPushModalOpen(true)}
       />
 
       {/* Main Container */}
@@ -459,6 +560,7 @@ export const App: React.FC = () => {
               config={config}
               onUpdateRecipeLevel={handleUpdateRecipeLevel}
               onUpdateAllRecipeLevels={handleUpdateAllRecipeLevels}
+              onPotScannedResetBag={() => handleBagCollectedReset(false)}
             />
           </div>
         )}
@@ -493,6 +595,16 @@ export const App: React.FC = () => {
         spriteStyle={spriteStyle}
         preFillData={preFillPokemonData}
         existingPokemons={pokemons}
+      />
+
+      {/* Smart Push Notifications Modal */}
+      <PushNotificationModal
+        isOpen={isPushModalOpen}
+        onClose={() => setIsPushModalOpen(false)}
+        activeProfile={activeProfile}
+        pokemons={pokemons}
+        config={config}
+        onUpdatePushConfig={handleUpdatePushConfig}
       />
     </div>
   );

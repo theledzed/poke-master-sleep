@@ -187,7 +187,9 @@ export default defineConfig(({ mode }) => {
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,json}']
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,json}'],
+        globIgnores: ['**/push-sw.js'],
+        importScripts: ['/push-sw.js']
       }
     })
   ]

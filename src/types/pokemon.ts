@@ -78,6 +78,38 @@ export interface MidWeekProgress {
   recordedHour?: number; // Hora local (0-23) al calibrar
 }
 
+export interface PushSubscriptionRecord {
+  endpoint: string;
+  keys: {
+    p256dh: string;
+    auth: string;
+  };
+  deviceLabel?: string;
+  platform?: 'android' | 'ios' | 'desktop';
+  createdAt: string;
+}
+
+export interface PushNotificationConfig {
+  enabled: boolean;
+  timezone: string;
+  appOrigin?: string;
+  wakeUpTime: string;             // Default '07:30'
+  breakfastReminder: boolean;     // Default true
+  breakfastTime: string;          // Default '11:35' (25 min before 12:00 PM)
+  lunchReminder: boolean;         // Default true
+  lunchTime: string;              // Default '17:35' (25 min before 6:00 PM)
+  dinnerSleepReminder: boolean;   // Default true
+  dinnerSleepTime: string;        // Default '22:30' (10:30 PM before 11:00 PM sleep)
+  smartBagAlert: boolean;         // Default true (watches fastest Ingredient/Skill mon in currentTeam)
+  lunarEventsAlert: boolean;      // Default true (New Moon & Full Moon 3-night events)
+  mondayResetAlert: boolean;      // Default true (Monday morning island & berry setup)
+  mondayResetTime: string;        // Default '08:30'
+  subscriptions: PushSubscriptionRecord[];
+  lastBagCollectedAt?: string;    // ISO timestamp updated via push button, Chef scan, or manual reset
+  snoozedUntil?: string;          // ISO timestamp if snoozed +1h
+  sentAlertKeys?: Record<string, string>;
+}
+
 export interface SnorlaxConfig {
   island: string;
   dishType: DishType;
@@ -90,6 +122,7 @@ export interface SnorlaxConfig {
   goodCampTicket?: boolean; // Pase de Acampada (+50% puchero, +20% velocidad de ayuda, +20% inventario)
   currentTeam?: CurrentTeamConfig;
   midWeekProgress?: MidWeekProgress;
+  pushConfig?: PushNotificationConfig;
 }
 
 export interface MealPlan {

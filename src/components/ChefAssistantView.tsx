@@ -29,11 +29,13 @@ import {
 interface ChefAssistantViewProps {
   config?: SnorlaxConfig;
   onUpdateRecipeLevel?: (recipeName: string, level: number) => void;
+  onPotScannedResetBag?: () => void;
 }
 
 export const ChefAssistantView: React.FC<ChefAssistantViewProps> = ({
   config,
-  onUpdateRecipeLevel
+  onUpdateRecipeLevel,
+  onPotScannedResetBag
 }) => {
   // Screenshot upload state
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -144,6 +146,8 @@ export const ChefAssistantView: React.FC<ChefAssistantViewProps> = ({
       if (result.inventory && Object.keys(result.inventory).length > 0) {
         setInventory(result.inventory);
         setScanSuccess(true);
+        // Zero-friction anchor: scanning the cooking pot implies user is actively collecting in Pokémon Sleep
+        onPotScannedResetBag?.();
       } else {
         throw new Error('No se detectaron ingredientes en la captura. Asegúrate de que la cuadrícula sea visible.');
       }

@@ -1,0 +1,21 @@
+name: Pokémon Sleep Push Dispatcher
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  dispatch-push:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Trigger Vercel Push Dispatch Endpoint
+        run: |
+          TARGET_URL="${{ vars.APP_URL }}"
+          if [ -n "$TARGET_URL" ]; then
+            curl -fsS --max-time 20 "${TARGET_URL%/}/api/push" || true
+          else
+            curl -fsS --max-time 15 "https://poke-master-sleep.vercel.app/api/push" || \
+            curl -fsS --max-time 15 "https://pokemon-sleep-master.vercel.app/api/push" || true
+          fi

@@ -9,12 +9,14 @@ interface RecipesViewProps {
   config?: SnorlaxConfig;
   onUpdateRecipeLevel?: (recipeName: string, level: number) => void;
   onUpdateAllRecipeLevels?: (levels: Record<string, number>) => void;
+  onPotScannedResetBag?: () => void;
 }
 
 export const RecipesView: React.FC<RecipesViewProps> = ({
   config,
   onUpdateRecipeLevel,
-  onUpdateAllRecipeLevels
+  onUpdateAllRecipeLevels,
+  onPotScannedResetBag
 }) => {
   const [viewMode, setViewMode] = useState<'chef' | 'catalog'>('chef');
   const [selectedType, setSelectedType] = useState<DishType | 'all'>('all');
@@ -66,7 +68,11 @@ export const RecipesView: React.FC<RecipesViewProps> = ({
       </div>
 
       {viewMode === 'chef' ? (
-        <ChefAssistantView config={config} onUpdateRecipeLevel={onUpdateRecipeLevel} />
+        <ChefAssistantView
+          config={config}
+          onUpdateRecipeLevel={onUpdateRecipeLevel}
+          onPotScannedResetBag={onPotScannedResetBag}
+        />
       ) : (
         <>
           {/* Header */}
