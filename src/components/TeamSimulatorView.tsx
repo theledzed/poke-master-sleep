@@ -131,8 +131,10 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
   const teamBonusAyudaCount = useMemo(() => {
     return currentTeamPokemons.reduce((count, p) => {
       const hasBonus = (p.subskills || []).some(s => {
+        if (!s) return false;
+        const isEnabled = Boolean(s.enabled || (typeof s.unlockLevel === 'number' && s.unlockLevel <= p.level));
         const name = (typeof s === 'string' ? s : s?.name || '').toLowerCase();
-        return name.includes('bonus ayuda') || name.includes('helping bonus');
+        return isEnabled && (name.includes('bonus ayuda') || name.includes('helping bonus'));
       });
       return count + (hasBonus ? 1 : 0);
     }, 0);

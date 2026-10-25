@@ -1,7 +1,8 @@
 // Vercel Serverless Function: GET / POST /api/push
 // Unified Web Push Engine: Cron Dispatch, Lock-Screen Action ACK, Instant Test & Partner Nudge
 
-import webpush from 'web-push';
+import * as webpushModule from 'web-push';
+const webpush: typeof import('web-push') = (webpushModule as any).default || webpushModule;
 import { createClient } from '@supabase/supabase-js';
 
 const VAPID_PUBLIC_KEY = (
