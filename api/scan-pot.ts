@@ -3,7 +3,12 @@
 
 let cachedWinningPotModel: string | null = null;
 
-const DEFAULT_MODELS = ['gemini-3.5-flash-lite', 'gemini-2.5-flash-lite'];
+const DEFAULT_MODELS = [
+  'gemini-3.5-flash-lite',
+  'gemini-3.5-flash',
+  'gemini-flash-lite-latest',
+  'gemini-flash-latest'
+];
 
 const POT_SYSTEM_PROMPT = `Extract Pokémon Sleep cooking pot & ingredient stock from the image(s) into JSON.
 Rules:
@@ -69,7 +74,14 @@ function extractSuggestedModel(errMsg: string, failedModel: string): string | nu
   let match: RegExpExecArray | null;
   while ((match = regex.exec(errMsg || '')) !== null) {
     const candidate = match[1].replace(/\.$/, '');
-    if (candidate && candidate !== failedModel && !candidate.includes('2.0-') && !candidate.includes('1.5-')) {
+    if (
+      candidate &&
+      candidate !== failedModel &&
+      !candidate.includes('2.5-flash-lite') &&
+      !candidate.includes('2.5-flash') &&
+      !candidate.includes('2.0-') &&
+      !candidate.includes('1.5-')
+    ) {
       return candidate;
     }
   }
@@ -78,7 +90,7 @@ function extractSuggestedModel(errMsg: string, failedModel: string): string | nu
 
 function filterVisionModels(modelsList: any[]): string[] {
   const excluded = [
-    '2.0-', '1.5-', '1.0-', 'embedding', 'aqa', 'imagen', 'learnlm',
+    '2.5-flash-lite', '2.5-flash', '2.0-', '1.5-', '1.0-', 'embedding', 'aqa', 'imagen', 'learnlm',
     'tts', 'audio', 'live', 'thinking', 'robotics', 'computer-use',
     'image', 'veo', 'gemma', 'pro', 'customtools'
   ];
@@ -109,7 +121,7 @@ function filterVisionModels(modelsList: any[]): string[] {
     return vB - vA;
   });
 
-  return Array.from(new Set(valid)).slice(0, 2);
+  return Array.from(new Set(valid)).slice(0, 3);
 }
 
 function extractJsonFromCandidate(data: any): any {
@@ -187,7 +199,7 @@ export default async function handler(req: any, res: any) {
     let resultJson: any = null;
     let attempts = 0;
 
-    while (queue.length > 0 && attempts < 3 && !resultJson) {
+    while (queue.length > 0 && attempts < 4 && !resultJson) {
       const model = queue.shift()!;
       if (!model || tried.has(model)) continue;
       tried.add(model);
@@ -235,7 +247,16 @@ export default async function handler(req: any, res: any) {
               });
             }
 
-            if (response.status === 429 || lowerMsg.includes('quota') || lowerMsg.includes('resource_exhausted')) {
+            const isHighDemand =
+              response.status === 503 ||
+              lowerMsg.includes('high demand') ||
+              lowerMsg.includes('spikes in demand') ||
+              lowerMsg.includes('overloaded');
+
+            if (
+              !isHighDemand &&
+              (response.status === 429 || lowerMsg.includes('quota') || lowerMsg.includes('resource_exhausted'))
+            ) {
               return res.status(429).json({
                 error: 'QUOTA_EXCEEDED',
                 message: 'Límite por minuto alcanzado en Google AI Studio. Intenta de nuevo en unos segundos.'
@@ -248,6 +269,10 @@ export default async function handler(req: any, res: any) {
               (lowerMsg.includes('responseschema') || lowerMsg.includes('thinking') || lowerMsg.includes('unknown name'))
             ) {
               continue;
+            }
+
+            if (isHighDemand && cachedWinningPotModel === model) {
+              cachedWinningPotModel = null;
             }
 
             if (

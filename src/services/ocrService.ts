@@ -443,11 +443,13 @@ export function normalizeOcrPokemonData(raw: RawOcrData): PreFilledPokemonData {
 // SHARED HIGH-SPEED GEMINI VISION ENGINE (CLIENT + FALLBACK COORDINATION)
 // ============================================================================
 
-const GEMINI_MODELS_CACHE_KEY = 'gemini_active_vision_models_v5';
+const GEMINI_MODELS_CACHE_KEY = 'gemini_active_vision_models_v6';
 
 export const DEFAULT_GEMINI_MODELS = [
   'gemini-3.5-flash-lite',
-  'gemini-2.5-flash-lite'
+  'gemini-3.5-flash',
+  'gemini-flash-lite-latest',
+  'gemini-flash-latest'
 ];
 
 const POKEMON_SYSTEM_PROMPT = `Extract Pokémon Sleep summary data from the image(s) into JSON.
@@ -580,6 +582,8 @@ async function fetchWithTimeout(
  */
 function filterAndRankVisionModels(modelsList: any[]): string[] {
   const excludedTokens = [
+    '2.5-flash-lite',
+    '2.5-flash',
     '2.0-',
     '1.5-',
     '1.0-',
@@ -630,7 +634,7 @@ function filterAndRankVisionModels(modelsList: any[]): string[] {
     return vB - vA;
   });
 
-  return Array.from(new Set(valid)).slice(0, 2);
+  return Array.from(new Set(valid)).slice(0, 3);
 }
 
 /**
@@ -646,6 +650,8 @@ function extractSuggestedModelFromError(errMsg: string, failedModel: string): st
     if (
       candidate &&
       candidate !== failedModel &&
+      !candidate.includes('2.5-flash-lite') &&
+      !candidate.includes('2.5-flash') &&
       !candidate.includes('2.0-') &&
       !candidate.includes('1.5-')
     ) {
@@ -661,7 +667,7 @@ function saveWinningModelToCache(winningModel: string): void {
     const nextList = [
       winningModel,
       ...DEFAULT_GEMINI_MODELS.filter((m) => m !== winningModel)
-    ].slice(0, 2);
+    ].slice(0, 3);
     localStorage.setItem(GEMINI_MODELS_CACHE_KEY, JSON.stringify(nextList));
   } catch {
     // ignore storage quota errors
@@ -686,7 +692,7 @@ export async function resolveGeminiVisionModels(
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.slice(0, 2);
+          return parsed.slice(0, 3);
         }
       }
     } catch {
@@ -822,7 +828,7 @@ async function executeDirectGeminiVision(params: {
   let catalogRefreshed = false;
   let lastError: any = null;
   let attempts = 0;
-  const MAX_ATTEMPTS = 3;
+  const MAX_ATTEMPTS = 4;
 
   while (queue.length > 0 && attempts < MAX_ATTEMPTS) {
     const model = queue.shift()!;
@@ -876,12 +882,25 @@ async function executeDirectGeminiVision(params: {
             throw authErr;
           }
 
-          if (response.status === 429 || lowerMsg.includes('quota') || lowerMsg.includes('resource_exhausted')) {
+          const isHighDemand =
+            response.status === 503 ||
+            lowerMsg.includes('high demand') ||
+            lowerMsg.includes('spikes in demand') ||
+            lowerMsg.includes('overloaded');
+
+          if (
+            !isHighDemand &&
+            (response.status === 429 || lowerMsg.includes('quota') || lowerMsg.includes('resource_exhausted'))
+          ) {
             const quotaErr: FatalApiError = new Error(
               'Límite gratuito por minuto alcanzado en Google AI Studio. Espera unos segundos e intenta de nuevo.'
             );
             quotaErr.isFatalApiError = true;
             throw quotaErr;
+          }
+
+          if (isHighDemand) {
+            onProgress?.(45, 'Pico de demanda en modelo Lite. Cambiando a Gemini Flash...', 'uploading');
           }
 
           // If a new model rejects responseSchema or thinkingConfig (400), retry same model once with minimal config

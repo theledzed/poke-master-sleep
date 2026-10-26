@@ -3,7 +3,12 @@
 
 let cachedWinningModel: string | null = null;
 
-const DEFAULT_MODELS = ['gemini-3.5-flash-lite', 'gemini-2.5-flash-lite'];
+const DEFAULT_MODELS = [
+  'gemini-3.5-flash-lite',
+  'gemini-3.5-flash',
+  'gemini-flash-lite-latest',
+  'gemini-flash-latest'
+];
 
 const POKEMON_SYSTEM_PROMPT = `Extract Pokémon Sleep summary data from the image(s) into JSON.
 If the image contains 2 side-by-side or separate views (top stats + scrolled subskills/ingredients), merge all visible data for this single Pokémon.
@@ -90,7 +95,14 @@ function extractSuggestedModel(errMsg: string, failedModel: string): string | nu
   let match: RegExpExecArray | null;
   while ((match = regex.exec(errMsg || '')) !== null) {
     const candidate = match[1].replace(/\.$/, '');
-    if (candidate && candidate !== failedModel && !candidate.includes('2.0-') && !candidate.includes('1.5-')) {
+    if (
+      candidate &&
+      candidate !== failedModel &&
+      !candidate.includes('2.5-flash-lite') &&
+      !candidate.includes('2.5-flash') &&
+      !candidate.includes('2.0-') &&
+      !candidate.includes('1.5-')
+    ) {
       return candidate;
     }
   }
@@ -99,7 +111,7 @@ function extractSuggestedModel(errMsg: string, failedModel: string): string | nu
 
 function filterVisionModels(modelsList: any[]): string[] {
   const excluded = [
-    '2.0-', '1.5-', '1.0-', 'embedding', 'aqa', 'imagen', 'learnlm',
+    '2.5-flash-lite', '2.5-flash', '2.0-', '1.5-', '1.0-', 'embedding', 'aqa', 'imagen', 'learnlm',
     'tts', 'audio', 'live', 'thinking', 'robotics', 'computer-use',
     'image', 'veo', 'gemma', 'pro', 'customtools'
   ];
@@ -130,7 +142,7 @@ function filterVisionModels(modelsList: any[]): string[] {
     return vB - vA;
   });
 
-  return Array.from(new Set(valid)).slice(0, 2);
+  return Array.from(new Set(valid)).slice(0, 3);
 }
 
 function extractJsonFromCandidate(data: any): any {
@@ -166,47 +178,6 @@ export default async function handler(req: any, res: any) {
   );
 
   if (req.method === 'OPTIONS') return res.status(200).end();
-
-  if (req.method === 'GET') {
-    const apiKey = (
-      process.env.GEMINI_API_KEY ||
-      process.env.VITE_GEMINI_API_KEY ||
-      process.env.GOOGLE_API_KEY ||
-      ''
-    ).trim();
-
-    const parsedUrl = new URL(req.url, 'http://localhost');
-    const testModel = parsedUrl.searchParams.get('testModel');
-    if (testModel) {
-      try {
-        const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${testModel}:generateContent?key=${apiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: 'Respond with JSON {"status":"ok"}' }] }],
-            generationConfig: { responseMimeType: 'application/json' }
-          })
-        });
-        const status = resp.status;
-        const text = await resp.text();
-        return res.status(200).json({ testModel, status, body: text.slice(0, 300) });
-      } catch (e: any) {
-        return res.status(500).json({ error: e.message });
-      }
-    }
-
-    try {
-      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-      const data = await resp.json();
-      const models = (data.models || [])
-        .filter((m: any) => (m.supportedGenerationMethods || []).includes('generateContent'))
-        .map((m: any) => m.name.replace(/^models\//, ''));
-      return res.status(200).json({ count: models.length, models });
-    } catch (e: any) {
-      return res.status(500).json({ error: e.message });
-    }
-  }
-
   if (req.method !== 'POST') return res.status(405).json({ error: 'Método no permitido. Usa POST.' });
 
   try {
@@ -249,7 +220,7 @@ export default async function handler(req: any, res: any) {
     let resultJson: any = null;
     let attempts = 0;
 
-    while (queue.length > 0 && attempts < 3 && !resultJson) {
+    while (queue.length > 0 && attempts < 4 && !resultJson) {
       const model = queue.shift()!;
       if (!model || tried.has(model)) continue;
       tried.add(model);
@@ -297,7 +268,16 @@ export default async function handler(req: any, res: any) {
               });
             }
 
-            if (response.status === 429 || lowerMsg.includes('quota') || lowerMsg.includes('resource_exhausted')) {
+            const isHighDemand =
+              response.status === 503 ||
+              lowerMsg.includes('high demand') ||
+              lowerMsg.includes('spikes in demand') ||
+              lowerMsg.includes('overloaded');
+
+            if (
+              !isHighDemand &&
+              (response.status === 429 || lowerMsg.includes('quota') || lowerMsg.includes('resource_exhausted'))
+            ) {
               return res.status(429).json({
                 error: 'QUOTA_EXCEEDED',
                 message: 'Límite por minuto alcanzado en Google AI Studio. Intenta de nuevo en unos segundos.'
@@ -310,6 +290,10 @@ export default async function handler(req: any, res: any) {
               (lowerMsg.includes('responseschema') || lowerMsg.includes('thinking') || lowerMsg.includes('unknown name'))
             ) {
               continue;
+            }
+
+            if (isHighDemand && cachedWinningModel === model) {
+              cachedWinningModel = null;
             }
 
             if (
