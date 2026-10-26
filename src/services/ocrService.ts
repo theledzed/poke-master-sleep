@@ -1,6 +1,7 @@
 import { getSpeciesMasterData, MasterSpecies } from '../data/speciesMaster';
 import { normalizeIngredientName, parseNature, KNOWN_SUBSKILLS, NATURES } from '../data/gameData';
 import { formatFrequencySeconds } from '../services/evolutionService';
+import { normalizeMainSkillName } from './pokeApiService';
 import { Specialty } from '../types/pokemon';
 
 export interface RawOcrData {
@@ -325,7 +326,8 @@ export function normalizeOcrPokemonData(raw: RawOcrData): PreFilledPokemonData {
   const berry = matchedMaster ? matchedMaster.berry : 'Baya Caquic';
 
   // 5. Main Skill
-  const mainSkillName = raw.mainSkillName?.trim() || matchedMaster?.mainSkill || 'Carga vigor S';
+  const rawSkillName = raw.mainSkillName?.trim() || matchedMaster?.mainSkill || 'Carga vigor S';
+  const mainSkillName = normalizeMainSkillName(rawSkillName);
   const mainSkillLevel = typeof raw.mainSkillLevel === 'number' && raw.mainSkillLevel >= 1 ? raw.mainSkillLevel : 1;
 
   // 6. Frequency

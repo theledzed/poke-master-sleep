@@ -76,6 +76,8 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
   const isLegendaryBeast = ['raikou', 'entei', 'suicune'].some(b => pokemon.name.toLowerCase().includes(b));
   if (pokemon.name.toLowerCase().trim() === 'eevee' && mainSkill !== 'Imán ingredientes S') {
     mainSkill = 'Imán ingredientes S';
+  } else if (pokemon.name.toLowerCase().trim() === 'ditto' && (mainSkill === 'Carga vigor S' || mainSkill.toLowerCase().includes('copy') || mainSkill.toLowerCase().includes('transform'))) {
+    mainSkill = 'Transformación (Copia habilidades)';
   } else if (mainSkill.includes('Impulso de ayuda') && !isLegendaryBeast) {
     mainSkill = canonicalSkill;
   }

@@ -141,9 +141,11 @@ export function getSkillVigorPerTrigger(pokemon: Pokemon): number {
   let mainSkill = pokemon.mainSkillName || canonical;
   const isLegendaryBeast = ['raikou', 'entei', 'suicune'].some(b => pokemon.name.toLowerCase().includes(b));
 
-  // Guardrail: Eevee in Pokémon Sleep exclusively possesses 'Imán ingredientes S'
+  // Guardrail: Eevee in Pokémon Sleep exclusively possesses 'Imán ingredientes S', and Ditto has 'Transformación (Copia habilidades)'
   if (pokemon.name.toLowerCase().trim() === 'eevee' && mainSkill !== 'Imán ingredientes S') {
     mainSkill = 'Imán ingredientes S';
+  } else if (pokemon.name.toLowerCase().trim() === 'ditto' && (mainSkill === 'Carga vigor S' || mainSkill.toLowerCase().includes('copy') || mainSkill.toLowerCase().includes('transform'))) {
+    mainSkill = 'Transformación (Copia habilidades)';
   } else if (mainSkill.includes('Impulso de ayuda') && !isLegendaryBeast) {
     mainSkill = canonical;
   }
@@ -180,7 +182,7 @@ export function getSkillVigorPerTrigger(pokemon: Pokemon): number {
     return (critBonus[skillLevel] || 5) * 220;
   }
 
-  if (mainSkill.includes('Metrónomo') || mainSkill.includes('Transformación') || mainSkill.includes('Mimético') || mainSkill.includes('Copia habilidades')) {
+  if (mainSkill.includes('Metrónomo') || mainSkill.includes('Transformación') || mainSkill.includes('Mimético') || mainSkill.includes('Copia habilidades') || mainSkill.includes('Skill Copy') || mainSkill.includes('Transform')) {
     const table = [0, 850, 1300, 1900, 2700, 3800, 5300, 7000];
     return table[skillLevel] || 2700;
   }

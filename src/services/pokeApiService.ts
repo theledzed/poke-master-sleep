@@ -715,6 +715,14 @@ export const MAIN_SKILLS_META: Record<string, MainSkillMeta> = {
     badgeText: 'text-zinc-300',
     iconSymbol: '🌑',
     category: 'special'
+  },
+  'Transformación (Copia habilidades)': {
+    name: 'Transformación (Copia habilidades)',
+    badgeBg: 'bg-fuchsia-500/20 border-fuchsia-400/40',
+    badgeText: 'text-fuchsia-300',
+    iconSymbol: '🧬',
+    iconUrl: '/images/mainskill/copy.png',
+    category: 'special'
   }
 };
 
@@ -745,7 +753,7 @@ export const SPECIES_MAIN_SKILL_MAP: Record<string, string> = {
   cubone: 'Carga vigor S', marowak: 'Carga vigor S',
   kangaskhan: 'Imán ingredientes S',
   pinsir: 'Carga vigor S',
-  ditto: 'Carga vigor S',
+  ditto: 'Transformación (Copia habilidades)',
   eevee: 'Imán ingredientes S',
   vaporeon: 'Imán ingredientes S',
   jolteon: 'Superútil S',
@@ -817,29 +825,66 @@ export const SPECIES_MAIN_SKILL_MAP: Record<string, string> = {
   mewtwo: 'Onda Mental'
 };
 
+export function normalizeMainSkillName(skillName?: string): string {
+  if (!skillName) return 'Carga vigor S';
+  const clean = skillName.trim();
+  const lower = clean.toLowerCase();
+
+  // Ditto's signature Transform / Skill Copy variants
+  if (
+    lower.includes('transform') ||
+    lower.includes('copia habilidad') ||
+    lower.includes('skill copy') ||
+    lower === 'copia' ||
+    lower === 'transformación' ||
+    lower === 'transformacion'
+  ) {
+    return 'Transformación (Copia habilidades)';
+  }
+
+  // Exact match in official metadata
+  if (MAIN_SKILLS_META[clean]) {
+    return clean;
+  }
+
+  // Case-insensitive / normalized lookup
+  for (const key of Object.keys(MAIN_SKILLS_META)) {
+    if (key.toLowerCase() === lower) {
+      return key;
+    }
+  }
+
+  return clean;
+}
+
 export function getPokemonCanonicalSkill(name: string): string {
+  const clean = name.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+  if (clean === 'ditto') {
+    return 'Transformación (Copia habilidades)';
+  }
   const master = getSpeciesMasterData(name);
   if (master?.mainSkill) {
-    return master.mainSkill;
+    return normalizeMainSkillName(master.mainSkill);
   }
-  const clean = name.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
   if (SPECIES_MAIN_SKILL_MAP[clean]) {
-    return SPECIES_MAIN_SKILL_MAP[clean];
+    return normalizeMainSkillName(SPECIES_MAIN_SKILL_MAP[clean]);
   }
   for (const [key, skill] of Object.entries(SPECIES_MAIN_SKILL_MAP)) {
     if (clean.includes(key) || key.includes(clean)) {
-      return skill;
+      return normalizeMainSkillName(skill);
     }
   }
   return 'Carga vigor S';
 }
 
 export function getMainSkillMeta(skillName: string): MainSkillMeta {
-  const meta = MAIN_SKILLS_META[skillName];
+  const normalized = normalizeMainSkillName(skillName);
+  const meta = MAIN_SKILLS_META[normalized] || MAIN_SKILLS_META[skillName];
   if (meta) {
     return {
       ...meta,
-      iconUrl: meta.iconUrl || getMainSkillIconUrl(skillName)
+      name: meta.name || normalized,
+      iconUrl: meta.iconUrl || getMainSkillIconUrl(normalized)
     };
   }
   return {

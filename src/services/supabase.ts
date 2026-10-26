@@ -93,6 +93,8 @@ export function sanitizePokemonSkills(pokemons: Pokemon[]): { pokemons: Pokemon[
 
     if (p.name.toLowerCase().trim() === 'eevee' && skill !== 'Imán ingredientes S') {
       skill = 'Imán ingredientes S';
+    } else if (p.name.toLowerCase().trim() === 'ditto' && (skill === 'Carga vigor S' || !skill || skill.toLowerCase().includes('copy') || skill.toLowerCase().includes('transform'))) {
+      skill = 'Transformación (Copia habilidades)';
     } else if (skill === 'Impulso de ayuda S' && !isLegendaryBeast) {
       skill = canonical;
     } else if (!skill) {

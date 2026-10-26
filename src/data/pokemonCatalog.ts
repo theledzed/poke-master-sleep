@@ -814,7 +814,7 @@ export const POKEMON_SPECIES_CATALOG: SpeciesCatalogEntry[] = [
     name: 'Ditto',
     specialty: 'Ingredientes',
     berry: 'Baya Caquic',
-    mainSkill: 'Carga vigor S',
+    mainSkill: 'Transformación (Copia habilidades)',
     ingredients: ['Aceite Puro', 'Puerro Grueso', 'Cola de Slowpoke'],
     frequencyStr: '58 min 20s'
   },

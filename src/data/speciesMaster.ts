@@ -2765,7 +2765,7 @@ export const SPECIES_MASTER_DATA: MasterSpecies[] = [
     "specialty": "Ingredientes",
     "type": "normal",
     "berry": "Baya Caquic",
-    "mainSkill": "Skill Copy (Transform)",
+    "mainSkill": "Transformación (Copia habilidades)",
     "baseFrequency": 3500,
     "frequencyStr": "58 min 20s",
     "ingredientRate": 20.1,

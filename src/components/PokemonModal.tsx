@@ -9,6 +9,7 @@ import {
   getIngredientSpriteUrl,
   getPokemonCanonicalSkill,
   getMainSkillIconUrl,
+  normalizeMainSkillName,
   MAIN_SKILLS_META,
   SpriteStyle
 } from '../services/pokeApiService';
@@ -300,10 +301,12 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
       let initialSkill = pokemonToEdit.mainSkillName || canonicalSkill;
       if (pokemonToEdit.name.toLowerCase().trim() === 'eevee' && initialSkill !== 'Imán ingredientes S') {
         initialSkill = 'Imán ingredientes S';
+      } else if (pokemonToEdit.name.toLowerCase().trim() === 'ditto' && (initialSkill === 'Carga vigor S' || initialSkill.toLowerCase().includes('copy') || initialSkill.toLowerCase().includes('transform'))) {
+        initialSkill = 'Transformación (Copia habilidades)';
       } else if (initialSkill === 'Impulso de ayuda S' && !['raikou', 'entei', 'suicune'].some(b => pokemonToEdit.name.toLowerCase().includes(b))) {
         initialSkill = canonicalSkill;
       }
-      setMainSkillName(initialSkill);
+      setMainSkillName(normalizeMainSkillName(initialSkill));
       setMainSkillLevel(pokemonToEdit.mainSkillLevel || getPokemonSkillLevel(pokemonToEdit) || 1);
       setNotes(pokemonToEdit.notes || '');
 
@@ -1289,7 +1292,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                   />
                 </div>
                 <select
-                  value={mainSkillName}
+                  value={normalizeMainSkillName(mainSkillName)}
                   onChange={(e) => setMainSkillName(e.target.value)}
                   className="w-full px-3 py-2 bg-white/[0.06] hover:bg-white/[0.09] focus:bg-white/[0.12] border border-white/10 focus:border-white/30 rounded-xl text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-white/30 font-medium truncate transition-all"
                 >
@@ -1298,6 +1301,11 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
                       {sk}
                     </option>
                   ))}
+                  {mainSkillName && !MAIN_SKILLS_META[normalizeMainSkillName(mainSkillName)] && (
+                    <option value={mainSkillName} className="bg-slate-900 text-white">
+                      {mainSkillName}
+                    </option>
+                  )}
                 </select>
               </div>
             </div>
