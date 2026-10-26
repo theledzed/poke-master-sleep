@@ -293,9 +293,8 @@ select cron.schedule(
                     <p className="text-[11px] text-slate-300 mt-1 leading-relaxed">
                       {platformSupport.supportsActionButtons ? (
                         <span>
-                          ✨ <strong>Android / Chrome detectado:</strong> Verás el botón rápido{' '}
-                          <code className="text-emerald-300 bg-black/40 px-1 rounded">✅ Ya recogí</code> directo en la
-                          notificación sin siquiera abrir la app.
+                          ⌚ <strong>Pixel Watch / Android detectado:</strong> Recibirás tarjeta circular con arte del Pokémon, hápticos dobles y botones interactivos{' '}
+                          <code className="text-emerald-300 bg-black/40 px-1 rounded">✅ Recogí</code> directo en tu muñeca sin abrir la app.
                         </span>
                       ) : (
                         <span>

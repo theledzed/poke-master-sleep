@@ -408,21 +408,26 @@ export default async function handler(req: any, res: any) {
     const payload =
       kind === 'meal'
         ? {
-            title: `🍽️ ¡${fromName} te manda un aviso!`,
-            body: `¡Oye ${toName}, dale de comer a Snorlax antes de que se pase la hora! 😄`,
+            title: `🍽️ ¡${fromName} te avisa!`,
+            body: `¡Dale de comer a Snorlax antes de que se pase la hora! 🍲`,
+            icon: '/images/berries/oran.png',
             tag: `pokesleep-nudge-${Date.now()}`,
             url: '/?tab=recipes',
             profileId: toProfile,
             alertType: 'meal',
-            actions: [{ action: 'open-chef', title: '🍳 Abrir Chef IA' }]
+            vibrate: [100, 50, 100, 50, 200],
+            actions: [{ action: 'open-chef', title: '🍳 Chef IA' }]
           }
         : {
-            title: `🌙 ¡${fromName} te recuerda dormir a Snorlax!`,
-            body: `¡Ya casi es hora de dormir a Snorlax y revisar tus inciensos, ${toName}! 💤`,
+            title: `🌙 ¡${fromName} te recuerda!`,
+            body: `¡Hora de dormir a Snorlax y revisar tus inciensos! 💤`,
+            icon: '/images/berries/leppa.png',
             tag: `pokesleep-nudge-${Date.now()}`,
             url: '/?tab=optimizer',
             profileId: toProfile,
-            alertType: 'sleep'
+            alertType: 'sleep',
+            vibrate: [150, 80, 250],
+            actions: [{ action: 'open-camp', title: '⛺ Campamento' }]
           };
 
     const { sentCount, validSubscriptions } = await broadcastToSubscriptions(targetSubs, payload);
@@ -499,13 +504,15 @@ export default async function handler(req: any, res: any) {
         const mondayTarget = parseHHMM(pushCfg.mondayResetTime, 8 * 60 + 30);
         if (isInWindow(clock.minutesOfDay, mondayTarget, 22)) {
           await queueNotification(`${clock.dateKey}:monday-reset`, {
-            title: '🏝️ ¡Nueva semana en Pokémon Sleep!',
-            body: 'Elige tu nueva isla, tipo de plato y bayas favoritas para calcular tu mejor equipo de la semana.',
+            title: '🏝️ ¡Lunes: Nueva Isla!',
+            body: 'Elige tu isla y bayas de Snorlax\npara optimizar tu equipo semanal.',
+            icon: '/pwa-192x192.png',
             tag: `pokesleep-monday-${profileId}`,
             url: '/?tab=optimizer',
             profileId,
             alertType: 'monday',
-            actions: [{ action: 'open-camp', title: '🏝️ Configurar Isla' }]
+            vibrate: [150, 100, 200],
+            actions: [{ action: 'open-camp', title: '⛺ Campamento' }]
           });
         }
       }
@@ -516,16 +523,18 @@ export default async function handler(req: any, res: any) {
         if (isInWindow(clock.minutesOfDay, bTarget, 20)) {
           await queueNotification(`${clock.dateKey}:breakfast`, {
             title: isSunday
-              ? '🔥 ¡Domingo Súper Olla! 25 min para cerrar Desayuno'
-              : '🥐 ¡25 min para que termine el Desayuno de Snorlax!',
+              ? '🔥 ¡Súper Olla! 25m para Desayuno'
+              : '🥐 Snorlax: Desayuno (25 min)',
             body: isSunday
-              ? 'Olla al doble de capacidad y +20% crítico antes de las 12:00 PM. ¡Escanea tu stock en el Chef IA!'
-              : 'A las 12:00 PM cierra el desayuno. Toca para escanear tu olla en el Chef IA.',
+              ? 'Olla ×2 y +20% crítico antes de 12:00 PM\n¡Toca para escanear en Chef IA!'
+              : 'Cierra a las 12:00 PM\n¡Toca para armar tu plato en Chef IA!',
+            icon: '/images/berries/oran.png',
             tag: `pokesleep-meal-${profileId}`,
             url: '/?tab=recipes',
             profileId,
             alertType: 'meal',
-            actions: [{ action: 'open-chef', title: '🍳 Abrir Chef IA' }]
+            vibrate: [120, 80, 120, 80, 240],
+            actions: [{ action: 'open-chef', title: '🍳 Chef IA' }]
           });
         }
       }
@@ -536,16 +545,18 @@ export default async function handler(req: any, res: any) {
         if (isInWindow(clock.minutesOfDay, lTarget, 20)) {
           await queueNotification(`${clock.dateKey}:lunch`, {
             title: isSunday
-              ? '🔥 ¡Domingo Súper Olla! 25 min para cerrar la Comida'
-              : '🍲 ¡25 min para que termine la Comida de Snorlax!',
+              ? '🔥 ¡Súper Olla! 25m para Comida'
+              : '🍲 Snorlax: Comida (25 min)',
             body: isSunday
-              ? 'Aprovecha la Súper Olla dominical antes de las 6:00 PM para disparar tu rango.'
-              : 'A las 6:00 PM cambia el turno a Cena. ¡No pierdas el vigor de la tarde!',
+              ? 'Súper Olla dominical antes de 6:00 PM\n¡Dispara tu rango semanal!'
+              : 'Cierra a las 6:00 PM (cambio a Cena)\n¡No pierdas el vigor de la tarde!',
+            icon: '/images/berries/oran.png',
             tag: `pokesleep-meal-${profileId}`,
             url: '/?tab=recipes',
             profileId,
             alertType: 'meal',
-            actions: [{ action: 'open-chef', title: '🍳 Abrir Chef IA' }]
+            vibrate: [120, 80, 120, 80, 240],
+            actions: [{ action: 'open-chef', title: '🍳 Chef IA' }]
           });
         }
       }
@@ -555,22 +566,31 @@ export default async function handler(req: any, res: any) {
       if (pushCfg.dinnerSleepReminder !== false && isInWindow(clock.minutesOfDay, dinnerSleepTarget, 22)) {
         const lunar = pushCfg.lunarEventsAlert !== false ? getServerLunarEvent(now) : null;
         const title = lunar
-          ? `${lunar.emoji} ¡${lunar.label} + Cena antes de dormir!`
+          ? `${lunar.emoji} ¡${lunar.label} + Cena!`
           : isSunday
-          ? '🌙 ¡Última Súper Cena de Domingo y a dormir!'
-          : '🌙 Hora de la Cena de Snorlax y preparar el sueño';
+          ? '🌙 Súper Cena de Domingo'
+          : '🌙 Snorlax: Hora de la Cena';
         const body = lunar
-          ? `Faltan ~30 min para dormirlo. Dale de cenar y aprovecha: ${lunar.bonusSummary}`
-          : 'Recuerda darle la cena a Snorlax antes de dormirlo (~11:00 PM) y revisar energía o inciensos.';
+          ? `Cena y prepara el sueño (~23:00)\n${lunar.bonusSummary}`
+          : 'Cena antes de dormirlo (~23:00)\nRevisa tu equipo e inciensos.';
+
+        const lunarImg = lunar?.activeEvent === 'new_moon'
+          ? '/images/pokemon/darkrai.png'
+          : lunar?.activeEvent === 'full_moon'
+          ? '/images/pokemon/cresselia.png'
+          : undefined;
 
         await queueNotification(`${clock.dateKey}:dinner-sleep`, {
           title,
           body,
+          icon: lunarImg || '/images/berries/leppa.png',
+          image: lunarImg,
           tag: `pokesleep-night-${profileId}`,
           url: '/?tab=recipes',
           profileId,
           alertType: 'sleep',
-          actions: [{ action: 'open-chef', title: '🍳 Revisar Cena' }]
+          vibrate: [180, 100, 280],
+          actions: [{ action: 'open-chef', title: '🍳 Cena Chef' }]
         });
       }
 
@@ -609,16 +629,20 @@ export default async function handler(req: any, res: any) {
             const bagAlertKey = `bag:${clock.dateKey}:${anchorBucket}`;
 
             if (elapsedMinutes >= fastest.fillMinutes && elapsedMinutes <= fastest.fillMinutes + 90) {
+              const monClean = (fastest.pokemonName || '').toLowerCase().replace(/[^a-z0-9]/g, '');
               await queueNotification(bagAlertKey, {
-                title: `🎒 ¡${fastest.pokemonName} ya tiene la bolsa llena!`,
-                body: `Bolsa ${fastest.carryLimit}/${fastest.carryLimit} llena (~${fastest.formattedDuration}). Entra a Pokémon Sleep por ${fastest.primaryOutputLabel}.`,
+                title: `🎒 ${fastest.pokemonName}: Bolsa llena`,
+                body: `Límite ${fastest.carryLimit}/${fastest.carryLimit} (~${fastest.formattedDuration})\nEntra por ${fastest.primaryOutputLabel}`,
+                icon: `/images/avatar/portrait/${monClean}.png`,
+                image: `/images/pokemon/${monClean}.png`,
                 tag: `pokesleep-bag-${profileId}`,
                 url: '/?push_action=bag-collected',
                 profileId,
                 alertType: 'bag',
+                vibrate: [90, 70, 90],
                 actions: [
-                  { action: 'bag-collected', title: '✅ Ya recogí' },
-                  { action: 'snooze-1h', title: '⏱️ +1 hora' }
+                  { action: 'bag-collected', title: '✅ Recogí' },
+                  { action: 'snooze-1h', title: '⏱️ +1h' }
                 ]
               });
             }

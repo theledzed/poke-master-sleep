@@ -502,12 +502,33 @@ export async function triggerTestPushNotification(params: {
     pushConfig.subscriptions[pushConfig.subscriptions.length - 1];
 
   const lunar = getLunarEventStatus();
+  const monName = bottleneck?.pokemonName || 'Graveler';
+  const monClean = monName.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const portraitIcon = `/images/avatar/portrait/${monClean}.png`;
+  const heroImage = `/images/pokemon/${monClean}.png`;
+
   const title = bottleneck
-    ? `🎒 Prueba: ¡${bottleneck.pokemonName} llenó su bolsa!`
-    : `💤 ¡Notificaciones listas, ${PROFILES[profileId].name}!`;
+    ? `🎒 ${bottleneck.pokemonName}: Bolsa llena`
+    : `⌚ Pixel Watch: ¡Alertas listas!`;
   const body = bottleneck
-    ? `Bolsa (${bottleneck.carryLimit}/${bottleneck.carryLimit}) en ~${bottleneck.formattedDuration} · Prueba tocar "✅ Ya recogí" desde aquí. (${lunar.emoji} ${lunar.label})`
-    : `Recibirás avisos 25 min antes de cerrar Desayuno/Comida, Cena 10:30 PM y eventos lunares (${lunar.emoji} ${lunar.label}).`;
+    ? `Límite ${bottleneck.carryLimit}/${bottleneck.carryLimit} (~${bottleneck.formattedDuration})\nPrueba tocar "✅ Recogí" en tu muñeca`
+    : `Recibirás avisos 25 min antes de comidas\ny al llenarse la bolsa de tu equipo`;
+
+  const testPayload = {
+    title,
+    body,
+    icon: portraitIcon,
+    image: heroImage,
+    tag: `pokesleep-test-${Date.now()}`,
+    url: '/?push_action=bag-collected',
+    profileId,
+    alertType: 'bag',
+    vibrate: [90, 70, 90],
+    actions: [
+      { action: 'bag-collected', title: '✅ Recogí' },
+      { action: 'snooze-1h', title: '⏱️ +1h' }
+    ]
+  };
 
   if (targetSub) {
     try {
@@ -518,18 +539,7 @@ export async function triggerTestPushNotification(params: {
           action: 'test',
           profileId,
           subscription: targetSub,
-          payload: {
-            title,
-            body,
-            tag: `pokesleep-test-${Date.now()}`,
-            url: '/?push_action=bag-collected',
-            profileId,
-            alertType: 'bag',
-            actions: [
-              { action: 'bag-collected', title: '✅ Ya recogí' },
-              { action: 'snooze-1h', title: '⏱️ +1 hora' }
-            ]
-          }
+          payload: testPayload
         })
       });
       if (resp.ok) {
@@ -545,13 +555,15 @@ export async function triggerTestPushNotification(params: {
     const reg = await navigator.serviceWorker.ready;
     await reg.showNotification(title, {
       body,
-      icon: '/pwa-192x192.png',
+      icon: portraitIcon,
+      image: heroImage,
       badge: '/favicon.png',
       tag: `pokesleep-local-test-${Date.now()}`,
+      vibrate: [90, 70, 90],
       data: { url: '/?push_action=bag-collected', profileId, alertType: 'bag' },
       actions: [
-        { action: 'bag-collected', title: '✅ Ya recogí' },
-        { action: 'snooze-1h', title: '⏱️ +1 hora' }
+        { action: 'bag-collected', title: '✅ Recogí' },
+        { action: 'snooze-1h', title: '⏱️ +1h' }
       ]
     } as any);
     return { viaServer: false };

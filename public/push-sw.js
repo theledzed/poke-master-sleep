@@ -1,5 +1,6 @@
 /* eslint-disable no-restricted-globals */
 // Pokémon Sleep Master — Custom Web Push & Interactive Notification Handler
+// Optimized for Wear OS (Pixel Watch 4 / Galaxy Watch) and Android Lock-Screens
 // Imported into Workbox Service Worker via importScripts('/push-sw.js')
 
 self.addEventListener('push', (event) => {
@@ -24,21 +25,41 @@ self.addEventListener('push', (event) => {
     }
   }
 
-  const options = {
-    body: payload.body,
-    icon: payload.icon || '/pwa-192x192.png',
-    badge: payload.badge || '/favicon.png',
-    tag: payload.tag || 'pokesleep-general',
-    renotify: true,
-    vibrate: [180, 80, 180],
-    data: {
-      url: payload.url || '/',
-      profileId: payload.profileId || 'cris',
-      alertType: payload.alertType || 'general'
+  // Helper to ensure all asset URLs are fully-qualified HTTPS so Wear OS companion service
+  // can download and display bitmaps on circular smartwatch displays
+  const toAbsoluteUrl = (path) => {
+    if (!path) return undefined;
+    try {
+      return new URL(path, self.location.origin).href;
+    } catch {
+      return path;
     }
   };
 
-  // Android / Desktop Chrome support interactive lock-screen buttons; iOS Safari safely ignores `actions`
+  // Distinct haptics: default to a tailored two-beat tap rhythm for smartwatches
+  const vibratePattern = payload.vibrate || [100, 60, 100];
+
+  const options = {
+    body: payload.body,
+    icon: toAbsoluteUrl(payload.icon || '/pwa-192x192.png'),
+    badge: toAbsoluteUrl(payload.badge || '/favicon.png'),
+    tag: payload.tag || 'pokesleep-general',
+    renotify: true,
+    vibrate: vibratePattern,
+    data: {
+      url: payload.url || '/',
+      profileId: payload.profileId || 'cris',
+      alertType: payload.alertType || 'general',
+      icon: payload.icon
+    }
+  };
+
+  // Wear OS BigPictureStyle / Android expanded card banner
+  if (payload.image) {
+    options.image = toAbsoluteUrl(payload.image);
+  }
+
+  // Android & Wear OS interactive action pills (rendered directly on smartwatch screen)
   if (Array.isArray(payload.actions) && payload.actions.length > 0) {
     options.actions = payload.actions;
   }
@@ -53,7 +74,16 @@ self.addEventListener('notificationclick', (event) => {
   const profileId = data.profileId || 'cris';
   const clickedAction = event.action || '';
 
-  // 1. Android Lock-Screen Button: "[✅ Ya recogí]" -> silent background reset WITHOUT opening the app!
+  const toAbsoluteUrl = (path) => {
+    if (!path) return undefined;
+    try {
+      return new URL(path, self.location.origin).href;
+    } catch {
+      return path;
+    }
+  };
+
+  // 1. Pixel Watch / Android Lock-Screen Button: "[✅ Recogí]" -> silent background reset WITHOUT opening the app!
   if (clickedAction === 'bag-collected') {
     event.waitUntil(
       (async () => {
@@ -81,13 +111,14 @@ self.addEventListener('notificationclick', (event) => {
           });
         }
 
-        // Brief silent visual confirmation on Android status bar
-        await self.registration.showNotification('✅ Reloj de bolsa reiniciado', {
-          body: 'Perfecto. Volveremos a avisarte cuando tu equipo llene el inventario.',
-          icon: '/pwa-192x192.png',
-          badge: '/favicon.png',
+        // Crisp haptic confirmation card on Pixel Watch & phone status bar
+        await self.registration.showNotification('✅ Bolsa reiniciada', {
+          body: 'Reloj en marcha para la siguiente recolección.',
+          icon: toAbsoluteUrl(data.icon || '/pwa-192x192.png'),
+          badge: toAbsoluteUrl('/favicon.png'),
           tag: `pokesleep-bag-${profileId}`,
-          silent: true,
+          vibrate: [60],
+          silent: false,
           data: { url: '/', profileId, alertType: 'ack-done' }
         });
       })()
@@ -95,28 +126,44 @@ self.addEventListener('notificationclick', (event) => {
     return;
   }
 
-  // 2. Android Lock-Screen Button: "[⏱️ +1 hora]" -> silent snooze WITHOUT opening the app!
+  // 2. Pixel Watch / Android Lock-Screen Button: "[⏱️ +1h]" -> silent snooze WITHOUT opening the app!
   if (clickedAction === 'snooze-1h') {
     event.waitUntil(
-      fetch('/api/push', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'ack',
-          profileId,
-          ackType: 'snooze-1h'
-        })
-      }).catch(() => {})
+      (async () => {
+        try {
+          await fetch('/api/push', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'ack',
+              profileId,
+              ackType: 'snooze-1h'
+            })
+          });
+        } catch (err) {
+          console.warn('[push-sw] Error sending snooze ack:', err);
+        }
+
+        await self.registration.showNotification('⏱️ Pospuesto 1 hora', {
+          body: 'Te recordaremos revisar tu inventario en 60 minutos.',
+          icon: toAbsoluteUrl(data.icon || '/pwa-192x192.png'),
+          badge: toAbsoluteUrl('/favicon.png'),
+          tag: `pokesleep-bag-${profileId}`,
+          vibrate: [50],
+          silent: false,
+          data: { url: '/', profileId, alertType: 'ack-done' }
+        });
+      })()
     );
     return;
   }
 
-  // 3. Default tap (iOS 1-tap or tapping the notification body / "Abrir Chef" button)
+  // 3. Default tap (tapping notification card / "Abrir Chef" button)
   const targetUrl = data.url || '/';
 
   event.waitUntil(
     (async () => {
-      // On iOS (where secondary action buttons aren't shown), tapping a bag notification directly resets the timer!
+      // On iOS (where action buttons aren't rendered), tapping a bag notification directly resets the timer!
       if (data.alertType === 'bag') {
         fetch('/api/push', {
           method: 'POST',
@@ -149,3 +196,4 @@ self.addEventListener('notificationclick', (event) => {
     })()
   );
 });
+
