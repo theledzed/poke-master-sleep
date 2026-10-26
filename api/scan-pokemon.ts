@@ -175,7 +175,8 @@ export default async function handler(req: any, res: any) {
       ''
     ).trim();
 
-    const testModel = req.query?.testModel as string;
+    const parsedUrl = new URL(req.url, 'http://localhost');
+    const testModel = parsedUrl.searchParams.get('testModel');
     if (testModel) {
       try {
         const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${testModel}:generateContent?key=${apiKey}`, {
