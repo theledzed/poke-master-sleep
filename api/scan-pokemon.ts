@@ -166,6 +166,26 @@ export default async function handler(req: any, res: any) {
   );
 
   if (req.method === 'OPTIONS') return res.status(200).end();
+
+  if (req.method === 'GET') {
+    const apiKey = (
+      process.env.GEMINI_API_KEY ||
+      process.env.VITE_GEMINI_API_KEY ||
+      process.env.GOOGLE_API_KEY ||
+      ''
+    ).trim();
+    try {
+      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+      const data = await resp.json();
+      const models = (data.models || [])
+        .filter((m: any) => (m.supportedGenerationMethods || []).includes('generateContent'))
+        .map((m: any) => m.name.replace(/^models\//, ''));
+      return res.status(200).json({ count: models.length, models });
+    } catch (e: any) {
+      return res.status(500).json({ error: e.message });
+    }
+  }
+
   if (req.method !== 'POST') return res.status(405).json({ error: 'Método no permitido. Usa POST.' });
 
   try {
