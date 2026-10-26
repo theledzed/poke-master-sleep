@@ -779,13 +779,15 @@ export const BERRIES: Record<string, { type: string; baseVigor: number; icon: st
   'Baya Zreza':  { type: 'Lucha', baseVigor: 27, icon: '🥊' },
   'Baya Safre':  { type: 'Hielo', baseVigor: 35, icon: '❄️' },
   'Baya Andano': { type: 'Acero', baseVigor: 33, icon: '⚙️' },
+  'Baya Rimoya': { type: 'Dragón', baseVigor: 35, icon: '🐉' },
+  'Baya Ziuela': { type: 'Bicho', baseVigor: 27, icon: '🐛' },
+  // Compatibilidad con registros previos o variantes internacionales
   'Baya Drasi':  { type: 'Dragón', baseVigor: 35, icon: '🐉' },
   'Baya Yache':  { type: 'Dragón', baseVigor: 35, icon: '🐉' },
-  'Baya Ziuela': { type: 'Bicho', baseVigor: 27, icon: '🐛' },
   'Baya Lum':    { type: 'Bicho', baseVigor: 27, icon: '🐛' }
 };
 
-// The 18 unique canonical berries for UI selectors
+// The 18 unique canonical berries for UI selectors (one per Pokemon elemental type)
 export const CANONICAL_BERRIES = [
   'Baya Caquic', // Normal
   'Baya Zanama', // Fuego
@@ -801,12 +803,32 @@ export const CANONICAL_BERRIES = [
   'Baya Ziuela', // Bicho
   'Baya Zidra',  // Roca
   'Baya Oram',   // Fantasma
-  'Baya Drasi',  // Dragón
-  'Baya Yache',  // Dragón (nombre alternativo internacional)
+  'Baya Rimoya', // Dragón
   'Baya Andano', // Acero
   'Baya Wiki',   // Siniestro
   'Baya Meloc'   // Hada
 ] as const;
+
+export function normalizeBerryName(berryName?: string): string {
+  if (!berryName) return 'Baya Caquic';
+  const clean = berryName.trim();
+  const lower = clean.toLowerCase();
+  if (lower.includes('drasi') || lower.includes('yache') || lower.includes('rimoya')) {
+    return 'Baya Rimoya';
+  }
+  if (lower.includes('lum')) {
+    return 'Baya Ziuela';
+  }
+  if (BERRIES[clean]) {
+    return clean;
+  }
+  for (const b of CANONICAL_BERRIES) {
+    if (b.toLowerCase() === lower || b.toLowerCase().replace('baya ', '') === lower.replace('baya ', '')) {
+      return b;
+    }
+  }
+  return clean;
+}
 
 // Calculate berry value based on level
 export function getBerryVigor(berryName: string, level: number): number {

@@ -3,6 +3,7 @@ import { Pokemon, OptimizedTeamResult, SnorlaxConfig, MidWeekProgress } from '..
 import { getEffectivePotCapacity, evaluateTeam } from '../services/optimizer';
 import { PokemonCard } from './PokemonCard';
 import { getIngredientSpriteUrl, getDishImageUrl, getRankPokeballUrl, SpriteStyle } from '../services/pokeApiService';
+import { normalizeBerryName } from '../data/gameData';
 import { Zap, Trophy, Utensils, Sparkles, Flame, ShieldAlert, ArrowRight, CheckCircle2, Swords, Star, LayoutGrid, Smartphone, Check } from 'lucide-react';
 import { WeeklyRankProjectionView } from './WeeklyRankProjectionView';
 import { proyectarSemanaEquipo, getPokemonSleepDayIndex } from '../services/weeklyProjector';
@@ -449,7 +450,7 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
                 key={poke.id}
                 pokemon={poke}
                 slotIndex={idx}
-                isFavoriteBerry={config.favoriteBerries.includes(poke.berry)}
+                isFavoriteBerry={config.favoriteBerries.some(fav => normalizeBerryName(fav) === normalizeBerryName(poke.berry))}
                 onEdit={onEditPokemon}
                 compact={true}
                 spriteStyle={spriteStyle}
@@ -464,7 +465,7 @@ export const TeamOptimizerView: React.FC<TeamOptimizerViewProps> = ({
                 key={poke.id}
                 pokemon={poke}
                 slotIndex={idx}
-                isFavoriteBerry={config.favoriteBerries.includes(poke.berry)}
+                isFavoriteBerry={config.favoriteBerries.some(fav => normalizeBerryName(fav) === normalizeBerryName(poke.berry))}
                 onEdit={onEditPokemon}
                 compact={false}
                 spriteStyle={spriteStyle}

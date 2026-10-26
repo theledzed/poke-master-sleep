@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Pokemon, Specialty, IngredientSlot, Subskill } from '../types/pokemon';
-import { BERRIES, INGREDIENTS, NATURES, KNOWN_SUBSKILLS, parseNature, CANONICAL_BERRIES } from '../data/gameData';
+import { BERRIES, INGREDIENTS, NATURES, KNOWN_SUBSKILLS, parseNature, CANONICAL_BERRIES, normalizeBerryName } from '../data/gameData';
 import { parseFrequency } from '../services/csvParser';
 import {
   getPokemonArtworkUrl,
@@ -296,7 +296,7 @@ export const PokemonModal: React.FC<PokemonModalProps> = ({
       const masterInfo = getSpeciesMasterData(pokemonToEdit.name);
       setCarryLimit(pokemonToEdit.carryLimit !== undefined ? pokemonToEdit.carryLimit : (masterInfo?.carryLimit ?? ''));
       setSpecialty(pokemonToEdit.specialty);
-      setBerry(pokemonToEdit.berry);
+      setBerry(normalizeBerryName(pokemonToEdit.berry));
       const canonicalSkill = getPokemonCanonicalSkill(pokemonToEdit.name);
       let initialSkill = pokemonToEdit.mainSkillName || canonicalSkill;
       if (pokemonToEdit.name.toLowerCase().trim() === 'eevee' && initialSkill !== 'Imán ingredientes S') {

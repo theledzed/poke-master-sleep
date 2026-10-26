@@ -13,7 +13,7 @@ import {
   isSpecialPokemon,
   SpriteStyle
 } from '../services/pokeApiService';
-import { BERRIES, INGREDIENTS, DISH_LEVEL_BONUS } from '../data/gameData';
+import { BERRIES, INGREDIENTS, DISH_LEVEL_BONUS, normalizeBerryName } from '../data/gameData';
 import {
   Swords,
   Trophy,
@@ -258,7 +258,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
       .filter(p => {
         const matchesSearch = p.name.toLowerCase().includes(pickerSearch.toLowerCase());
         const matchesSpec = pickerSpecialty === 'all' || p.specialty === pickerSpecialty;
-        const matchesFav = !pickerOnlyFavorites || config.favoriteBerries.includes(p.berry);
+        const matchesFav = !pickerOnlyFavorites || config.favoriteBerries.some(fav => normalizeBerryName(fav) === normalizeBerryName(p.berry));
         return matchesSearch && matchesSpec && matchesFav;
       })
       .sort((a, b) => {
@@ -681,7 +681,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                 <PokemonCard
                   pokemon={poke}
                   slotIndex={slotIdx}
-                  isFavoriteBerry={config.favoriteBerries.includes(poke.berry)}
+                  isFavoriteBerry={config.favoriteBerries.some(fav => normalizeBerryName(fav) === normalizeBerryName(poke.berry))}
                   onEdit={onEditPokemon}
                   compact={true}
                   spriteStyle={spriteStyle}
@@ -1025,7 +1025,7 @@ export const TeamSimulatorView: React.FC<TeamSimulatorViewProps> = ({
                 const isSpecial = isSpecialPokemon(p);
                 const otherSlotHasSpecial = currentTeamPokemons.some((tp, idx) => idx !== pickerSlotIndex && isSpecialPokemon(tp));
                 const wouldConflictSpecial = isSpecial && otherSlotHasSpecial;
-                const isFavorite = config.favoriteBerries.includes(p.berry);
+                const isFavorite = config.favoriteBerries.some(fav => normalizeBerryName(fav) === normalizeBerryName(p.berry));
                 const isShiny = p.notes?.toLowerCase().includes('shiny') || p.notes?.toLowerCase().includes('variocolor');
                 const mainSkill = p.mainSkillName || getPokemonCanonicalSkill(p.name);
                 const mainSkillMeta = getMainSkillMeta(mainSkill);

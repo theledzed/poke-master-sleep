@@ -101,9 +101,14 @@ export function sanitizePokemonSkills(pokemons: Pokemon[]): { pokemons: Pokemon[
       skill = canonical;
     }
 
-    if (skill !== p.mainSkillName) {
+    let berry = p.berry;
+    if (berry === 'Baya Drasi' || berry === 'Baya Yache') {
+      berry = 'Baya Rimoya';
+    }
+
+    if (skill !== p.mainSkillName || berry !== p.berry) {
       changed = true;
-      return { ...p, mainSkillName: skill };
+      return { ...p, mainSkillName: skill, berry };
     }
     return p;
   });
@@ -173,7 +178,7 @@ export function getProfileFromLocal(profileId: ProfileId): {
     config = { ...DEFAULT_SNORLAX_CONFIG };
   }
 
-  // Sanitize any legacy corrupted skill names (e.g. Eevee with Impulso de ayuda)
+  // Sanitize any legacy corrupted skill names or berry names
   const { pokemons: sanitizedPokemons, changed } = sanitizePokemonSkills(pokemons);
   if (changed) {
     try {
@@ -182,6 +187,26 @@ export function getProfileFromLocal(profileId: ProfileId): {
       localStorage.setItem(legacyBoxKey, pokemonsStr);
     } catch (e) {
       // ignore
+    }
+  }
+
+  // Sanitize favorite berries (e.g. migrate legacy Baya Drasi / Baya Yache to official Baya Rimoya)
+  if (Array.isArray(config.favoriteBerries)) {
+    let configChanged = false;
+    const sanitizedFavs = config.favoriteBerries.map(b => {
+      if (b === 'Baya Drasi' || b === 'Baya Yache') {
+        configChanged = true;
+        return 'Baya Rimoya';
+      }
+      return b;
+    });
+    if (configChanged) {
+      config = { ...config, favoriteBerries: sanitizedFavs };
+      try {
+        localStorage.setItem(configKey, JSON.stringify(config));
+      } catch (e) {
+        // ignore
+      }
     }
   }
 

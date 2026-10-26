@@ -821,7 +821,7 @@ export const POKEMON_SPECIES_CATALOG: SpeciesCatalogEntry[] = [
   {
     name: 'Dratini',
     specialty: 'Ingredientes',
-    berry: 'Baya Drasi',
+    berry: 'Baya Rimoya',
     mainSkill: 'Carga energía S',
     ingredients: ['Hierba Picante', 'Maíz Verdegal', 'Aceite Puro'],
     frequencyStr: '1h 23min 20s'
@@ -829,7 +829,7 @@ export const POKEMON_SPECIES_CATALOG: SpeciesCatalogEntry[] = [
   {
     name: 'Dragonair',
     specialty: 'Ingredientes',
-    berry: 'Baya Drasi',
+    berry: 'Baya Rimoya',
     mainSkill: 'Carga energía S',
     ingredients: ['Hierba Picante', 'Maíz Verdegal', 'Aceite Puro'],
     frequencyStr: '1h 3min 20s'
@@ -837,7 +837,7 @@ export const POKEMON_SPECIES_CATALOG: SpeciesCatalogEntry[] = [
   {
     name: 'Dragonite',
     specialty: 'Ingredientes',
-    berry: 'Baya Drasi',
+    berry: 'Baya Rimoya',
     mainSkill: 'Carga energía S',
     ingredients: ['Hierba Picante', 'Maíz Verdegal', 'Aceite Puro'],
     frequencyStr: '43 min 20s'
@@ -1117,7 +1117,7 @@ export const POKEMON_SPECIES_CATALOG: SpeciesCatalogEntry[] = [
   {
     name: 'Drampa',
     specialty: 'Ingredientes',
-    berry: 'Baya Drasi',
+    berry: 'Baya Rimoya',
     mainSkill: 'Imán ingredientes S',
     ingredients: ['Soja Verdegal', 'Aguacate', 'Fiambre Vegetariano'],
     frequencyStr: '50 min 0s'
@@ -1841,7 +1841,7 @@ export const POKEMON_SPECIES_CATALOG: SpeciesCatalogEntry[] = [
   {
     name: 'Latias',
     specialty: 'Habilidades',
-    berry: 'Baya Drasi',
+    berry: 'Baya Rimoya',
     mainSkill: 'Pulso Cura (Ánimo enérgico S)',
     ingredients: ['Miel Dulce', 'Cacao Relajante', 'Huevo Selecto'],
     frequencyStr: '36 min 40s'
@@ -1849,7 +1849,7 @@ export const POKEMON_SPECIES_CATALOG: SpeciesCatalogEntry[] = [
   {
     name: 'Latios',
     specialty: 'Habilidades',
-    berry: 'Baya Drasi',
+    berry: 'Baya Rimoya',
     mainSkill: 'Cometa Draco (Bayamanía)',
     ingredients: ['Hierba Picante', 'Maíz Verdegal', 'Seta Sabrosa'],
     frequencyStr: '36 min 40s'

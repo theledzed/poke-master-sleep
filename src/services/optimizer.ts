@@ -1,5 +1,5 @@
 import { Pokemon, Recipe, SnorlaxConfig, OptimizedTeamResult, MealPlan, DishType } from '../types/pokemon';
-import { INGREDIENTS, RECIPES, DISH_LEVEL_BONUS, getBerryVigor, POT_SIZES } from '../data/gameData';
+import { INGREDIENTS, RECIPES, DISH_LEVEL_BONUS, getBerryVigor, POT_SIZES, normalizeBerryName } from '../data/gameData';
 import { getPokemonCanonicalSkill, isSpecialPokemon } from './pokeApiService';
 import { getSpeciesMasterData } from '../data/speciesMaster';
 
@@ -398,7 +398,7 @@ export function calculatePokemonProduction(
   const totalIngHelps = helpsPerDay * (dayRatio + nightNormalRatio) * ingChance;
   const totalBerryHelps = helpsPerDay * ((dayRatio + nightNormalRatio) * (1 - ingChance) + nightSneakyRatio);
 
-  const isFavorite = config.favoriteBerries.includes(pokemon.berry);
+  const isFavorite = config.favoriteBerries.some(fav => normalizeBerryName(fav) === normalizeBerryName(pokemon.berry));
   const favoriteMultiplier = isFavorite ? 2.0 : 1.0;
   const singleBerryVigor = getBerryVigor(pokemon.berry, pokemon.level);
 
@@ -709,7 +709,7 @@ export function evaluateTeam(team: Pokemon[], config: SnorlaxConfig): OptimizedT
     optimizationScore -= 100000;
   }
 
-  const favoriteCount = team.filter(p => config.favoriteBerries.includes(p.berry)).length;
+  const favoriteCount = team.filter(p => config.favoriteBerries.some(fav => normalizeBerryName(fav) === normalizeBerryName(p.berry))).length;
   if (favoriteCount > 0) {
     highlights.push(`${favoriteCount} Pokémon con Baya Favorita (×2 Vigor).`);
   }
@@ -753,7 +753,7 @@ export function evaluateTeam(team: Pokemon[], config: SnorlaxConfig): OptimizedT
 // Heuristic score for ranking Pokemon
 function getPokemonScore(pokemon: Pokemon, config: SnorlaxConfig, potCapacity: number): number {
   let score = 0;
-  const isFavorite = config.favoriteBerries.includes(pokemon.berry);
+  const isFavorite = config.favoriteBerries.some(fav => normalizeBerryName(fav) === normalizeBerryName(pokemon.berry));
   const berryVal = getBerryVigor(pokemon.berry, pokemon.level);
   const master = getSpeciesMasterData(pokemon.name);
   const freq = (pokemon.frequencySeconds && pokemon.frequencySeconds > 0)

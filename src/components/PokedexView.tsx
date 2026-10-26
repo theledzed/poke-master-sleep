@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Pokemon, Specialty } from '../types/pokemon';
 import { PokemonCard } from './PokemonCard';
 import { PokedexAuditView } from './PokedexAuditView';
-import { BERRIES, INGREDIENTS, CANONICAL_BERRIES } from '../data/gameData';
+import { BERRIES, INGREDIENTS, CANONICAL_BERRIES, normalizeBerryName } from '../data/gameData';
 import { Search, Filter, ArrowUpDown, Plus, Sparkles, CheckCircle2, RotateCcw, SlidersHorizontal, FileSpreadsheet, Heart, Camera } from 'lucide-react';
 import { ProfileId } from '../services/supabase';
 import { SpriteStyle } from '../services/pokeApiService';
@@ -371,7 +371,7 @@ export const PokedexView: React.FC<PokedexViewProps> = ({
             <PokemonCard
               key={pokemon.id}
               pokemon={pokemon}
-              isFavoriteBerry={favoriteBerries.includes(pokemon.berry)}
+              isFavoriteBerry={favoriteBerries.some(fav => normalizeBerryName(fav) === normalizeBerryName(pokemon.berry))}
               onEdit={onEditPokemon}
               onEvolve={onEvolvePokemon}
               spriteStyle={spriteStyle}

@@ -1,5 +1,5 @@
 import { Pokemon, IngredientSlot, Subskill, Specialty } from '../types/pokemon';
-import { KNOWN_SUBSKILLS, normalizeIngredientName, parseNature, BERRIES } from '../data/gameData';
+import { KNOWN_SUBSKILLS, normalizeIngredientName, parseNature, BERRIES, normalizeBerryName } from '../data/gameData';
 import { getPokemonCanonicalSkill } from './pokeApiService';
 import { getPokemonSkillLevel } from './optimizer';
 import * as XLSX from 'xlsx';
@@ -92,7 +92,7 @@ export function parseCsvRows(rows: Record<string, any>[]): Pokemon[] {
     const natureRaw = cleanRow['Naturaleza'] || 'Dócil';
     const natureObj = parseNature(natureRaw);
 
-    const berry = cleanRow['Baya'] || 'Baya Caquic';
+    const berry = normalizeBerryName(cleanRow['Baya'] || 'Baya Caquic');
     const berryType = BERRIES[berry]?.type || 'Normal';
 
     const ingredients = parseIngredientSlots(cleanRow['Ingredientes'] || '', level);

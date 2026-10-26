@@ -252,6 +252,7 @@ export const BERRY_ITEM_SPRITES: Record<string, string> = {
   'Baya Wiki': 'wiki-berry',
   'Baya Andano': 'belue-berry',
   'Baya Meloc': 'pecha-berry',
+  'Baya Rimoya': 'yache-berry',
   'Baya Drasi': 'yache-berry',
   'Baya Yache': 'yache-berry',
   'Baya Ziuela': 'lum-berry',
@@ -276,7 +277,7 @@ export const BERRY_LOCAL_ASSETS: Record<string, string> = {
   'wiki': 'wiki',
   'andano': 'belue', 'belue': 'belue',
   'meloc': 'pecha', 'pecha': 'pecha',
-  'drasi': 'yache', 'yache': 'yache',
+  'rimoya': 'yache', 'drasi': 'yache', 'yache': 'yache',
   'ziuela': 'lum', 'lum': 'lum'
 };
 

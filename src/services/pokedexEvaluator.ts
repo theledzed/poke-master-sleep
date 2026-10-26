@@ -476,6 +476,7 @@ export const BERRY_TO_ISLANDS: Record<string, string[]> = {
   'Baya Andano': ['Antigua Central Eléctrica Dorada'],
   'Baya Atania': ['Isla Verdegal', 'Cueva Pardita'],
   'Baya Ziuela': ['Isla Verdegal'],
+  'Baya Rimoya': ['Isla Verdegal'],
   'Baya Drasi': ['Isla Verdegal'],
   'Baya Yache': ['Isla Verdegal']
 };

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Pokemon } from '../types/pokemon';
-import { BERRIES } from '../data/gameData';
+import { BERRIES, normalizeBerryName } from '../data/gameData';
 import {
   getPokemonArtworkUrl,
   getPokemonDexId,
@@ -64,7 +64,8 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
     setImageError(false);
   }, [pokemon.name, spriteStyle]);
 
-  const berryMeta = BERRIES[pokemon.berry];
+  const normalizedBerry = normalizeBerryName(pokemon.berry);
+  const berryMeta = BERRIES[normalizedBerry] || BERRIES[pokemon.berry];
   const typeTheme = getTypeTheme(berryMeta?.type || 'Normal');
   const dexId = getPokemonDexId(pokemon.name);
   const masterData = useMemo(() => getSpeciesMasterData(pokemon.name), [pokemon.name]);
@@ -248,12 +249,12 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
             }`}>
               <div className="flex items-center gap-1.5 truncate">
                 <img
-                  src={getBerrySpriteUrl(pokemon.berry)}
-                  alt={pokemon.berry}
+                  src={getBerrySpriteUrl(normalizedBerry)}
+                  alt={normalizedBerry}
                   className="w-3.5 h-3.5 object-contain flex-shrink-0"
                   onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
                 />
-                <span className="truncate font-semibold text-[10px]">{pokemon.berry}</span>
+                <span className="truncate font-semibold text-[10px]">{normalizedBerry}</span>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0 tabular-nums">
                 <span className="font-black text-[10px] text-white">×{berryMultiplier}</span>
@@ -445,8 +446,8 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
                 <div className="bg-white/[0.04] p-2.5 rounded-2xl">
                   <span className="text-[9px] uppercase font-black text-slate-400 block mb-1">Baya ({berryMultiplier}x)</span>
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-200 truncate">
-                    <img src={getBerrySpriteUrl(pokemon.berry)} alt={pokemon.berry} className="w-4 h-4 object-contain flex-shrink-0" />
-                    <span className="truncate">{pokemon.berry.replace('Baya ', '')}</span>
+                    <img src={getBerrySpriteUrl(normalizedBerry)} alt={normalizedBerry} className="w-4 h-4 object-contain flex-shrink-0" />
+                    <span className="truncate">{normalizedBerry.replace('Baya ', '')}</span>
                     {isFavoriteBerry && <span className="text-purple-300 font-black">⭐</span>}
                   </div>
                 </div>
@@ -769,12 +770,12 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
 
             <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full ${typeTheme.badgeBg} ${typeTheme.badgeText} flex items-center gap-1.5`}>
               <img
-                src={getBerrySpriteUrl(pokemon.berry)}
-                alt={pokemon.berry}
+                src={getBerrySpriteUrl(normalizedBerry)}
+                alt={normalizedBerry}
                 className="w-3.5 h-3.5 object-contain flex-shrink-0"
                 onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
               />
-              <span>{pokemon.berry}</span>
+              <span>{normalizedBerry}</span>
             </span>
 
             <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-white/[0.06] text-slate-200 font-medium" title={pokemon.nature}>
