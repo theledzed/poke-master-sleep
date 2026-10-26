@@ -174,6 +174,26 @@ export default async function handler(req: any, res: any) {
       process.env.GOOGLE_API_KEY ||
       ''
     ).trim();
+
+    const testModel = req.query?.testModel as string;
+    if (testModel) {
+      try {
+        const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${testModel}:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: 'Respond with JSON {"status":"ok"}' }] }],
+            generationConfig: { responseMimeType: 'application/json' }
+          })
+        });
+        const status = resp.status;
+        const text = await resp.text();
+        return res.status(200).json({ testModel, status, body: text.slice(0, 300) });
+      } catch (e: any) {
+        return res.status(500).json({ error: e.message });
+      }
+    }
+
     try {
       const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
       const data = await resp.json();
