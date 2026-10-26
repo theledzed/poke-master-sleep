@@ -93,6 +93,37 @@ export function isTeamHealer(pokemon: Pokemon): boolean {
   );
 }
 
+// Detects if the official Halloween 2026: Doble Dulce event is active
+export function isHalloweenEventActive(config?: SnorlaxConfig): boolean {
+  if (config && typeof config.halloweenEventActive === 'boolean') {
+    return config.halloweenEventActive;
+  }
+  // Auto-detect based on current real-world date during the event week: Oct 26 04:00 to Nov 2 03:59 (2026)
+  const now = new Date();
+  const start = new Date('2026-10-26T04:00:00');
+  const end = new Date('2026-11-02T03:59:59');
+  const inDateRange = now >= start && now <= end;
+  if (!config) return inDateRange;
+  return inDateRange && (!config.island || config.island === 'greengrass');
+}
+
+// Check if a Pokemon is Ghost type (benefits from Halloween 2026 buffs)
+export function isGhostPokemon(pokemon: Pokemon): boolean {
+  if (pokemon.berry && pokemon.berry.trim() === 'Baya Oram') return true;
+  const master = getSpeciesMasterData(pokemon.name);
+  if (master && master.type && master.type.toLowerCase() === 'ghost') return true;
+  const ghostNames = [
+    'gastly', 'haunter', 'gengar',
+    'shuppet', 'banette',
+    'drifloon', 'drifblim',
+    'misdreavus', 'mismagius',
+    'pumpkaboo', 'gourgeist',
+    'mimikyu', 'skeledirge'
+  ];
+  const lowerName = pokemon.name.toLowerCase();
+  return ghostNames.some(g => lowerName.includes(g));
+}
+
 // Determine actual skill level from explicit property, notes, evolution stage and subskills
 export function getPokemonSkillLevel(pokemon: Pokemon): number {
   let baseLevel = 1;
@@ -135,8 +166,9 @@ export function getPokemonSkillLevel(pokemon: Pokemon): number {
 }
 
 // Calculate realistic vigor per trigger according to official Sleep tables
-export function getSkillVigorPerTrigger(pokemon: Pokemon): number {
-  const skillLevel = getPokemonSkillLevel(pokemon);
+export function getSkillVigorPerTrigger(pokemon: Pokemon, extraSkillLevels = 0): number {
+  const baseLevel = getPokemonSkillLevel(pokemon);
+  const skillLevel = Math.min(7, baseLevel + extraSkillLevels);
   const canonical = getPokemonCanonicalSkill(pokemon.name);
   let mainSkill = pokemon.mainSkillName || canonical;
   const isLegendaryBeast = ['raikou', 'entei', 'suicune'].some(b => pokemon.name.toLowerCase().includes(b));
@@ -229,7 +261,7 @@ export function getSkillVigorPerTrigger(pokemon: Pokemon): number {
 }
 
 // Calculate realistic team energy speed multiplier based on ACTUAL healing output
-export function calculateTeamEnergyFactor(team: Pokemon[]): {
+export function calculateTeamEnergyFactor(team: Pokemon[], config?: SnorlaxConfig): {
   teamEnergyFactor: number;
   totalDailyHealedEnergy: number;
   hasEffectiveHealer: boolean;
@@ -243,9 +275,11 @@ export function calculateTeamEnergyFactor(team: Pokemon[]): {
     return { teamEnergyFactor: BASE_ENERGY_FACTOR, totalDailyHealedEnergy: 0, hasEffectiveHealer: false };
   }
 
+  const isEvent = isHalloweenEventActive(config);
   let totalDailyHealedEnergy = 0;
 
   for (const healer of healers) {
+    const isGhostHealer = isEvent && isGhostPokemon(healer);
     const name = healer.name.toLowerCase();
     const master = getSpeciesMasterData(healer.name);
     let baseTriggerRate = master ? (master.skillRate / 100) : 0.035;
@@ -262,7 +296,7 @@ export function calculateTeamEnergyFactor(team: Pokemon[]): {
       if (sub.name === 'Activación S') triggerSubskillBonus += 0.18;
       if (sub.name === 'Activación M') triggerSubskillBonus += 0.36;
     }
-    const triggerMod = (1 + triggerSubskillBonus) * (healer.natureObj?.skillMod || 1.0);
+    const triggerMod = (1 + triggerSubskillBonus) * (healer.natureObj?.skillMod || 1.0) * (isGhostHealer ? 1.25 : 1.0);
 
     const effectiveTriggerRate = baseTriggerRate * triggerMod;
 
@@ -274,7 +308,7 @@ export function calculateTeamEnergyFactor(team: Pokemon[]): {
 
     const dailyTriggers = approxHelpsPerDay * effectiveTriggerRate;
 
-    const skillLevel = getPokemonSkillLevel(healer);
+    const skillLevel = Math.min(7, getPokemonSkillLevel(healer) + (isGhostHealer ? 3 : 0));
     const healTable = [0, 5, 7, 9, 11, 15, 18, 22];
     const energyPerHeal = healTable[skillLevel] || 5;
 
@@ -382,8 +416,13 @@ export function calculatePokemonProduction(
     totalInventory = Math.round(totalInventory * 1.20);
   }
 
+  // Halloween 2026 Ghost Buff Detection:
+  const isEvent = isHalloweenEventActive(config);
+  const isGhost = isGhostPokemon(pokemon);
+  const extraIng = (isEvent && isGhost) ? 1 : 0;
+
   // Average inventory slots filled per help:
-  const avgItemsPerHelp = (1 - ingChance) * berriesPerHelp + ingChance * 2.2;
+  const avgItemsPerHelp = (1 - ingChance) * berriesPerHelp + ingChance * (2.2 + extraIng);
   const helpsToFill = totalInventory / Math.max(1, avgItemsPerHelp);
   const timeToFillHours = (helpsToFill * effectiveFrequency) / 3600;
 
@@ -404,7 +443,7 @@ export function calculatePokemonProduction(
 
   const dailyBerryVigor = Math.round(totalBerryHelps * berriesPerHelp * singleBerryVigor * favoriteMultiplier);
 
-  // 7. Ingredient production
+  // 7. Ingredient production (+1 extra ingredient per help for Ghost type during Halloween 2026)
   const activeIngSlots = pokemon.ingredients.filter(slot => slot.enabled);
   const dailyIngredients: Record<string, number> = {};
 
@@ -412,12 +451,12 @@ export function calculatePokemonProduction(
     const helpsPerSlot = totalIngHelps / activeIngSlots.length;
 
     for (const slot of activeIngSlots) {
-      const produced = Math.round(helpsPerSlot * slot.count);
+      const produced = Math.round(helpsPerSlot * (slot.count + extraIng));
       dailyIngredients[slot.name] = (dailyIngredients[slot.name] || 0) + produced;
     }
   }
 
-  // 9. Skill production
+  // 9. Skill production (x1.25 trigger rate & +3 skill levels for Ghost type during Halloween 2026)
   let baseTriggerRate = master ? (master.skillRate / 100) : 0.024;
   if (!master) {
     if (pokemon.specialty === 'Habilidades') {
@@ -432,14 +471,16 @@ export function calculatePokemonProduction(
     if (sub.name === 'Activación S') triggerSubskillBonus += 0.18;
     if (sub.name === 'Activación M') triggerSubskillBonus += 0.36;
   }
-  const triggerMod = (1 + triggerSubskillBonus) * (pokemon.natureObj?.skillMod || 1.0);
+  const ghostSkillMod = (isEvent && isGhost) ? 1.25 : 1.0;
+  const triggerMod = (1 + triggerSubskillBonus) * (pokemon.natureObj?.skillMod || 1.0) * ghostSkillMod;
 
   const skillTriggersPerDay = helpsPerDay * baseTriggerRate * triggerMod;
   const isHealer = isTeamHealer(pokemon);
 
   let dailySkillVigor = 0;
   if (!isHealer) {
-    const vigorPerTrigger = getSkillVigorPerTrigger(pokemon);
+    const extraSkillLevels = (isEvent && isGhost) ? 3 : 0;
+    const vigorPerTrigger = getSkillVigorPerTrigger(pokemon, extraSkillLevels);
     dailySkillVigor = Math.round(skillTriggersPerDay * vigorPerTrigger);
   }
 
@@ -652,7 +693,7 @@ export function evaluateTeam(team: Pokemon[], config: SnorlaxConfig): OptimizedT
     0
   );
 
-  const { teamEnergyFactor, totalDailyHealedEnergy, hasEffectiveHealer } = calculateTeamEnergyFactor(team);
+  const { teamEnergyFactor, totalDailyHealedEnergy, hasEffectiveHealer } = calculateTeamEnergyFactor(team, config);
 
   const productions = team.map(p => calculatePokemonProduction(p, config, bonusAyudaCount, teamEnergyFactor));
 
@@ -712,6 +753,11 @@ export function evaluateTeam(team: Pokemon[], config: SnorlaxConfig): OptimizedT
   const favoriteCount = team.filter(p => config.favoriteBerries.some(fav => normalizeBerryName(fav) === normalizeBerryName(p.berry))).length;
   if (favoriteCount > 0) {
     highlights.push(`${favoriteCount} Pokémon con Baya Favorita (×2 Vigor).`);
+  }
+  const isEvent = isHalloweenEventActive(config);
+  const ghostCount = team.filter(p => isGhostPokemon(p)).length;
+  if (isEvent && ghostCount > 0) {
+    highlights.push(`🎃 Bonus Halloween activo: ${ghostCount} Pokémon Fantasma (+1 ingrediente, x1,25 activación, +3 niveles de habilidad).`);
   }
   if (hasEffectiveHealer) {
     highlights.push(`Sanador activo (+${Math.round(totalDailyHealedEnergy)} energía/día, factor ${teamEnergyFactor.toFixed(2)}x).`);

@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { SnorlaxConfig, DishType } from '../types/pokemon';
 import { ISLANDS, BERRIES, POT_SIZES, CANONICAL_BERRIES } from '../data/gameData';
 import { getBerrySpriteUrl, getRankPokeballUrl } from '../services/pokeApiService';
+import { isHalloweenEventActive } from '../services/optimizer';
+import { HalloweenEventModal } from './HalloweenEventModal';
 import {
   Sparkles,
   MapPin,
@@ -36,6 +38,24 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
   const [isStepperOpen, setIsStepperOpen] = useState(false);
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [activeBerrySlot, setActiveBerrySlot] = useState<number>(0);
+  const [isHalloweenModalOpen, setIsHalloweenModalOpen] = useState(false);
+
+  const isEventActive = isHalloweenEventActive(config);
+  const isGreengrass = !config.island || config.island === 'greengrass';
+  const hasOramFavorite = config.favoriteBerries.some(b => b.trim() === 'Baya Oram');
+
+  const handleQuickSetOram = () => {
+    const nextBerries = [...config.favoriteBerries];
+    if (nextBerries.length === 0) {
+      nextBerries.push('Baya Oram');
+    } else {
+      nextBerries[0] = 'Baya Oram';
+    }
+    onChangeConfig({
+      ...config,
+      favoriteBerries: nextBerries
+    });
+  };
 
   useEffect(() => {
     if (isStepperOpen) {
@@ -224,6 +244,74 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
         </div>
       </div>
 
+      {/* HALLOWEEN 2026 EVENT BANNER */}
+      {isEventActive && (
+        <div className="mt-3 p-3 sm:p-3.5 rounded-[22px] bg-gradient-to-r from-orange-950/75 via-purple-950/75 to-slate-950/80 border border-orange-500/30 backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-[0_4px_20px_rgba(249,115,22,0.12)] relative overflow-hidden animate-fade-in">
+          {/* Subtle Glow */}
+          <div className="absolute -right-8 -top-8 w-28 h-28 bg-orange-500/15 rounded-full blur-2xl pointer-events-none" />
+
+          <div className="flex items-center gap-3 min-w-0 relative z-10">
+            <div className="w-9 h-9 rounded-xl bg-orange-500/20 border border-orange-400/30 flex items-center justify-center text-lg shadow-inner flex-shrink-0">
+              <span>🎃</span>
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-display font-bold text-white text-xs sm:text-sm tracking-tight">
+                  Halloween 2026: Doble Dulce
+                </span>
+                <span className="text-[10px] font-bold px-2 py-0.2 rounded-full bg-orange-500/25 text-orange-200 border border-orange-400/30">
+                  En curso
+                </span>
+                {isGreengrass && hasOramFavorite && (
+                  <span className="text-[10px] font-bold px-2 py-0.2 rounded-full bg-purple-500/25 text-purple-200 border border-purple-400/30">
+                    Baya Oram Fija 👻
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2 text-[11px] text-orange-200/80 mt-0.5 flex-wrap font-medium">
+                <span>👻 Fantasmas: +1 ing. | x1,25 skill | +3 niv.</span>
+                <span>•</span>
+                <span>🍬 Caramelos x2 / x3</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-end sm:self-auto flex-shrink-0 relative z-10">
+            {isGreengrass && !hasOramFavorite && (
+              <button
+                type="button"
+                onClick={handleQuickSetOram}
+                className="px-3 py-1.5 rounded-full text-xs font-bold bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-400/40 transition-colors flex items-center gap-1.5"
+                title="Snorlax en Isla Verdegal tiene garantizada la Baya Oram"
+              >
+                <img
+                  src={getBerrySpriteUrl('Baya Oram')}
+                  alt="Baya Oram"
+                  className="w-3.5 h-3.5 object-contain"
+                />
+                <span>Fijar Oram</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setIsHalloweenModalOpen(true)}
+              className="btn-dreamy-ghost px-3.5 py-1.5 text-xs rounded-full font-bold text-orange-200 border-orange-400/40 hover:bg-orange-500/20 flex items-center gap-1.5"
+            >
+              <span>Ver Guía</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* HALLOWEEN EVENT DETAILS MODAL */}
+      <HalloweenEventModal
+        isOpen={isHalloweenModalOpen}
+        onClose={() => setIsHalloweenModalOpen(false)}
+        config={config}
+        onChangeConfig={onChangeConfig}
+      />
+
       {/* INTERACTIVE 4-STEP WIZARD MODAL (Portal to document.body for instant viewport centering) */}
       {isStepperOpen && createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/75 backdrop-blur-xl overflow-y-auto">
@@ -370,6 +458,24 @@ export const SnorlaxSetup: React.FC<SnorlaxSetupProps> = ({
                         ? '✨ Esta isla cuenta con 3 bayas fijas predeterminadas por el juego.'
                         : 'Toca una ranura y selecciona su baya con arte oficial:'}
                     </p>
+
+                    {isEventActive && isGreengrass && (
+                      <div className="p-3 rounded-2xl bg-orange-950/40 border border-orange-500/30 flex items-center justify-between gap-2 mt-2.5">
+                        <div className="flex items-center gap-2 text-xs text-orange-200">
+                          <span>🎃</span>
+                          <span>Evento Halloween: Snorlax tiene <strong>Baya Oram</strong> garantizada en Verdegal.</span>
+                        </div>
+                        {!hasOramFavorite && (
+                          <button
+                            type="button"
+                            onClick={() => handleBerryChange(0, 'Baya Oram')}
+                            className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-orange-500 hover:bg-orange-600 text-white shadow flex-shrink-0"
+                          >
+                            Fijar en Ranura 1
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* 3 Berry Slots Display */}

@@ -123,6 +123,7 @@ export interface SnorlaxConfig {
   currentTeam?: CurrentTeamConfig;
   midWeekProgress?: MidWeekProgress;
   pushConfig?: PushNotificationConfig;
+  halloweenEventActive?: boolean; // Evento de Halloween 2026: Doble Dulce (buff Fantasma, Baya Oram)
 }
 
 export interface MealPlan {

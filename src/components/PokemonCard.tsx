@@ -12,7 +12,7 @@ import {
   isSpecialPokemon,
   SpriteStyle
 } from '../services/pokeApiService';
-import { getPokemonSkillLevel } from '../services/optimizer';
+import { getPokemonSkillLevel, isGhostPokemon, isHalloweenEventActive } from '../services/optimizer';
 import { evaluateSinglePokemonGenetics } from '../services/pokedexEvaluator';
 import { canPokemonEvolve, formatFrequencySeconds } from '../services/evolutionService';
 import { getSpeciesMasterData } from '../data/speciesMaster';
@@ -84,6 +84,9 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
   }
   const mainSkillMeta = getMainSkillMeta(mainSkill);
   const skillLevel = getPokemonSkillLevel(pokemon);
+
+  const isGhost = isGhostPokemon(pokemon);
+  const isHalloween = isHalloweenEventActive();
 
   // Intrinsic genetic evaluation for quick grade display
   const genetic = useMemo(() => evaluateSinglePokemonGenetics(pokemon), [pokemon]);
@@ -169,6 +172,11 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
                 {isShiny && (
                   <span className="text-[8px] font-black text-purple-200 bg-purple-500/20 px-1.5 py-0.2 rounded-full flex items-center gap-0.5">
                     <Sparkles className="w-2 h-2" />
+                  </span>
+                )}
+                {isGhost && isHalloween && (
+                  <span className="text-[9px] font-black leading-none bg-orange-500/20 border border-orange-400/30 px-1 py-0.5 rounded-full select-none" title="¡Buff de Halloween 2026 activo (+1 ing, x1.25 skill, +3 niv)!">
+                    🎃
                   </span>
                 )}
               </div>
@@ -650,6 +658,11 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
             {isSpecial && (
               <span className="text-[9px] font-black text-purple-300 bg-purple-500/20 px-2 py-0.5 rounded-full flex items-center gap-0.5 shadow-sm">
                 <Crown className="w-2.5 h-2.5" /> Especial
+              </span>
+            )}
+            {isGhost && isHalloween && (
+              <span className="text-[9px] font-black text-orange-200 bg-orange-500/25 border border-orange-400/40 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm" title="¡Potenciado por evento de Halloween 2026 (+1 ing, x1.25 skill, +3 niv)!">
+                <span>🎃</span> Halloween
               </span>
             )}
           </div>
