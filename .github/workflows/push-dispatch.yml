@@ -13,9 +13,14 @@ jobs:
       - name: Trigger Vercel Push Dispatch Endpoint
         run: |
           TARGET_URL="${{ vars.APP_URL }}"
-          if [ -n "$TARGET_URL" ]; then
-            curl -fsS --max-time 20 "${TARGET_URL%/}/api/push" || true
-          else
-            curl -fsS --max-time 15 "https://poke-master-sleep.vercel.app/api/push" || \
-            curl -fsS --max-time 15 "https://pokemon-sleep-master.vercel.app/api/push" || true
+          if [ -z "$TARGET_URL" ]; then
+            TARGET_URL="https://hachidori-airlines-fap8.vercel.app"
+          fi
+          echo "Dispatching push to: ${TARGET_URL%/}/api/push"
+          HTTP_STATUS=$(curl -sS -o response.json -w "%{http_code}" --max-time 30 "${TARGET_URL%/}/api/push" || echo "failed")
+          echo "HTTP Status: $HTTP_STATUS"
+          cat response.json || true
+          echo ""
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "::warning ::Push dispatch returned HTTP $HTTP_STATUS"
           fi

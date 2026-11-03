@@ -184,10 +184,19 @@ export const PushNotificationModal: React.FC<PushNotificationModalProps> = ({
 
   const supabaseCronSql = useMemo(() => {
     const origin =
-      typeof window !== 'undefined' ? window.location.origin : 'https://poke-master-sleep.vercel.app';
+      typeof window !== 'undefined' && window.location.origin && !window.location.origin.includes('localhost')
+        ? window.location.origin
+        : 'https://hachidori-airlines-fap8.vercel.app';
     return `-- Ejecuta esto 1 sola vez en Supabase SQL Editor para precisión cada 5 min:
 create extension if not exists pg_cron;
 create extension if not exists pg_net;
+
+do $$
+begin
+  if exists (select 1 from cron.job where jobname = 'pokesleep-push-dispatch') then
+    perform cron.unschedule('pokesleep-push-dispatch');
+  end if;
+end $$;
 
 select cron.schedule(
   'pokesleep-push-dispatch',
@@ -200,6 +209,29 @@ select cron.schedule(
     navigator.clipboard.writeText(supabaseCronSql);
     setCopiedSql(true);
     setTimeout(() => setCopiedSql(false), 2200);
+  };
+
+  const handleTestCronDispatch = async () => {
+    setIsBusy(true);
+    setFeedback(null);
+    try {
+      const resp = await fetch('/api/push');
+      const data = await resp.json();
+      if (!resp.ok || !data.success) {
+        throw new Error(data.message || 'Error en el servidor de despacho');
+      }
+      const sentSummary = (data.summary || [])
+        .map((s: any) => `${s.profileId}: ${s.sent?.length ? s.sent.join(', ') : 'al día'}`)
+        .join(' | ');
+      setFeedback({
+        type: 'ok',
+        text: `✅ Reloj evaluado con éxito (${sentSummary})`
+      });
+    } catch (err: any) {
+      setFeedback({ type: 'err', text: err?.message || 'Error ejecutando prueba del reloj.' });
+    } finally {
+      setIsBusy(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -613,14 +645,24 @@ select cron.schedule(
                 <pre className="p-2.5 rounded-xl bg-black/60 border border-white/10 text-[10px] text-cyan-200 overflow-x-auto font-mono">
                   {supabaseCronSql}
                 </pre>
-                <button
-                  type="button"
-                  onClick={handleCopySql}
-                  className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold flex items-center gap-1.5 text-[11px]"
-                >
-                  {copiedSql ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copiedSql ? '¡SQL copiado!' : 'Copiar SQL de Supabase'}</span>
-                </button>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={handleCopySql}
+                    className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold flex items-center gap-1.5 text-[11px]"
+                  >
+                    {copiedSql ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedSql ? '¡SQL copiado!' : 'Copiar SQL de Supabase'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isBusy}
+                    onClick={handleTestCronDispatch}
+                    className="px-3 py-1.5 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 border border-indigo-400/30 font-bold flex items-center gap-1.5 text-[11px] disabled:opacity-50"
+                  >
+                    <span>⚡ Probar Reloj Automático Ahora</span>
+                  </button>
+                </div>
               </div>
             )}
           </div>

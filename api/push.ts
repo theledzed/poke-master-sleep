@@ -502,7 +502,7 @@ export default async function handler(req: any, res: any) {
       // A. Monday Morning Island & Berry Setup Ritual (default 08:30)
       if (isMonday && pushCfg.mondayResetAlert !== false) {
         const mondayTarget = parseHHMM(pushCfg.mondayResetTime, 8 * 60 + 30);
-        if (isInWindow(clock.minutesOfDay, mondayTarget, 22)) {
+        if (isInWindow(clock.minutesOfDay, mondayTarget, 45)) {
           await queueNotification(`${clock.dateKey}:monday-reset`, {
             title: '🏝️ ¡Lunes: Nueva Isla!',
             body: 'Elige tu isla y bayas de Snorlax\npara optimizar tu equipo semanal.',
@@ -517,10 +517,10 @@ export default async function handler(req: any, res: any) {
         }
       }
 
-      // B. Breakfast Last Call — 25 min before 12:00 PM (default 11:35)
+      // B. Breakfast Last Call — 25 min before 12:00 PM (default 11:35, window 35 min)
       if (pushCfg.breakfastReminder !== false) {
         const bTarget = parseHHMM(pushCfg.breakfastTime, 11 * 60 + 35);
-        if (isInWindow(clock.minutesOfDay, bTarget, 20)) {
+        if (isInWindow(clock.minutesOfDay, bTarget, 35)) {
           await queueNotification(`${clock.dateKey}:breakfast`, {
             title: isSunday
               ? '🔥 ¡Súper Olla! 25m para Desayuno'
@@ -539,10 +539,10 @@ export default async function handler(req: any, res: any) {
         }
       }
 
-      // C. Lunch Last Call — 25 min before 6:00 PM (default 17:35)
+      // C. Lunch Last Call — 25 min before 6:00 PM (default 17:35, window 35 min)
       if (pushCfg.lunchReminder !== false) {
         const lTarget = parseHHMM(pushCfg.lunchTime, 17 * 60 + 35);
-        if (isInWindow(clock.minutesOfDay, lTarget, 20)) {
+        if (isInWindow(clock.minutesOfDay, lTarget, 35)) {
           await queueNotification(`${clock.dateKey}:lunch`, {
             title: isSunday
               ? '🔥 ¡Súper Olla! 25m para Comida'
@@ -561,9 +561,9 @@ export default async function handler(req: any, res: any) {
         }
       }
 
-      // D. Dinner + Pre-Sleep (default 22:30 -> 30 min before 11:00 PM bedtime) + Astronomical Moon Events!
+      // D. Dinner + Pre-Sleep (default 22:30 -> 30 min before 11:00 PM bedtime, window 45 min) + Astronomical Moon Events!
       const dinnerSleepTarget = parseHHMM(pushCfg.dinnerSleepTime, 22 * 60 + 30);
-      if (pushCfg.dinnerSleepReminder !== false && isInWindow(clock.minutesOfDay, dinnerSleepTarget, 22)) {
+      if (pushCfg.dinnerSleepReminder !== false && isInWindow(clock.minutesOfDay, dinnerSleepTarget, 45)) {
         const lunar = pushCfg.lunarEventsAlert !== false ? getServerLunarEvent(now) : null;
         const title = lunar
           ? `${lunar.emoji} ¡${lunar.label} + Cena!`
@@ -601,38 +601,62 @@ export default async function handler(req: any, res: any) {
 
       if (pushCfg.smartBagAlert !== false && isAwakeHours) {
         const snoozedUntilMs = pushCfg.snoozedUntil ? Date.parse(pushCfg.snoozedUntil) : 0;
-        if (!snoozedUntilMs || now.getTime() >= snoozedUntilMs) {
+        const isSnoozed = snoozedUntilMs > 0 && now.getTime() < snoozedUntilMs;
+        const isSnoozeExpired = snoozedUntilMs > 0 && now.getTime() >= snoozedUntilMs;
+
+        if (!isSnoozed) {
           const fastest = computeFastestBagServer(row.pokemons || [], cfg);
           if (fastest) {
-            // Compute latest natural collection anchor in minutes-of-day:
-            // Wake-up (e.g. 07:30), Noon post-breakfast (12:00), or 6 PM post-lunch (18:00)
-            let naturalAnchorMins = wakeUpMins;
-            if (clock.minutesOfDay >= 18 * 60) {
-              naturalAnchorMins = 18 * 60;
-            } else if (clock.minutesOfDay >= 12 * 60) {
-              naturalAnchorMins = 12 * 60;
-            }
+            // Anchor calculation:
+            // 1) Morning wake up today in epoch ms (for user's timezone)
+            const minsSinceWakeUp = clock.minutesOfDay - wakeUpMins;
+            const wakeUpTodayMs = now.getTime() - minsSinceWakeUp * 60 * 1000;
 
-            // Convert naturalAnchorMins to approximate epoch timestamp
-            const minsSinceNaturalAnchor = clock.minutesOfDay - naturalAnchorMins;
-            const naturalAnchorMs = now.getTime() - minsSinceNaturalAnchor * 60 * 1000;
-
+            // 2) User's last confirmed bag collection
             const manualCollectedMs = pushCfg.lastBagCollectedAt
               ? Date.parse(pushCfg.lastBagCollectedAt)
               : 0;
 
-            const effectiveAnchorMs = Math.max(naturalAnchorMs, manualCollectedMs || 0);
+            // Effective anchor is when the bag started filling:
+            // Either the morning wake-up or the last manual collection (whichever is more recent).
+            const effectiveAnchorMs = Math.max(wakeUpTodayMs, manualCollectedMs || 0);
             const elapsedMinutes = (now.getTime() - effectiveAnchorMs) / 60000;
 
-            // Round anchor bucket to 5-minute resolution so small clock drift keeps the exact same idempotency key
-            const anchorBucket = Math.round(effectiveAnchorMs / (5 * 60 * 1000));
-            const bagAlertKey = `bag:${clock.dateKey}:${anchorBucket}`;
+            // Round anchor bucket to 15-minute resolution for idempotency stability
+            const anchorBucket = Math.round(effectiveAnchorMs / (15 * 60 * 1000));
 
-            if (elapsedMinutes >= fastest.fillMinutes && elapsedMinutes <= fastest.fillMinutes + 90) {
+            // Is this a snooze reminder firing?
+            const isSnoozeWakeup = isSnoozeExpired;
+            
+            // Cycle 1: Bag reached 100% capacity (elapsed >= fillMinutes)
+            // Cycle 2: Overflow alert if user has not collected after ~2x fill time
+            const isFull = elapsedMinutes >= fastest.fillMinutes;
+            const isOverflow = elapsedMinutes >= fastest.fillMinutes * 2;
+
+            let bagAlertKey: string | null = null;
+            if (isSnoozeWakeup) {
+              bagAlertKey = `bag:${clock.dateKey}:${anchorBucket}:snooze-${snoozedUntilMs}`;
+            } else if (isOverflow) {
+              bagAlertKey = `bag:${clock.dateKey}:${anchorBucket}:overflow`;
+            } else if (isFull) {
+              bagAlertKey = `bag:${clock.dateKey}:${anchorBucket}`;
+            }
+
+            if (bagAlertKey) {
               const monClean = (fastest.pokemonName || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+              const bagTitle = isSnoozeWakeup
+                ? `⏱️ ${fastest.pokemonName}: Recordatorio de bolsa`
+                : isOverflow
+                ? `🎒 ${fastest.pokemonName}: ¡Bolsa desbordada!`
+                : `🎒 ${fastest.pokemonName}: Bolsa llena`;
+
+              const bagBody = isOverflow
+                ? `Límite ${fastest.carryLimit}/${fastest.carryLimit} superado (~${fastest.formattedDuration})\nEntra a recoger antes de perder ingredientes.`
+                : `Límite ${fastest.carryLimit}/${fastest.carryLimit} (~${fastest.formattedDuration})\nEntra por ${fastest.primaryOutputLabel}`;
+
               await queueNotification(bagAlertKey, {
-                title: `🎒 ${fastest.pokemonName}: Bolsa llena`,
-                body: `Límite ${fastest.carryLimit}/${fastest.carryLimit} (~${fastest.formattedDuration})\nEntra por ${fastest.primaryOutputLabel}`,
+                title: bagTitle,
+                body: bagBody,
                 icon: `/images/avatar/portrait/${monClean}.png`,
                 image: `/images/pokemon/${monClean}.png`,
                 tag: `pokesleep-bag-${profileId}`,
@@ -645,6 +669,11 @@ export default async function handler(req: any, res: any) {
                   { action: 'snooze-1h', title: '⏱️ +1h' }
                 ]
               });
+
+              if (isSnoozeWakeup) {
+                delete pushCfg.snoozedUntil;
+                configDirty = true;
+              }
             }
           }
         }
