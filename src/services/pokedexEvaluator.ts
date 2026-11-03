@@ -1,5 +1,5 @@
 import { Pokemon, Specialty } from '../types/pokemon';
-import { isSpecialPokemon } from './pokeApiService';
+import { isSpecialPokemon, normalizeMainSkillName, getPokemonCanonicalSkill } from './pokeApiService';
 import { NATURES } from '../data/gameData';
 import { getSpeciesMasterData, MasterSpecies } from '../data/speciesMaster';
 import { calculateEvolutionPreview, formatFrequencySeconds, SLEEP_EVOLUTION_MAP } from './evolutionService';
@@ -229,6 +229,8 @@ export const SPECIES_META: Record<string, EvolutionMeta> = {
   clodsire: { family: 'wooper', stage: 2, maxStage: 2 },
   murkrow: { family: 'murkrow', stage: 1, maxStage: 2, evolvesWithItem: 'Piedra Noche' },
   honchkrow: { family: 'murkrow', stage: 2, maxStage: 2 },
+  misdreavus: { family: 'misdreavus', stage: 1, maxStage: 2, evolvesWithItem: 'Piedra Noche' },
+  mismagius: { family: 'misdreavus', stage: 2, maxStage: 2 },
   wobbuffet: { family: 'wobbuffet', stage: 2, maxStage: 2 },
   wynaut: { family: 'wobbuffet', stage: 1, maxStage: 2 },
   heracross: { family: 'heracross', stage: 3, maxStage: 3 },
@@ -555,6 +557,9 @@ export function detectSubskillSeedPotential(pokemon: Pokemon): { target?: string
   if ((spec === 'Habilidades' || spec === 'Todo') && subs.some(s => s?.name === 'Activación S') && !allNames.has('Activación M')) {
     return { target: 'Activación S ➔ M (+18% activación extra)', bonusPts: 4 };
   }
+  if ((spec === 'Habilidades' || spec === 'Todo') && subs.some(s => s?.name === 'Nivel habilidad S') && !allNames.has('Nivel habilidad M')) {
+    return { target: 'Nivel habilidad S ➔ M (+1 nivel gratis de habilidad)', bonusPts: 4 };
+  }
   if (subs.some(s => s?.name === 'Velocidad ayuda S') && !allNames.has('Velocidad ayuda M')) {
     return { target: 'Velocidad ayuda S ➔ M (-7% tiempo extra)', bonusPts: 3 };
   }
@@ -620,10 +625,44 @@ export function evaluateSinglePokemonGenetics(pokemon: Pokemon): {
 
   const helpingBonus = getSubWeight('Bonus ayuda');
   if (helpingBonus.weight > 0) {
-    const pts = Math.round(22 * helpingBonus.weight);
+    const ingA = pokemon.ingredients?.[0]?.name?.toLowerCase().trim();
+    const ingB = pokemon.ingredients?.[1]?.name?.toLowerCase().trim();
+    const hasMono = Boolean(ingA && ingB && ingA === ingB);
+
+    let hasOwnRoleSynergy = false;
+    if (spec === 'Bayas') {
+      hasOwnRoleSynergy =
+        (bfs.weight > 0 ||
+          getSubWeight('Velocidad ayuda M').weight > 0 ||
+          Boolean(nat?.speedMod && nat.speedMod < 1.0) ||
+          Boolean(nat?.ingMod && nat.ingMod < 1.0)) &&
+        !(nat?.speedMod && nat.speedMod > 1.0);
+    } else if (spec === 'Ingredientes') {
+      hasOwnRoleSynergy =
+        (getSubWeight('Más ingredientes M').weight > 0 ||
+          getSubWeight('Más ingredientes S').weight > 0 ||
+          Boolean(nat?.ingMod && nat.ingMod > 1.0) ||
+          hasMono) &&
+        !(nat?.ingMod && nat.ingMod < 1.0);
+    } else {
+      hasOwnRoleSynergy =
+        (getSubWeight('Activación M').weight > 0 ||
+          getSubWeight('Activación S').weight > 0 ||
+          getSubWeight('Nivel habilidad M').weight > 0 ||
+          Boolean(nat?.skillMod && nat.skillMod > 1.0) ||
+          bfs.weight > 0) &&
+        !(nat?.skillMod && nat.skillMod < 1.0);
+    }
+
+    const rawHbPts = hasOwnRoleSynergy ? 20 : 14;
+    const pts = Math.round(rawHbPts * helpingBonus.weight);
     baseGeneticScore += pts;
-    ceilingBonus += 22 - pts;
-    pros.push(`🤝 "Bonus ayuda" (Nv. ${helpingBonus.slot}): acelera un 5% a todo tu equipo (+${pts} pts)`);
+    ceilingBonus += rawHbPts - pts;
+    pros.push(
+      hasOwnRoleSynergy
+        ? `🤝 "Bonus ayuda" (Nv. ${helpingBonus.slot}): -5% tiempo al equipo (tope 35%) + sinergia con su rol (+${pts} pts)`
+        : `🤝 "Bonus ayuda" (Nv. ${helpingBonus.slot}): soporte de -5% tiempo al equipo, aunque requiere más kit propio (+${pts} pts)`
+    );
   }
 
   // 2. Velocidad de ayuda
@@ -815,6 +854,37 @@ export function evaluateSinglePokemonGenetics(pokemon: Pokemon): {
     const lvlM = getSubWeight('Nivel habilidad M');
     const lvlS = getSubWeight('Nivel habilidad S');
 
+    // Valorar el impacto real de la Habilidad Principal según el meta de dataminers (RaenonX)
+    const canonicalSkill = normalizeMainSkillName(pokemon.mainSkillName || getPokemonCanonicalSkill(pokemon.name));
+    const notSabotagedSkill = !(nat?.skillMod && nat.skillMod < 1.0);
+    if (notSabotagedSkill) {
+      if (canonicalSkill.includes('Llama Embrujada') || canonicalSkill.includes('con sustancia')) {
+        baseGeneticScore += 6;
+        pros.push(`🔥 "Llama Embrujada": híbrida culinaria top que amplía el puchero (hasta +31) y acumula crítico riquísimo (+6 pts)`);
+      } else if (canonicalSkill.includes('Energía para todos') || canonicalSkill.includes('Plegaria Lunar') || canonicalSkill.includes('Zumo de Baya')) {
+        baseGeneticScore += 6;
+        pros.push(`💖 Sanador de Equipo (${canonicalSkill}): motor esencial de energía del campamento (+6 pts)`);
+      } else if (
+        canonicalSkill.includes('Receta sustanciosa') ||
+        canonicalSkill.includes('Menos (Receta') ||
+        canonicalSkill.includes('Cocinitas S') ||
+        canonicalSkill.includes('Corpulencia')
+      ) {
+        baseGeneticScore += 5;
+        pros.push(`🍲 Soporte Culinario Meta (${canonicalSkill}): desbloquea recetas grandes y/o multiplica platos riquísimos (+5 pts)`);
+      } else if (
+        canonicalSkill.includes('Carga vigor M') ||
+        canonicalSkill.includes('Bayamanía') ||
+        canonicalSkill.includes('Disfraz') ||
+        canonicalSkill.includes('Cometa Draco') ||
+        canonicalSkill.includes('Onda Mental') ||
+        canonicalSkill.includes('Reserva')
+      ) {
+        baseGeneticScore += 5;
+        pros.push(`⚡ Habilidad Ofensiva Meta (${canonicalSkill}): alto techo de vigor directo (+5 pts)`);
+      }
+    }
+
     if (nat?.skillMod && nat.skillMod > 1.0) {
       baseGeneticScore += 18;
       pros.push(`✨ Naturaleza ideal: aumenta activación de habilidad principal (+18 pts)`);
@@ -822,7 +892,7 @@ export function evaluateSinglePokemonGenetics(pokemon: Pokemon): {
       if (isHybridBerrySpecialist) {
         baseGeneticScore -= 8;
         cons.push(`⚠️ Naturaleza reduce habilidad, pero compensa operando como Híbrido de Bayas (-8 pts)`);
-      } else if (trigM.weight > 0 && (hsm.weight > 0 || lvlM.weight > 0)) {
+      } else if (trigM.weight > 0 && (hsm.weight > 0 || lvlM.weight > 0 || lvlL.weight > 0)) {
         baseGeneticScore -= 10;
         mintCandidate = true;
         cons.push(`🌿 Naturaleza frena su habilidad (-10 pts), ¡pero es Candidato #1 a Menta Neutra por sus subhabilidades top!`);
@@ -853,17 +923,17 @@ export function evaluateSinglePokemonGenetics(pokemon: Pokemon): {
       pros.push(`🎯 "Activación S" (Nv. ${trigS.slot}): +18% prob. de habilidad (+${pts} pts)`);
     }
 
-    if (lvlL.weight > 0) {
-      const pts = Math.round(22 * lvlL.weight);
+    const effectiveLvlMWeight = lvlM.weight > 0 ? lvlM.weight : lvlL.weight;
+    const effectiveLvlMSlot = lvlM.weight > 0 ? lvlM.slot : lvlL.slot;
+    if (effectiveLvlMWeight > 0) {
+      const pts = Math.round(16 * effectiveLvlMWeight);
       baseGeneticScore += pts;
-      pros.push(`🔼 "Nivel habilidad L" (Nv. ${lvlL.slot}): +3 niveles gratis de habilidad (+${pts} pts)`);
-    } else if (lvlM.weight > 0) {
-      const pts = Math.round(16 * lvlM.weight);
-      baseGeneticScore += pts;
-      pros.push(`🔼 "Nivel habilidad M" (Nv. ${lvlM.slot}): +2 niveles gratis de habilidad (+${pts} pts)`);
+      ceilingBonus += 16 - pts;
+      pros.push(`🔼 "Nivel habilidad M" (Nv. ${effectiveLvlMSlot}): +2 niveles gratis de habilidad (+${pts} pts)`);
     } else if (lvlS.weight > 0) {
       const pts = Math.round(9 * lvlS.weight);
       baseGeneticScore += pts;
+      ceilingBonus += 9 - pts;
       pros.push(`🔼 "Nivel habilidad S" (Nv. ${lvlS.slot}): +1 nivel de habilidad (+${pts} pts)`);
     }
 
@@ -891,9 +961,10 @@ export function evaluateSinglePokemonGenetics(pokemon: Pokemon): {
     pros.push(`📈 "Bonus EXP al dormir" (Nv. ${expSleep.slot}): +14% EXP a todo el equipo (+6 pts)`);
   }
   const expStudy = getSubWeight('Bonus EXP de estudio');
-  const dreamShards = getSubWeight('Bonus fragmentos sueño');
+  const dreamShards = getSubWeight('Bonus fragmentos sueños');
+  const dreamShardsLegacy = getSubWeight('Bonus fragmentos sueño');
   const energyRec = getSubWeight('Bonus recupera energía');
-  if (expStudy.weight > 0 || dreamShards.weight > 0 || energyRec.weight > 0) {
+  if (expStudy.weight > 0 || dreamShards.weight > 0 || dreamShardsLegacy.weight > 0 || energyRec.weight > 0) {
     baseGeneticScore += 4;
     pros.push(`🌟 Subhabilidad dorada de soporte pasivo para el campamento (+4 pts)`);
   }

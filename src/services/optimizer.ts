@@ -1,6 +1,6 @@
 import { Pokemon, Recipe, SnorlaxConfig, OptimizedTeamResult, MealPlan, DishType } from '../types/pokemon';
 import { INGREDIENTS, RECIPES, DISH_LEVEL_BONUS, getBerryVigor, POT_SIZES, normalizeBerryName } from '../data/gameData';
-import { getPokemonCanonicalSkill, isSpecialPokemon } from './pokeApiService';
+import { getPokemonCanonicalSkill, isSpecialPokemon, normalizeMainSkillName } from './pokeApiService';
 import { getSpeciesMasterData } from '../data/speciesMaster';
 
 export const MIXED_DISHES: Record<DishType, Recipe> = {
@@ -72,13 +72,16 @@ interface PokemonProduction {
   dailyBerryVigor: number;
   dailyIngredients: Record<string, number>;
   dailySkillVigor: number;
+  skillTriggersPerDay: number;
+  effectiveSkillLevel: number;
+  normalizedSkillName: string;
   isHealer: boolean;
 }
 
-// Helper unificado para detectar sanadores de equipo según WikiDex
+// Helper unificado para detectar sanadores de equipo según WikiDex / Serebii
 export function isTeamHealer(pokemon: Pokemon): boolean {
   const name = pokemon.name.toLowerCase();
-  const skill = pokemon.mainSkillName || getPokemonCanonicalSkill(pokemon.name);
+  const skill = normalizeMainSkillName(pokemon.mainSkillName || getPokemonCanonicalSkill(pokemon.name));
   return (
     skill.includes('Energía para todos') ||
     skill.includes('Zumo de Baya') ||
@@ -88,6 +91,7 @@ export function isTeamHealer(pokemon: Pokemon): boolean {
       'pawmi', 'pawmo', 'pawmot',
       'ralts', 'kirlia', 'gardevoir',
       'sylveon', 'cresselia', 'shuckle',
+      'happiny', 'chansey', 'blissey',
       'turtwig', 'grotle', 'torterra'
     ].some(h => name.includes(h))
   );
@@ -152,93 +156,249 @@ export function getPokemonSkillLevel(pokemon: Pokemon): number {
     }
   }
 
-  // 2. Si NO venía ya calculado en las notas, sumamos las subskills activas (incluyendo Nivel habilidad L = +3)
+  // 2. Si NO venía ya calculado en las notas, sumamos las subskills activas (Nivel habilidad S = +1, Nivel habilidad M = +2)
   if (!noteMatch) {
     for (const sub of pokemon.subskills) {
       if (!sub.enabled) continue;
       if (sub.name === 'Nivel habilidad S') baseLevel += 1;
-      if (sub.name === 'Nivel habilidad M') baseLevel += 2;
-      if (sub.name === 'Nivel habilidad L') baseLevel += 3;
+      if (sub.name === 'Nivel habilidad M' || sub.name === 'Nivel habilidad L') baseLevel += 2;
     }
   }
 
   return Math.min(7, Math.max(1, baseLevel));
 }
 
-// Calculate realistic vigor per trigger according to official Sleep tables
-export function getSkillVigorPerTrigger(pokemon: Pokemon, extraSkillLevels = 0): number {
-  const baseLevel = getPokemonSkillLevel(pokemon);
-  const skillLevel = Math.min(7, baseLevel + extraSkillLevels);
+export function resolvePokemonMainSkill(pokemon: Pokemon): string {
+  const cleanName = pokemon.name.toLowerCase().trim();
   const canonical = getPokemonCanonicalSkill(pokemon.name);
-  let mainSkill = pokemon.mainSkillName || canonical;
-  const isLegendaryBeast = ['raikou', 'entei', 'suicune'].some(b => pokemon.name.toLowerCase().includes(b));
+  let mainSkill = normalizeMainSkillName(pokemon.mainSkillName || canonical);
+  const isLegendaryBeast = ['raikou', 'entei', 'suicune'].some(b => cleanName.includes(b));
 
-  // Guardrail: Eevee in Pokémon Sleep exclusively possesses 'Imán ingredientes S', and Ditto has 'Transformación (Copia habilidades)'
-  if (pokemon.name.toLowerCase().trim() === 'eevee' && mainSkill !== 'Imán ingredientes S') {
+  if (cleanName === 'eevee' && mainSkill !== 'Imán ingredientes S') {
     mainSkill = 'Imán ingredientes S';
-  } else if (pokemon.name.toLowerCase().trim() === 'ditto' && (mainSkill === 'Carga vigor S' || mainSkill.toLowerCase().includes('copy') || mainSkill.toLowerCase().includes('transform'))) {
+  } else if (cleanName === 'ditto' && (mainSkill === 'Carga vigor S' || mainSkill.toLowerCase().includes('copy') || mainSkill.toLowerCase().includes('transform'))) {
     mainSkill = 'Transformación (Copia habilidades)';
+  } else if ((cleanName.includes('misdreavus') || cleanName.includes('mismagius')) && mainSkill !== 'Llama Embrujada (Cocinitas con sustancia S)') {
+    mainSkill = 'Llama Embrujada (Cocinitas con sustancia S)';
   } else if (mainSkill.includes('Impulso de ayuda') && !isLegendaryBeast) {
     mainSkill = canonical;
   }
 
+  return mainSkill;
+}
+
+// Official datamined cooking skill bonuses per trigger (RaenonX / Serebii)
+export function getSkillCookingEffectPerTrigger(mainSkill: string, skillLevel: number): {
+  potBoost: number;
+  critBoostPercent: number;
+  randomIngredients: number;
+} {
+  const lvl = Math.min(7, Math.max(1, skillLevel));
+
+  // Llama Embrujada (Cocinitas con sustancia S) — Misdreavus, Mismagius
+  // Nv.1-7: +7, +10, +12, +17, +22, +27, +31 puchero | +1%, +2%, +2%, +3%, +3%, +4%, +5% plato riquísimo
+  if (mainSkill.includes('Llama Embrujada') || mainSkill.includes('con sustancia')) {
+    const potTable = [0, 7, 10, 12, 17, 22, 27, 31];
+    const critTable = [0, 1, 2, 2, 3, 3, 4, 5];
+    return {
+      potBoost: potTable[lvl] || 10,
+      critBoostPercent: critTable[lvl] || 2,
+      randomIngredients: 0
+    };
+  }
+
+  // Receta sustanciosa S / Menos (Receta sustanciosa S) — Magnezone, Flareon, Glaceon, Meowscarada, Luxray, Minun, Toxtricity Low Key
+  if (mainSkill.includes('Receta sustanciosa') || mainSkill.includes('Menos (Receta')) {
+    const potTable = [0, 7, 10, 14, 18, 22, 27, 31];
+    return {
+      potBoost: potTable[lvl] || 10,
+      critBoostPercent: 0,
+      randomIngredients: 0
+    };
+  }
+
+  // Cocinitas S (Tasty Chance S) — Dedenne, Swampert, Weavile, Cramorant
+  if (mainSkill.includes('Cocinitas S')) {
+    const critTable = [0, 4, 5, 6, 7, 8, 10, 12];
+    return {
+      potBoost: 0,
+      critBoostPercent: critTable[lvl] || 5,
+      randomIngredients: 0
+    };
+  }
+
+  // Corpulencia (Asistencia culinaria S / Bulk Up) — Heracross (rework v3.3.0)
+  // Inyecta 6, 8, 11, 14, 17, 21, 24 ingredientes aleatorios + 1% a 5% de plato riquísimo
+  if (mainSkill.includes('Corpulencia') || mainSkill.includes('Asistencia culinaria')) {
+    const ingTable = [0, 6, 8, 11, 14, 17, 21, 24];
+    const critTable = [0, 1, 2, 2, 3, 3, 4, 5];
+    return {
+      potBoost: 0,
+      critBoostPercent: critTable[lvl] || 2,
+      randomIngredients: ingTable[lvl] || 8
+    };
+  }
+
+  return { potBoost: 0, critBoostPercent: 0, randomIngredients: 0 };
+}
+
+// Official Serebii / RaenonX 2D table for Helper Boost (Raikou, Entei, Suicune)
+// Rows = unique matching-type species on the team (1..5), Cols = Skill Level (1..7)
+const HELPER_BOOST_MATRIX: Record<number, number[]> = {
+  1: [0, 2, 3, 3, 4, 4, 5, 6],
+  2: [0, 2, 3, 3, 4, 5, 6, 7],
+  3: [0, 3, 4, 5, 6, 7, 8, 9],
+  4: [0, 4, 5, 6, 7, 8, 9, 10],
+  5: [0, 6, 7, 8, 9, 10, 11, 12]
+};
+
+export function getHelperBoostHelpsPerMember(
+  pokemon: Pokemon,
+  skillLevel: number,
+  team?: Pokemon[],
+  config?: SnorlaxConfig
+): number {
+  const lvl = Math.min(7, Math.max(1, skillLevel));
+  const cleanName = pokemon.name.toLowerCase();
+  const mainSkill = resolvePokemonMainSkill(pokemon);
+
+  let targetBerry = '';
+  if (cleanName.includes('raikou') || mainSkill.includes('Eléctrico')) targetBerry = 'Baya Uvav';
+  else if (cleanName.includes('entei') || mainSkill.includes('Fuego')) targetBerry = 'Baya Zanama';
+  else if (cleanName.includes('suicune') || mainSkill.includes('Agua')) targetBerry = 'Baya Aranja';
+
+  let uniqueMatchingSpecies = 1;
+  if (team && team.length > 0 && targetBerry) {
+    const uniqueIds = new Set<string>();
+    for (const member of team) {
+      if (normalizeBerryName(member.berry) === targetBerry) {
+        const master = getSpeciesMasterData(member.name);
+        uniqueIds.add(master ? master.id : member.name.toLowerCase().trim());
+      }
+    }
+    uniqueMatchingSpecies = Math.min(5, Math.max(1, uniqueIds.size));
+  } else if (config && targetBerry && config.favoriteBerries.some(fav => normalizeBerryName(fav) === targetBerry)) {
+    // Solo heuristic when favored berry matches: assume moderate 2-species synergy until Beam Search tests actual teams
+    uniqueMatchingSpecies = 2;
+  }
+
+  const row = HELPER_BOOST_MATRIX[uniqueMatchingSpecies] || HELPER_BOOST_MATRIX[1];
+  return row[lvl] || 3;
+}
+
+// Calculate realistic vigor per trigger according to official Pokémon Sleep datamined tables
+export function getSkillVigorPerTrigger(
+  pokemon: Pokemon,
+  extraSkillLevels = 0,
+  teamContext?: { team?: Pokemon[]; config?: SnorlaxConfig }
+): number {
+  const baseLevel = getPokemonSkillLevel(pokemon);
+  const skillLevel = Math.min(7, baseLevel + extraSkillLevels);
+  const cleanName = pokemon.name.toLowerCase().trim();
+  const mainSkill = resolvePokemonMainSkill(pokemon);
+  const isLegendaryBeast = ['raikou', 'entei', 'suicune'].some(b => cleanName.includes(b));
+
   if (mainSkill.includes('Carga vigor M')) {
-    const table = [0, 880, 1251, 1726, 2383, 3290, 4546, 6400];
+    // Official Serebii Lv.1-7: 880, 1251, 1726, 2383, 3290, 4546, 6858
+    const table = [0, 880, 1251, 1726, 2383, 3290, 4546, 6858];
     return table[skillLevel] || 1726;
   }
 
-  if (mainSkill.includes('Carga vigor S') || mainSkill.includes('Reserva')) {
-    const table = [0, 400, 569, 785, 1083, 1496, 2066, 3002];
-    return table[skillLevel] || 785;
+  if (mainSkill.includes('Reserva')) {
+    // Stockpile / Spit Up (Drifloon, Drifblim) — RaenonX expected vigor per trigger (~1.44x Fixed Charge Strength S)
+    const table = [0, 575, 820, 1130, 1560, 2155, 2975, 4320];
+    return table[skillLevel] || 1130;
+  }
+
+  if (mainSkill.includes('Carga vigor S')) {
+    // Variable Charge Strength S (200-800 at Lv.1 -> average 1.25x Fixed) vs Fixed (400 at Lv.1)
+    const isVariableUser = [
+      'psyduck', 'golduck', 'gastly', 'haunter', 'gengar',
+      'mankey', 'primeape', 'chikorita', 'bayleef', 'meganium',
+      'croagunk', 'toxicroak'
+    ].some(sp => cleanName.includes(sp));
+
+    if (isVariableUser) {
+      const varTable = [0, 500, 711, 981, 1354, 1870, 2583, 4015];
+      return varTable[skillLevel] || 981;
+    }
+    const fixedTable = [0, 400, 569, 785, 1083, 1496, 2066, 3212];
+    return fixedTable[skillLevel] || 785;
   }
 
   if (mainSkill.includes('Imán ingredientes S') || mainSkill.includes('Más (Imán') || mainSkill.includes('Presente')) {
-    // Oficial Sleep: 6, 8, 11, 14, 17, 21, 25 ingredientes aleatorios inyectados
-    // Valorizados a ~115 de vigor base medio de ingrediente
-    const ingCounts = [0, 6, 8, 11, 14, 17, 21, 25];
-    return (ingCounts[skillLevel] || 8) * 115;
+    // Oficial Sleep: 6, 8, 11, 14, 17, 21, 24 ingredientes aleatorios
+    const ingCounts = [0, 6, 8, 11, 14, 17, 21, 24];
+    let baseIngs = ingCounts[skillLevel] || 8;
+    // Sinergia oficial Más / Menos: si hay otro compañero con Más o Menos en el equipo, suma ingredientes extra
+    if (mainSkill.includes('Más (Imán') && teamContext?.team) {
+      const plusMinusCount = teamContext.team.filter(m => {
+        const sk = resolvePokemonMainSkill(m);
+        return sk.includes('Más (Imán') || sk.includes('Menos (Receta');
+      }).length;
+      if (plusMinusCount >= 2) {
+        const bonusPlus = [0, 5, 6, 7, 8, 9, 10, 12];
+        baseIngs += bonusPlus[skillLevel] || 6;
+      }
+    }
+    return baseIngs * 115;
   }
 
   if (mainSkill.includes('Ingrediente aleatorio S') || mainSkill.includes('Afortunado') || mainSkill.includes('Corte Fuerte')) {
-    const ingCounts = [0, 6, 8, 11, 14, 17, 21, 25];
-    return (ingCounts[skillLevel] || 8) * 110;
+    const ingCounts = [0, 6, 8, 11, 14, 17, 21, 24];
+    return (ingCounts[skillLevel] || 8) * 122;
+  }
+
+  if (mainSkill.includes('Llama Embrujada') || mainSkill.includes('con sustancia')) {
+    const { potBoost, critBoostPercent } = getSkillCookingEffectPerTrigger(mainSkill, skillLevel);
+    return potBoost * 95 + critBoostPercent * 210;
+  }
+
+  if (mainSkill.includes('Corpulencia') || mainSkill.includes('Asistencia culinaria')) {
+    const { randomIngredients, critBoostPercent } = getSkillCookingEffectPerTrigger(mainSkill, skillLevel);
+    return randomIngredients * 115 + critBoostPercent * 210;
   }
 
   if (mainSkill.includes('Receta sustanciosa') || mainSkill.includes('Menos (Receta')) {
-    const potBoost = [0, 7, 10, 14, 18, 22, 27, 31];
-    return (potBoost[skillLevel] || 10) * 85;
+    const { potBoost } = getSkillCookingEffectPerTrigger(mainSkill, skillLevel);
+    return potBoost * 95;
   }
 
-  if (mainSkill.includes('Cocinitas S') || mainSkill.includes('Corpulencia')) {
-    const critBonus = [0, 4, 5, 6, 7, 8, 10, 12];
-    return (critBonus[skillLevel] || 5) * 220;
+  if (mainSkill.includes('Cocinitas S')) {
+    const { critBoostPercent } = getSkillCookingEffectPerTrigger(mainSkill, skillLevel);
+    return critBoostPercent * 210;
   }
 
-  if (mainSkill.includes('Metrónomo') || mainSkill.includes('Transformación') || mainSkill.includes('Mimético') || mainSkill.includes('Copia habilidades') || mainSkill.includes('Skill Copy') || mainSkill.includes('Transform')) {
-    const table = [0, 850, 1300, 1900, 2700, 3800, 5300, 7000];
-    return table[skillLevel] || 2700;
+  if (mainSkill.includes('Metrónomo') || mainSkill.includes('Transformación') || mainSkill.includes('Mimético') || mainSkill.includes('Copia habilidades')) {
+    const table = [0, 800, 1200, 1750, 2450, 3400, 4650, 6200];
+    return table[skillLevel] || 2450;
   }
 
   if (mainSkill.includes('Mejora de ayuda') || (mainSkill.includes('Impulso de ayuda') && isLegendaryBeast)) {
-    // Bestias legendarias (Raikou, Entei, Suicune): activan ayudas instantáneas para TODO el equipo (5 miembros)
-    const helps = [0, 4, 5, 6, 7, 8, 9, 11];
-    return (helps[skillLevel] || 5) * 1250;
+    // Bestias legendarias: usa la matriz oficial 1..5 especies del mismo tipo (evita inflar en equipos mixtos)
+    const helpsPerMember = getHelperBoostHelpsPerMember(pokemon, skillLevel, teamContext?.team, teamContext?.config);
+    return helpsPerMember * 5 * 165;
   }
 
   if (mainSkill.includes('Superútil S')) {
-    // Ayudante individual (Arcanine, Jolteon): 1 compañero aleatorio recibe ayudas
-    const helps = [0, 4, 5, 6, 7, 8, 9, 10];
-    return (helps[skillLevel] || 5) * 350;
+    // Oficial Serebii tras buffs: 6, 7, 8, 9, 10, 11, 12 recolecciones a 1 miembro aleatorio (~165 vigor base realista en solo)
+    const helps = [0, 6, 7, 8, 9, 10, 11, 12];
+    return (helps[skillLevel] || 7) * 165;
   }
 
   if (mainSkill.includes('Bayamanía') || mainSkill.includes('Cometa Draco') || mainSkill.includes('Disfraz')) {
-    const table = [0, 800, 1200, 1800, 2500, 3400, 4500, 5800];
+    const table = [0, 850, 1250, 1800, 2500, 3400, 4550, 6000];
     return table[skillLevel] || 1800;
   }
 
   if (mainSkill.includes('Ánimo enérgico') || mainSkill.includes('Pulso Cura') || mainSkill.includes('Moflete Estático') || mainSkill.includes('Luz Lunar')) {
     const energy = [0, 14, 19, 24, 31, 39, 48, 55];
-    return (energy[skillLevel] || 19) * 35;
+    return (energy[skillLevel] || 19) * 30;
+  }
+
+  if (mainSkill.includes('Carga energía') || mainSkill.includes('Autocuración')) {
+    const energy = [0, 12, 16, 21, 26, 33, 43, 50];
+    return (energy[skillLevel] || 16) * 22;
   }
 
   if (mainSkill.includes('Energía para todos') || mainSkill.includes('Zumo de Baya') || mainSkill.includes('Plegaria Lunar')) {
@@ -247,14 +407,18 @@ export function getSkillVigorPerTrigger(pokemon: Pokemon, extraSkillLevels = 0):
   }
 
   if (mainSkill.includes('Onda Mental')) {
-    const table = [0, 900, 1300, 1800, 2500, 3500, 4800, 6400];
-    return table[skillLevel] || 1800;
+    const table = [0, 950, 1380, 1920, 2680, 3700, 5100, 6800];
+    return table[skillLevel] || 1920;
   }
 
   if (mainSkill.includes('Mal Sueño')) {
-    // Penalización por drenar 12 de energía a compañeros no-Siniestro
     const table = [0, 750, 1100, 1550, 2150, 3000, 4100, 5500];
     return table[skillLevel] || 1550;
+  }
+
+  if (mainSkill.includes('Imán fragmentos') || mainSkill.includes('Esfera Aural')) {
+    const table = [0, 240, 340, 480, 670, 920, 1260, 1800];
+    return table[skillLevel] || 480;
   }
 
   return 300 + skillLevel * 150;
@@ -332,36 +496,50 @@ export function getEffectivePotCapacity(config: SnorlaxConfig): number {
   return capacity;
 }
 
-// Calculate single Pokemon production given team context (bonus ayuda, realistic energy multiplier)
+// Calculate single Pokemon production given team context (bonus ayuda with 35% cap, realistic energy multiplier)
 export function calculatePokemonProduction(
   pokemon: Pokemon,
   config: SnorlaxConfig,
   teamBonusAyudaCount: number,
   teamEnergyFactor: number
 ): PokemonProduction {
-  // 1. Base frequency:
-  // In Pokémon Sleep, the frequency displayed on the in-game profile card (pokemon.frequencySeconds)
-  // already incorporates the Pokémon's individual level, nature speed modifier, and active subskills (Velocidad S/M).
-  // Only external team boosts (Helping Bonus from teammates) and Good Camp Ticket modify this interval.
+  // 1. Base frequency & official 35% Subskill Speed Cap (RaenonX datamine):
+  // Subskill speed reductions (Velocidad ayuda S = 7%, Velocidad ayuda M = 14%, Bonus ayuda = 5% x portador)
+  // sum additively in a single bucket strictly capped at 35%.
   const cleanName = pokemon.name.toLowerCase().trim();
   const master = getSpeciesMasterData(pokemon.name);
-  let freq = (pokemon.frequencySeconds && pokemon.frequencySeconds > 0)
-    ? pokemon.frequencySeconds
-    : (master ? master.baseFrequency : 3600);
 
-  // External teammate Helping Bonus (5% per teammate, max 25%)
-  const teammateSpeedReduction = Math.min(0.25, teamBonusAyudaCount * 0.05);
-  const teamSpeedFactor = 1 - teammateSpeedReduction;
+  let selfSpeedSub = 0;
+  for (const sub of pokemon.subskills) {
+    if (!sub.enabled) continue;
+    if (sub.name === 'Velocidad ayuda S') selfSpeedSub += 0.07;
+    if (sub.name === 'Velocidad ayuda M') selfSpeedSub += 0.14;
+  }
 
-  // Good Camp Ticket: helping speed increased by 20% (time interval reduced to 0.80x)
-  const campSpeedMod = config.goodCampTicket ? 0.80 : 1.0;
+  let freq: number;
+  if (pokemon.frequencySeconds && pokemon.frequencySeconds > 0) {
+    // In-game profile card frequency already incorporates level, nature, and individual Velocidad S/M
+    freq = pokemon.frequencySeconds;
+  } else {
+    const baseFreq = master && master.baseFrequency > 0 ? master.baseFrequency : 3600;
+    const levelMod = Math.max(0.60, 1 - (pokemon.level - 1) * 0.002);
+    const natureSpeedMod = pokemon.natureObj?.speedMod || 1.0;
+    freq = Math.round(baseFreq * levelMod * natureSpeedMod * (1 - selfSpeedSub));
+  }
+
+  // Enforce strict 35% combined subskill cap without double-counting selfSpeedSub
+  const totalSubskillSpeedReduction = Math.min(0.35, selfSpeedSub + teamBonusAyudaCount * 0.05);
+  const teamSpeedFactor = (1 - totalSubskillSpeedReduction) / Math.max(0.5, 1 - selfSpeedSub);
+
+  // Good Camp Ticket: helping speed increased by 20% (frequency divided by 1.2 = 0.8333x)
+  const campSpeedMod = config.goodCampTicket ? (1 / 1.2) : 1.0;
 
   // Effective frequency with team energy multiplier
   const effectiveFrequency = (freq * teamSpeedFactor * campSpeedMod) / teamEnergyFactor;
   const helpsPerDay = Math.max(10, Math.floor(86400 / effectiveFrequency));
 
   // 5. Berry vs Ingredient probability with Day/Night cycle & Sneaky Snacking
-  let baseIngChance = master ? (master.ingredientRate / 100) : SPECIES_BASE_ING_RATES[cleanName];
+  let baseIngChance = master && master.ingredientRate > 0 ? (master.ingredientRate / 100) : SPECIES_BASE_ING_RATES[cleanName];
   if (!baseIngChance) {
     if (pokemon.specialty === 'Ingredientes' || pokemon.specialty === 'Todo') baseIngChance = 0.26;
     else if (pokemon.specialty === 'Bayas') baseIngChance = 0.15;
@@ -390,7 +568,7 @@ export function calculatePokemonProduction(
   if (typeof pokemon.carryLimit === 'number' && pokemon.carryLimit > 0) {
     totalInventory = pokemon.carryLimit;
   } else {
-    let baseInventory = master ? master.carryLimit : 15;
+    let baseInventory = master && master.carryLimit > 0 ? master.carryLimit : 15;
     if (!master) {
       if (['gengar', 'blastoise', 'charizard', 'venusaur', 'raichu', 'typhlosion', 'feraligatr', 'meganium', 'ampharos', 'tyranitar', 'walrein', 'gardevoir', 'gallade', 'magnezone', 'togekiss', 'dragonite', 'mew', 'mewtwo', 'raikou', 'entei', 'suicune'].some(s => cleanName.includes(s))) {
         baseInventory = 22;
@@ -443,7 +621,7 @@ export function calculatePokemonProduction(
 
   const dailyBerryVigor = Math.round(totalBerryHelps * berriesPerHelp * singleBerryVigor * favoriteMultiplier);
 
-  // 7. Ingredient production (+1 extra ingredient per help for Ghost type during Halloween 2026)
+  // 8. Ingredient production (+1 extra ingredient per help for Ghost type during Halloween 2026)
   const activeIngSlots = pokemon.ingredients.filter(slot => slot.enabled);
   const dailyIngredients: Record<string, number> = {};
 
@@ -457,12 +635,12 @@ export function calculatePokemonProduction(
   }
 
   // 9. Skill production (x1.25 trigger rate & +3 skill levels for Ghost type during Halloween 2026)
-  let baseTriggerRate = master ? (master.skillRate / 100) : 0.024;
-  if (!master) {
+  let baseTriggerRate = master && master.skillRate > 0 ? (master.skillRate / 100) : 0.024;
+  if (!master || master.skillRate <= 0) {
     if (pokemon.specialty === 'Habilidades') {
       baseTriggerRate = 0.042;
     } else if (pokemon.specialty === 'Todo') {
-      baseTriggerRate = 0.048; // Mythical Mew has exceptional skill frequency!
+      baseTriggerRate = 0.048;
     }
   }
   let triggerSubskillBonus = 0;
@@ -476,11 +654,13 @@ export function calculatePokemonProduction(
 
   const skillTriggersPerDay = helpsPerDay * baseTriggerRate * triggerMod;
   const isHealer = isTeamHealer(pokemon);
+  const extraSkillLevels = (isEvent && isGhost) ? 3 : 0;
+  const effectiveSkillLevel = Math.min(7, getPokemonSkillLevel(pokemon) + extraSkillLevels);
+  const normalizedSkillName = resolvePokemonMainSkill(pokemon);
 
   let dailySkillVigor = 0;
   if (!isHealer) {
-    const extraSkillLevels = (isEvent && isGhost) ? 3 : 0;
-    const vigorPerTrigger = getSkillVigorPerTrigger(pokemon, extraSkillLevels);
+    const vigorPerTrigger = getSkillVigorPerTrigger(pokemon, extraSkillLevels, { config });
     dailySkillVigor = Math.round(skillTriggersPerDay * vigorPerTrigger);
   }
 
@@ -491,26 +671,35 @@ export function calculatePokemonProduction(
     dailyBerryVigor,
     dailyIngredients,
     dailySkillVigor,
+    skillTriggersPerDay,
+    effectiveSkillLevel,
+    normalizedSkillName,
     isHealer
   };
 }
 
 // Plan 3 meals strictly respecting:
-// 1. potCapacity (a recipe CANNOT be cooked if total required ingredients > potCapacity)
+// 1. effectivePotCapacity (base pot + skill pot expansions from Receta sustanciosa S / Llama Embrujada / Menos)
 // 2. dailyPool availability (a recipe CANNOT be cooked if the team has not produced enough ingredients)
-// 3. Fallback to Curri Mixto / Ensalada Mixta / Zumo Mixto (base vigor = 0, only filler points)
+// 3. Persistent Extra Tasty stacking from Cocinitas S / Llama Embrujada / Corpulencia
 export function planTeamMeals(
   dailyPool: Record<string, number>,
   config: SnorlaxConfig,
-  partialTeamScale: number = 1.0
-): { meals: MealPlan[]; totalCookingVigor: number } {
-  const potCapacity = getEffectivePotCapacity(config);
+  partialTeamScale: number = 1.0,
+  cookingSkillBonuses?: {
+    bonusPotPerMeal?: number;
+    dailyCritBonusPercent?: number;
+  }
+): { meals: MealPlan[]; totalCookingVigor: number; effectivePotPerMeal: number; effectiveCritRate: number } {
+  const basePotCapacity = getEffectivePotCapacity(config);
+  const bonusPotPerMeal = Math.max(0, Math.min(200, Math.round(cookingSkillBonuses?.bonusPotPerMeal || 0)));
+  const effectivePotPerMeal = basePotCapacity + bonusPotPerMeal;
 
-  // STRICT RULE 1: Only recipes of the week's dish type whose total ingredients <= potCapacity
+  // STRICT RULE 1: Only recipes of the week's dish type whose total ingredients <= effectivePotPerMeal
   const fittingRecipes = RECIPES.filter(r => {
     if (r.type !== config.dishType) return false;
     const requiredTotal = Object.values(r.ingredients).reduce((a, b) => a + b, 0);
-    return requiredTotal <= potCapacity;
+    return requiredTotal <= effectivePotPerMeal;
   });
 
   // Sort candidate recipes by effective vigor (considering user's recipe level bonus) descending
@@ -522,10 +711,22 @@ export function planTeamMeals(
     return vigB - vigA;
   });
 
-  // Expected multiplier for Extra Tasty (Riquísimo):
-  // Mon-Sat: 10% chance of 2x (+100%) -> 1 + 0.10 * 1 = 1.10
-  // Sun: 30% chance of 3x (+200%) -> 1 + 0.30 * 2 = 1.60
-  const extraTastyMultiplier = config.isSunday ? 1.60 : 1.10;
+  // Expected multiplier for Extra Tasty (Riquísimo), including persistent skill stacking (RaenonX model):
+  // Base: Mon-Sat 10% chance of 2x (+1.0x), Sun 30% chance of 3x (+2.0x). Max bonus stack = +70%.
+  const baseCrit = config.isSunday ? 0.30 : 0.10;
+  const maxCrit = config.isSunday ? 1.00 : 0.80;
+  const critBonusMult = config.isSunday ? 2.0 : 1.0;
+  const critAddedPerMeal = Math.max(0, (cookingSkillBonuses?.dailyCritBonusPercent || 0) / 100 / 3);
+
+  let effectiveCritRate = baseCrit;
+  if (critAddedPerMeal > 0) {
+    for (let iter = 0; iter < 4; iter++) {
+      const expectedPersistentStack = Math.min(0.70, (critAddedPerMeal * 0.5) * ((1 / Math.max(0.10, effectiveCritRate)) + 1));
+      effectiveCritRate = Math.min(maxCrit, baseCrit + expectedPersistentStack);
+    }
+  }
+
+  const extraTastyMultiplier = 1 + effectiveCritRate * critBonusMult;
   const areaBonusMultiplier = 1 + (config.areaBonus || 0) / 100;
 
   // If partialTeamScale < 1.0, scale the pool proportionally for recipe feasibility projection:
@@ -540,13 +741,12 @@ export function planTeamMeals(
 
   // Step 1: Select the 3 recipes for the day, deducting required ingredients first (Reserve Rule)
   const chosenMealRecipes: { recipe: Recipe; isRealRecipe: boolean; recipeLevel: number; recipeVigor: number; recipeIngCount: number }[] = [];
-  let dailyBagBufferUsed = 0; // Cap total daily bag buffer to max 4 ingredients across all 3 meals
+  let dailyBagBufferUsed = 0;
 
   for (let i = 0; i < 3; i++) {
     let chosenRecipe: Recipe = MIXED_DISHES[config.dishType];
     let isRealRecipe = false;
 
-    // Search for highest-vigor fitting recipe
     for (const recipe of fittingRecipes) {
       let canAfford = true;
       let bufferNeededThisRecipe = 0;
@@ -555,8 +755,6 @@ export function planTeamMeals(
         const avail = poolCopy[ing] || 0;
         const missing = needed - avail;
         if (missing > 0) {
-          // If only 1-2 ingredients missing for a large recipe (e.g. 28/30 oil), bag buffer covers it,
-          // but strictly cap total buffer to max 4 units per day to prevent multi-ingredient deficits
           if (missing <= 2 && (dailyBagBufferUsed + bufferNeededThisRecipe + missing) <= 4 && (avail / needed) >= 0.80) {
             bufferNeededThisRecipe += missing;
             continue;
@@ -570,7 +768,6 @@ export function planTeamMeals(
         chosenRecipe = recipe;
         isRealRecipe = true;
         dailyBagBufferUsed += bufferNeededThisRecipe;
-        // Deduct recipe ingredients strictly from available pool
         for (const [ing, needed] of Object.entries(recipe.ingredients)) {
           poolCopy[ing] = Math.max(0, (poolCopy[ing] || 0) - needed);
         }
@@ -598,18 +795,15 @@ export function planTeamMeals(
     });
   }
 
-  // Step 2: Now that all 3 recipes have their ingredients reserved, poolCopy contains ONLY the true surplus!
-  // Allocate true surplus fairly across the 3 meals:
+  // Step 2: Allocate true surplus fairly across the 3 meals using effectivePotPerMeal:
   for (let i = 0; i < 3; i++) {
     const mealData = chosenMealRecipes[i];
     const { recipe: chosenRecipe, recipeLevel, recipeVigor, recipeIngCount } = mealData;
 
-    // Free spaces in pot for filler
-    let freeSpaces = Math.max(0, potCapacity - recipeIngCount);
+    let freeSpaces = Math.max(0, effectivePotPerMeal - recipeIngCount);
     const fillerMap: Record<string, { count: number; unitVigor: number }> = {};
     const remainingMeals = 3 - i;
 
-    // Get available surplus ingredients strictly from poolCopy, ordered by unit vigor descending
     const surplusList = Object.entries(poolCopy)
       .filter(([_, qty]) => qty > 0)
       .map(([name, qty]) => ({
@@ -634,7 +828,7 @@ export function planTeamMeals(
       }
     }
 
-    // Pass 2: If there are still free spaces left in the pot, top off with best remaining surplus
+    // Pass 2: Top off remaining pot space with best surplus
     if (freeSpaces > 0) {
       for (const surplus of surplusList) {
         if (freeSpaces <= 0) break;
@@ -663,8 +857,7 @@ export function planTeamMeals(
 
     const fillerVigor = fillerIngredients.reduce((acc, f) => acc + f.totalVigor, 0);
 
-    // If partial team, scale back the resulting meal vigor to the team's actual size
-    const effectiveMealBase = partialTeamScale < 1.0 
+    const effectiveMealBase = partialTeamScale < 1.0
       ? Math.round((recipeVigor + fillerVigor) * partialTeamScale)
       : (recipeVigor + fillerVigor);
 
@@ -683,10 +876,10 @@ export function planTeamMeals(
     });
   }
 
-  return { meals, totalCookingVigor };
+  return { meals, totalCookingVigor, effectivePotPerMeal, effectiveCritRate };
 }
 
-// Evaluate a full 5-pokemon team
+// Evaluate a full 5-pokemon team (or partial team during Beam Search)
 export function evaluateTeam(team: Pokemon[], config: SnorlaxConfig): OptimizedTeamResult {
   const bonusAyudaCount = team.reduce(
     (acc, p) => acc + p.subskills.filter(s => s.enabled && s.name === 'Bonus ayuda').length,
@@ -697,24 +890,103 @@ export function evaluateTeam(team: Pokemon[], config: SnorlaxConfig): OptimizedT
 
   const productions = team.map(p => calculatePokemonProduction(p, config, bonusAyudaCount, teamEnergyFactor));
 
+  const isEvent = isHalloweenEventActive(config);
+  const plusMinusCount = productions.filter(
+    pr => pr.normalizedSkillName.includes('Más (Imán') || pr.normalizedSkillName.includes('Menos (Receta')
+  ).length;
+
   let berryVigorDaily = 0;
   let skillVigorDaily = 0;
+  let totalDailyPotExpansion = 0;
+  let dailyCritBonusPercent = 0;
+  let extraHelpsPerMember = 0;
   const dailyIngredientProduction: Record<string, number> = {};
 
   for (const prod of productions) {
     berryVigorDaily += prod.dailyBerryVigor;
-    skillVigorDaily += prod.dailySkillVigor;
 
     for (const [ing, count] of Object.entries(prod.dailyIngredients)) {
       dailyIngredientProduction[ing] = (dailyIngredientProduction[ing] || 0) + count;
+    }
+
+    if (prod.isHealer) continue;
+
+    const sk = prod.normalizedSkillName;
+    const lvl = prod.effectiveSkillLevel;
+    const triggers = prod.skillTriggersPerDay;
+    const isBeast = ['raikou', 'entei', 'suicune'].some(b => prod.pokemon.name.toLowerCase().includes(b));
+
+    // 1. Cooking Pot & Extra Tasty skills -> simulated directly in planTeamMeals (zero double-counting!)
+    if (
+      sk.includes('Llama Embrujada') ||
+      sk.includes('con sustancia') ||
+      sk.includes('Receta sustanciosa') ||
+      sk.includes('Menos (Receta') ||
+      sk.includes('Cocinitas S') ||
+      sk.includes('Corpulencia') ||
+      sk.includes('Asistencia culinaria')
+    ) {
+      const { potBoost, critBoostPercent, randomIngredients } = getSkillCookingEffectPerTrigger(sk, lvl);
+      totalDailyPotExpansion += triggers * potBoost;
+      dailyCritBonusPercent += triggers * critBoostPercent;
+
+      // Corpulencia (Heracross) also injects random ingredients into the bag
+      if (randomIngredients > 0) {
+        skillVigorDaily += Math.round(triggers * randomIngredients * 115);
+      }
+      // Menos (Minun / Toxtricity Low Key) restores energy to a teammate when paired with Más/Menos
+      if (sk.includes('Menos (Receta') && plusMinusCount >= 2) {
+        const bonusEnergy = [0, 5, 6, 8, 9, 11, 12, 14][lvl] || 6;
+        skillVigorDaily += Math.round(triggers * bonusEnergy * 30);
+      }
+      continue;
+    }
+
+    // 2. Superútil S (Extra Helpful S) -> grants [6..12] instant helps to 1 random member on THIS team
+    if (sk.includes('Superútil S')) {
+      const helpsTable = [0, 6, 7, 8, 9, 10, 11, 12];
+      const totalInstantHelps = triggers * (helpsTable[lvl] || 7);
+      extraHelpsPerMember += totalInstantHelps / Math.max(1, team.length);
+      continue;
+    }
+
+    // 3. Mejora de ayuda (Helper Boost — Raikou, Entei, Suicune) -> grants exact type-synergy helps to ALL members
+    if (sk.includes('Mejora de ayuda') || (sk.includes('Impulso de ayuda') && isBeast)) {
+      const helpsPerMember = getHelperBoostHelpsPerMember(prod.pokemon, lvl, team, config);
+      extraHelpsPerMember += triggers * helpsPerMember;
+      continue;
+    }
+
+    // 4. All other skills (Carga vigor M/S, Reserva, Imán ingredientes, Más, Bayamanía, Onda Mental, etc.)
+    const extraLevels = (isEvent && isGhostPokemon(prod.pokemon)) ? 3 : 0;
+    const vigorPerTrigger = getSkillVigorPerTrigger(prod.pokemon, extraLevels, { team, config });
+    skillVigorDaily += Math.round(triggers * vigorPerTrigger);
+  }
+
+  // Apply real extra helps from Superútil S / Mejora de ayuda across the actual team members!
+  if (extraHelpsPerMember > 0) {
+    for (const prod of productions) {
+      const helpRatio = extraHelpsPerMember / Math.max(10, prod.helpsPerDay);
+      // Extra berries gathered go to Skill Vigor attribution so user sees the skill's exact strength contribution
+      skillVigorDaily += Math.round(prod.dailyBerryVigor * helpRatio);
+      // Extra ingredients gathered feed directly into the daily cooking pool!
+      for (const [ing, count] of Object.entries(prod.dailyIngredients)) {
+        dailyIngredientProduction[ing] = (dailyIngredientProduction[ing] || 0) + Math.round(count * helpRatio);
+      }
     }
   }
 
   // Progressive recipe scaling for partial teams during Beam Search:
   const partialTeamScale = team.length > 0 ? Math.min(1.0, team.length / 5) : 1.0;
+  const bonusPotPerMeal = Math.round(totalDailyPotExpansion / 3);
 
-  // Plan 3 meals strictly with Area Bonus and Extra Tasty
-  const { meals, totalCookingVigor } = planTeamMeals(dailyIngredientProduction, config, partialTeamScale);
+  // Plan 3 meals strictly with Area Bonus, Pot Expansion, and Persistent Extra Tasty stacking
+  const { meals, totalCookingVigor, effectivePotPerMeal, effectiveCritRate } = planTeamMeals(
+    dailyIngredientProduction,
+    config,
+    partialTeamScale,
+    { bonusPotPerMeal, dailyCritBonusPercent }
+  );
 
   // Apply Area Bonus to berries and skills
   const areaBonusMultiplier = 1 + (config.areaBonus || 0) / 100;
@@ -725,20 +997,24 @@ export function evaluateTeam(team: Pokemon[], config: SnorlaxConfig): OptimizedT
 
   // Calculate optimization score according to chosen strategy
   let optimizationScore = totalDailyVigor;
+
+  // During early Beam Search steps (team.length < 5), bridge pot/crit supports until ingredient farmers join on steps 4-5
+  if (team.length < 5 && (bonusPotPerMeal > 0 || dailyCritBonusPercent > 0)) {
+    const bridgeWeight = 1 - team.length / 5;
+    optimizationScore += Math.round(bridgeWeight * (bonusPotPerMeal * 240 + dailyCritBonusPercent * 190) * areaBonusMultiplier);
+  }
+
   const realMeals = meals.filter(m => m.recipe.baseVigor > 0);
   if (config.strategy === 'cooking') {
-    // Strongly prioritize completing real recipes that fit in the pot
     optimizationScore += realMeals.length * 15000;
   } else if (config.strategy === 'berries') {
-    // Strongly prioritize favorite berry output
     optimizationScore += totalBerryVigorWithArea * 0.5;
   }
 
   // Build highlights
   const highlights: string[] = [];
 
-  // Check Special Pokémon Limit (Official Sleep rule: Max 1 Legendary/Mythical per team)
-  // Official Exception: Latias and Latios (the Eon duo) are allowed together!
+  // Check Special Pokémon Limit (Official Sleep rule: Max 1 Legendary/Mythical per team; Eon duo Latias+Latios allowed)
   const specialPokemons = team.filter(p => isSpecialPokemon(p));
   const isEonDuo = specialPokemons.length === 2 &&
     specialPokemons.some(p => p.name.toLowerCase().includes('latias')) &&
@@ -754,7 +1030,6 @@ export function evaluateTeam(team: Pokemon[], config: SnorlaxConfig): OptimizedT
   if (favoriteCount > 0) {
     highlights.push(`${favoriteCount} Pokémon con Baya Favorita (×2 Vigor).`);
   }
-  const isEvent = isHalloweenEventActive(config);
   const ghostCount = team.filter(p => isGhostPokemon(p)).length;
   if (isEvent && ghostCount > 0) {
     highlights.push(`🎃 Bonus Halloween activo: ${ghostCount} Pokémon Fantasma (+1 ingrediente, x1,25 activación, +3 niveles de habilidad).`);
@@ -764,15 +1039,21 @@ export function evaluateTeam(team: Pokemon[], config: SnorlaxConfig): OptimizedT
   } else if (totalDailyHealedEnergy > 0) {
     highlights.push(`Sanador en desarrollo (+${Math.round(totalDailyHealedEnergy)} energía/día, factor ${teamEnergyFactor.toFixed(2)}x).`);
   }
+  if (bonusPotPerMeal > 0 || dailyCritBonusPercent > 0) {
+    const parts: string[] = [];
+    if (bonusPotPerMeal > 0) parts.push(`puchero expandido a ${effectivePotPerMeal} ing./comida (+${bonusPotPerMeal})`);
+    if (dailyCritBonusPercent > 0) parts.push(`${Math.round(effectiveCritRate * 100)}% prob. efectiva de plato riquísimo`);
+    highlights.push(`🍲 Habilidad culinaria activa: ${parts.join(' y ')}.`);
+  }
   if (bonusAyudaCount > 0) {
-    highlights.push(`Bonus Ayuda acumulado: -${Math.min(25, bonusAyudaCount * 5)}% tiempo de ayuda.`);
+    highlights.push(`Bonus Ayuda en equipo: -${Math.min(25, bonusAyudaCount * 5)}% tiempo base (tope oficial 35% con Vel. S/M).`);
   }
   if (config.areaBonus && config.areaBonus > 0) {
     highlights.push(`Bonus de Zona: +${config.areaBonus}% vigor universal.`);
   }
   if (config.goodCampTicket) {
     const effPot = getEffectivePotCapacity(config);
-    highlights.push(`🏕️ Pase de Acampada activo: Puchero expandido a ${effPot} ing. y +20% velocidad de ayuda.`);
+    highlights.push(`🏕️ Pase de Acampada activo: Puchero base ${effPot} ing. y +20% velocidad de ayuda.`);
   }
 
   // Recipe highlights
@@ -796,36 +1077,34 @@ export function evaluateTeam(team: Pokemon[], config: SnorlaxConfig): OptimizedT
   };
 }
 
-// Heuristic score for ranking Pokemon
-function getPokemonScore(pokemon: Pokemon, config: SnorlaxConfig, potCapacity: number): number {
+// Heuristic score for ranking candidate Pokemon before Beam Search
+function getPokemonScore(pokemon: Pokemon, config: SnorlaxConfig, reachablePotCapacity: number): number {
   let score = 0;
   const isFavorite = config.favoriteBerries.some(fav => normalizeBerryName(fav) === normalizeBerryName(pokemon.berry));
   const berryVal = getBerryVigor(pokemon.berry, pokemon.level);
   const master = getSpeciesMasterData(pokemon.name);
   const freq = (pokemon.frequencySeconds && pokemon.frequencySeconds > 0)
     ? Math.max(1200, pokemon.frequencySeconds)
-    : (master ? Math.max(1200, master.baseFrequency) : 3600);
+    : (master && master.baseFrequency > 0 ? Math.max(1200, master.baseFrequency) : 3600);
 
   // 1. Berry Score
-  // WikiDex: Especialidad "Todo" (Mew, Darkrai) obtiene una baya adicional (+1 = 2 base)
   let berries = (pokemon.specialty === 'Bayas' || pokemon.specialty === 'Todo') ? 2 : 1;
   if (pokemon.subskills.some(s => s.enabled && s.name === 'Busca bayas S')) berries += 1;
-  const dailyHelps = 86400 / freq;
-  const ingRate = master ? (master.ingredientRate / 100) : (pokemon.specialty === 'Bayas' ? 0.15 : 0.25);
+  const dailyHelps = (86400 / freq) * 1.42;
+  const ingRate = master && master.ingredientRate > 0 ? (master.ingredientRate / 100) : (pokemon.specialty === 'Bayas' ? 0.15 : 0.25);
   const berryDaily = dailyHelps * (isFavorite ? 2 : 1) * berryVal * berries * (1 - ingRate);
   score += berryDaily;
 
-  // 2. Ingredient Score: check if ingredients match fitting recipes for this week's dish type
+  // 2. Ingredient Score: check if ingredients match fitting recipes (including pot-expander reachable recipes)
   const activeIngs = pokemon.ingredients.filter(i => i.enabled);
   let ingValuation = 0;
   const fittingRecipes = RECIPES.filter(
-    r => r.type === config.dishType && Object.values(r.ingredients).reduce((a, b) => a + b, 0) <= potCapacity
+    r => r.type === config.dishType && Object.values(r.ingredients).reduce((a, b) => a + b, 0) <= reachablePotCapacity
   );
 
   for (const slot of activeIngs) {
     const unitVigor = INGREDIENTS[slot.name]?.vigor || 100;
     let matchBonus = 1.0;
-    // If ingredient is used in a fitting recipe
     for (const r of fittingRecipes) {
       if (r.ingredients[slot.name]) {
         matchBonus += (r.baseVigor / 1000) * 0.3;
@@ -842,15 +1121,31 @@ function getPokemonScore(pokemon: Pokemon, config: SnorlaxConfig, potCapacity: n
     score += ingValuation * 8;
   }
 
-  // 3. Healer / Skill bonus
+  // 3. Healer / Skill bonus weighted by ACTUAL species trigger rate, speed, nature & subskills
   const isHealer = isTeamHealer(pokemon);
-  const skillLvl = getPokemonSkillLevel(pokemon);
-  if (isHealer) {
-    score += skillLvl * 3000;
+  const isEvent = isHalloweenEventActive(config);
+  const isGhost = isGhostPokemon(pokemon);
+  const extraSkillLevels = (isEvent && isGhost) ? 3 : 0;
+  const skillLvl = Math.min(7, getPokemonSkillLevel(pokemon) + extraSkillLevels);
+
+  let baseSkillRate = master && master.skillRate > 0 ? (master.skillRate / 100) : 0.024;
+  if (!master || master.skillRate <= 0) {
+    if (pokemon.specialty === 'Habilidades') baseSkillRate = 0.042;
+    else if (pokemon.specialty === 'Todo') baseSkillRate = 0.048;
   }
-  if (pokemon.specialty === 'Habilidades' || pokemon.specialty === 'Todo') {
-    const vigorPerTrigger = getSkillVigorPerTrigger(pokemon);
-    score += vigorPerTrigger * 2.5;
+  let trigSub = 0;
+  for (const sub of pokemon.subskills) {
+    if (!sub.enabled) continue;
+    if (sub.name === 'Activación S') trigSub += 0.18;
+    if (sub.name === 'Activación M') trigSub += 0.36;
+  }
+  const expectedDailyTriggers = dailyHelps * baseSkillRate * (1 + trigSub) * (pokemon.natureObj?.skillMod || 1.0) * ((isEvent && isGhost) ? 1.25 : 1.0);
+
+  if (isHealer) {
+    score += skillLvl * 2600 + expectedDailyTriggers * 900;
+  } else if (pokemon.specialty === 'Habilidades' || pokemon.specialty === 'Todo') {
+    const vigorPerTrigger = getSkillVigorPerTrigger(pokemon, extraSkillLevels, { config });
+    score += expectedDailyTriggers * vigorPerTrigger * (config.strategy === 'cooking' && resolvePokemonMainSkill(pokemon).match(/Receta|Llama Embrujada|Cocinitas|Corpulencia/) ? 1.45 : 1.15);
   }
 
   // Level & RP
@@ -873,10 +1168,25 @@ export function optimizeTeam(
 
   const potCapacity = getEffectivePotCapacity(config);
 
-  // Form a balanced candidate pool so Beam Search tests both top berry gatherers AND top ingredient gatherers:
+  // Detect if user owns a Pot Expander (Mismagius, Magnezone, Flareon, Glaceon, Minun, etc.)
+  // so candidate selection also recruits farmers for larger pot-expanded recipes!
+  const isEvent = isHalloweenEventActive(config);
+  let maxBoxPotBoostPerMeal = 0;
+  for (const p of allPokemons) {
+    const sk = resolvePokemonMainSkill(p);
+    const extraLvls = (isEvent && isGhostPokemon(p)) ? 3 : 0;
+    const lvl = Math.min(7, getPokemonSkillLevel(p) + extraLvls);
+    const { potBoost } = getSkillCookingEffectPerTrigger(sk, lvl);
+    if (potBoost > 0) {
+      maxBoxPotBoostPerMeal = Math.max(maxBoxPotBoostPerMeal, potBoost);
+    }
+  }
+  const reachablePotCapacity = potCapacity + maxBoxPotBoostPerMeal;
+
+  // Form a balanced candidate pool so Beam Search tests top berry gatherers, skill supports, AND ingredient gatherers:
   const scoredAll = allPokemons.map(p => ({
     pokemon: p,
-    score: getPokemonScore(p, config, potCapacity)
+    score: getPokemonScore(p, config, reachablePotCapacity)
   }));
 
   // Separate by specialty (WikiDex: Todo combines effects of Bayas, Ingredientes and Habilidades)
@@ -902,14 +1212,13 @@ export function optimizeTeam(
   const healers = allPokemons.filter(p => isTeamHealer(p)).sort((a, b) => b.level - a.level);
   healers.slice(0, 4).forEach(addPokemon);
 
-  // Bucket 3: Top 6 Skills / Support (Mew, Mewtwo, Pot Expander, Bonus Ayuda)
-  skillMons.slice(0, 6).forEach(x => addPokemon(x.pokemon));
+  // Bucket 3: Top 8 Skills / Cooking Support (Mismagius, Magnezone, Dedenne, Ampharos, Mew, etc.)
+  skillMons.slice(0, 8).forEach(x => addPokemon(x.pokemon));
 
-  // Bucket 4: CRITICAL INGREDIENT QUOTAS:
-  // For each ingredient required by the week's fitting recipes, ensure the top 2 best producers in the user's box are included
+  // Bucket 4: CRITICAL INGREDIENT QUOTAS (including recipes unlocked by Pot Expanders!):
   const requiredIngredients = new Set<string>();
   RECIPES
-    .filter(r => r.type === config.dishType && Object.values(r.ingredients).reduce((a, b) => a + b, 0) <= potCapacity)
+    .filter(r => r.type === config.dishType && Object.values(r.ingredients).reduce((a, b) => a + b, 0) <= reachablePotCapacity)
     .forEach(r => {
       Object.keys(r.ingredients).forEach(ing => requiredIngredients.add(ing));
     });
@@ -920,8 +1229,8 @@ export function optimizeTeam(
       .map(p => {
         const slot = p.ingredients.find(s => s.enabled && s.name === ing)!;
         const master = getSpeciesMasterData(p.name);
-        const ingRate = master ? (master.ingredientRate / 100) : (p.specialty === 'Ingredientes' ? 0.26 : 0.18);
-        const freq = (p.frequencySeconds && p.frequencySeconds > 0) ? p.frequencySeconds : (master ? master.baseFrequency : 3600);
+        const ingRate = master && master.ingredientRate > 0 ? (master.ingredientRate / 100) : (p.specialty === 'Ingredientes' ? 0.26 : 0.18);
+        const freq = (p.frequencySeconds && p.frequencySeconds > 0) ? p.frequencySeconds : (master && master.baseFrequency > 0 ? master.baseFrequency : 3600);
         const rate = (slot.count * 86400 * ingRate) / freq;
         return { pokemon: p, rate };
       })

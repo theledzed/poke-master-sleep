@@ -478,17 +478,19 @@ export function getMainSkillIconUrl(skillName: string): string {
   if (!skillName) return '/images/mainskill/strength.png';
   const clean = skillName.toLowerCase();
   if (clean.includes('metr')) return '/images/mainskill/metronome.png';
-  if (clean.includes('vigor') || clean.includes('strength')) return '/images/mainskill/strength.png';
   if (clean.includes('reserva') || clean.includes('stockpile') || clean.includes('escupir') || clean.includes('tragar')) return '/images/mainskill/stockpile_strength.png';
+  if (clean.includes('zumo') || clean.includes('energ') || clean.includes('ánimo') || clean.includes('cheer') || clean.includes('cura') || clean.includes('lunar') || clean.includes('moflete') || clean.includes('autocuraci')) return '/images/mainskill/energy.png';
+  if (clean.includes('onda') || clean.includes('psystrike') || clean.includes('berry zone')) return '/images/mainskill/berryzone.png';
   if (clean.includes('baya') || clean.includes('berry') || clean.includes('draco') || clean.includes('disfraz')) return '/images/mainskill/berries.png';
-  if (clean.includes('pot') || clean.includes('receta') || clean.includes('cocina') || clean.includes('cooking') || clean.includes('menos (receta')) return '/images/mainskill/pot.png';
+  if (clean.includes('llama embrujada') || clean.includes('con sustancia') || clean.includes('cooking advance') || clean.includes('mystical fire') || clean.includes('pot') || clean.includes('receta') || clean.includes('cooking power') || clean.includes('menos (receta')) return '/images/mainskill/pot.png';
+  if (clean.includes('corpulencia') || clean.includes('bulk up') || clean.includes('asistencia culinaria') || clean.includes('imán ingredientes') || clean.includes('más (imán') || clean.includes('presente') || clean.includes('magnet')) return '/images/mainskill/ingredients.png';
   if (clean.includes('chance') || clean.includes('cocinitas') || clean.includes('tasty')) return '/images/mainskill/chance.png';
-  if (clean.includes('ingrediente') || clean.includes('ingredient') || clean.includes('afortunado') || clean.includes('más (imán') || clean.includes('magnet') || clean.includes('draw')) return '/images/mainskill/ingredient_draw.png';
-  if (clean.includes('fragmento') || clean.includes('shard') || clean.includes('aura sphere')) return '/images/mainskill/shards.png';
-  if (clean.includes('copia') || clean.includes('mimic') || clean.includes('copy') || clean.includes('transform')) return '/images/mainskill/copy.png';
+  if (clean.includes('ingrediente') || clean.includes('ingredient') || clean.includes('afortunado') || clean.includes('corte fuerte') || clean.includes('hyper cutter') || clean.includes('super luck') || clean.includes('draw')) return '/images/mainskill/ingredient_draw.png';
+  if (clean.includes('fragmento') || clean.includes('shard') || clean.includes('aura sphere') || clean.includes('esfera aural')) return '/images/mainskill/shards.png';
+  if (clean.includes('copia') || clean.includes('mimic') || clean.includes('mimético') || clean.includes('mimetico') || clean.includes('copy') || clean.includes('transform')) return '/images/mainskill/copy.png';
   if (clean.includes('ayuda') || clean.includes('superútil') || clean.includes('help') || clean.includes('boost')) return '/images/mainskill/helps.png';
-  if (clean.includes('energ') || clean.includes('ánimo') || clean.includes('cheer') || clean.includes('cura') || clean.includes('lunar') || clean.includes('zumo') || clean.includes('moflete') || clean.includes('autocuraci')) return '/images/mainskill/energy.png';
-  if (clean.includes('onda') || clean.includes('sueño') || clean.includes('mind') || clean.includes('versat') || clean.includes('darkrai')) return '/images/mainskill/versatile.png';
+  if (clean.includes('sueño') || clean.includes('mind') || clean.includes('versat') || clean.includes('darkrai')) return '/images/mainskill/versatile.png';
+  if (clean.includes('vigor') || clean.includes('strength')) return '/images/mainskill/strength.png';
   return '/images/mainskill/strength.png';
 }
 
@@ -724,6 +726,54 @@ export const MAIN_SKILLS_META: Record<string, MainSkillMeta> = {
     iconSymbol: '🧬',
     iconUrl: '/images/mainskill/copy.png',
     category: 'special'
+  },
+  'Mimético (Copia habilidades)': {
+    name: 'Mimético (Copia habilidades)',
+    badgeBg: 'bg-pink-500/20 border-pink-400/40',
+    badgeText: 'text-pink-300',
+    iconSymbol: '🎭',
+    iconUrl: '/images/mainskill/copy.png',
+    category: 'special'
+  },
+  'Llama Embrujada (Cocinitas con sustancia S)': {
+    name: 'Llama Embrujada (Cocinitas con sustancia S)',
+    badgeBg: 'bg-amber-500/20 border-purple-400/40',
+    badgeText: 'text-amber-300',
+    iconSymbol: '🔥',
+    iconUrl: '/images/mainskill/pot.png',
+    category: 'pot'
+  },
+  'Corpulencia (Asistencia culinaria S)': {
+    name: 'Corpulencia (Asistencia culinaria S)',
+    badgeBg: 'bg-red-500/20 border-amber-400/40',
+    badgeText: 'text-amber-300',
+    iconSymbol: '💪',
+    iconUrl: '/images/mainskill/ingredients.png',
+    category: 'ingredients'
+  },
+  'Corte Fuerte (Ingrediente aleatorio S)': {
+    name: 'Corte Fuerte (Ingrediente aleatorio S)',
+    badgeBg: 'bg-emerald-500/20 border-emerald-400/40',
+    badgeText: 'text-emerald-300',
+    iconSymbol: '✂️',
+    iconUrl: '/images/mainskill/ingredient_draw.png',
+    category: 'ingredients'
+  },
+  'Presente (Imán ingredientes S)': {
+    name: 'Presente (Imán ingredientes S)',
+    badgeBg: 'bg-rose-500/20 border-cyan-400/40',
+    badgeText: 'text-rose-200',
+    iconSymbol: '🎁',
+    iconUrl: '/images/mainskill/ingredients.png',
+    category: 'ingredients'
+  },
+  'Esfera Aural (Imán fragmentos S)': {
+    name: 'Esfera Aural (Imán fragmentos S)',
+    badgeBg: 'bg-sky-500/20 border-yellow-400/40',
+    badgeText: 'text-sky-200',
+    iconSymbol: '🔵',
+    iconUrl: '/images/mainskill/shards.png',
+    category: 'special'
   }
 };
 
@@ -733,35 +783,35 @@ export const SPECIES_MAIN_SKILL_MAP: Record<string, string> = {
   charmander: 'Imán ingredientes S', charmeleon: 'Imán ingredientes S', charizard: 'Imán ingredientes S',
   squirtle: 'Imán ingredientes S', wartortle: 'Imán ingredientes S', blastoise: 'Imán ingredientes S',
   caterpie: 'Imán ingredientes S', metapod: 'Imán ingredientes S', butterfree: 'Imán ingredientes S',
-  rattata: 'Carga vigor S', raticate: 'Carga vigor S',
-  ekans: 'Carga vigor S', arbok: 'Carga vigor S',
+  rattata: 'Carga energía S', raticate: 'Carga energía S',
+  ekans: 'Carga energía S', arbok: 'Carga energía S',
   pikachu: 'Carga vigor S', raichu: 'Carga vigor S',
   clefairy: 'Metrónomo', clefable: 'Metrónomo', cleffa: 'Metrónomo',
-  vulpix: 'Bayamanía', ninetales: 'Bayamanía',
+  vulpix: 'Ánimo enérgico S', ninetales: 'Ánimo enérgico S',
   jigglypuff: 'Energía para todos S', wigglytuff: 'Energía para todos S', igglybuff: 'Energía para todos S',
   diglett: 'Carga vigor S', dugtrio: 'Carga vigor S',
   meowth: 'Imán fragmentos S', persian: 'Imán fragmentos S',
   psyduck: 'Carga vigor S', golduck: 'Carga vigor S',
   mankey: 'Carga vigor S', primeape: 'Carga vigor S',
   growlithe: 'Superútil S', arcanine: 'Superútil S',
-  bellsprout: 'Imán ingredientes S', weepinbell: 'Imán ingredientes S', victreebel: 'Imán ingredientes S',
+  bellsprout: 'Carga energía S', weepinbell: 'Carga energía S', victreebel: 'Carga energía S',
   geodude: 'Carga vigor S', graveler: 'Carga vigor S', golem: 'Carga vigor S',
-  slowpoke: 'Carga energía S', slowbro: 'Carga energía S', slowking: 'Carga energía S',
+  slowpoke: 'Ánimo enérgico S', slowbro: 'Ánimo enérgico S', slowking: 'Ánimo enérgico S',
   magnemite: 'Receta sustanciosa S', magneton: 'Receta sustanciosa S', magnezone: 'Receta sustanciosa S',
-  doduo: 'Carga vigor S', dodrio: 'Carga vigor S',
+  doduo: 'Carga energía S', dodrio: 'Carga energía S',
   gastly: 'Carga vigor S', haunter: 'Carga vigor S', gengar: 'Carga vigor S',
   onix: 'Imán ingredientes S', steelix: 'Imán ingredientes S',
-  cubone: 'Carga vigor S', marowak: 'Carga vigor S',
+  cubone: 'Carga energía S', marowak: 'Carga energía S',
   kangaskhan: 'Imán ingredientes S',
-  pinsir: 'Carga vigor S',
+  pinsir: 'Carga vigor M',
   ditto: 'Transformación (Copia habilidades)',
   eevee: 'Imán ingredientes S',
   vaporeon: 'Imán ingredientes S',
   jolteon: 'Superútil S',
   flareon: 'Receta sustanciosa S',
   espeon: 'Carga vigor M',
-  umbreon: 'Autocuración S',
-  leafeon: 'Cura de energía S',
+  umbreon: 'Luz Lunar (Carga energía S)',
+  leafeon: 'Ánimo enérgico S',
   glaceon: 'Receta sustanciosa S',
   sylveon: 'Energía para todos S',
   dratini: 'Carga energía S', dragonair: 'Carga energía S', dragonite: 'Carga energía S',
@@ -771,34 +821,37 @@ export const SPECIES_MAIN_SKILL_MAP: Record<string, string> = {
   togepi: 'Metrónomo', togetic: 'Metrónomo', togekiss: 'Metrónomo',
   mareep: 'Carga vigor M', flaaffy: 'Carga vigor M', ampharos: 'Carga vigor M',
   sudowoodo: 'Carga vigor M', bonsly: 'Carga vigor M',
-  wooper: 'Carga energía S', quagsire: 'Carga energía S',
-  wobbuffet: 'Cura de energía S',
-  heracross: 'Imán ingredientes S',
-  houndour: 'Carga vigor S', houndoom: 'Carga vigor S',
+  wooper: 'Carga energía S', quagsire: 'Carga energía S', clodsire: 'Carga energía S',
+  wobbuffet: 'Ánimo enérgico S',
+  misdreavus: 'Llama Embrujada (Cocinitas con sustancia S)', mismagius: 'Llama Embrujada (Cocinitas con sustancia S)',
+  heracross: 'Corpulencia (Asistencia culinaria S)',
+  delibird: 'Presente (Imán ingredientes S)',
+  houndour: 'Carga vigor M', houndoom: 'Carga vigor M',
   larvitar: 'Carga energía S', pupitar: 'Carga energía S', tyranitar: 'Carga energía S',
-  treecko: 'Carga vigor S', grovyle: 'Carga vigor S', sceptile: 'Carga vigor S',
-  torchic: 'Carga vigor S', combusken: 'Carga vigor S', blaziken: 'Carga vigor S',
-  mudkip: 'Carga vigor S', marshtomp: 'Carga vigor S', swampert: 'Carga vigor S',
+  treecko: 'Bayamanía', grovyle: 'Bayamanía', sceptile: 'Bayamanía',
+  torchic: 'Carga energía S', combusken: 'Carga energía S', blaziken: 'Carga energía S',
+  mudkip: 'Cocinitas S', marshtomp: 'Cocinitas S', swampert: 'Cocinitas S',
   slakoth: 'Imán ingredientes S', vigoroth: 'Imán ingredientes S', slaking: 'Imán ingredientes S',
+  mawile: 'Corte Fuerte (Ingrediente aleatorio S)',
   sableye: 'Imán fragmentos S',
   gulpin: 'Imán fragmentos S', swalot: 'Imán fragmentos S',
   swablu: 'Carga energía S', altaria: 'Carga energía S',
   shuppet: 'Carga vigor S', banette: 'Carga vigor S',
-  absol: 'Carga energía S',
+  absol: 'Carga vigor S',
   spheal: 'Imán ingredientes S', sealeo: 'Imán ingredientes S', walrein: 'Imán ingredientes S',
   ralts: 'Energía para todos S', kirlia: 'Energía para todos S', gardevoir: 'Energía para todos S', gallade: 'Superútil S',
-  turtwig: 'Imán ingredientes S', grotle: 'Imán ingredientes S', torterra: 'Imán ingredientes S',
-  chimchar: 'Carga vigor S', monferno: 'Carga vigor S', infernape: 'Carga vigor S',
-  piplup: 'Carga vigor S', prinplup: 'Carga vigor S', empoleon: 'Carga vigor S',
-  shinx: 'Carga vigor S', luxio: 'Carga vigor S', luxray: 'Carga vigor S',
+  turtwig: 'Energía para todos S', grotle: 'Energía para todos S', torterra: 'Energía para todos S',
+  chimchar: 'Bayamanía', monferno: 'Bayamanía', infernape: 'Bayamanía',
+  piplup: 'Superútil S', prinplup: 'Superútil S', empoleon: 'Superútil S',
+  shinx: 'Receta sustanciosa S', luxio: 'Receta sustanciosa S', luxray: 'Receta sustanciosa S',
   happiny: 'Energía para todos S', chansey: 'Energía para todos S', blissey: 'Energía para todos S',
-  riolu: 'Imán fragmentos S', lucario: 'Imán fragmentos S',
+  riolu: 'Imán fragmentos S', lucario: 'Esfera Aural (Imán fragmentos S)',
   croagunk: 'Carga vigor S', toxicroak: 'Carga vigor S',
-  snover: 'Carga energía S', abomasnow: 'Carga energía S',
+  snover: 'Carga vigor M', abomasnow: 'Carga vigor M',
   darkrai: 'Mal Sueño',
-  foongus: 'Imán ingredientes S', amoonguss: 'Imán ingredientes S',
+  foongus: 'Carga energía S', amoonguss: 'Carga energía S',
   rufflet: 'Bayamanía', braviary: 'Bayamanía',
-  cutiefly: 'Imán ingredientes S', ribombee: 'Imán ingredientes S',
+  cutiefly: 'Ingrediente aleatorio S', ribombee: 'Ingrediente aleatorio S',
   stufful: 'Carga vigor S', bewear: 'Carga vigor S',
   mimikyu: 'Disfraz (Bayamanía)',
   dwebble: 'Ingrediente aleatorio S', crustle: 'Ingrediente aleatorio S',
@@ -807,29 +860,104 @@ export const SPECIES_MAIN_SKILL_MAP: Record<string, string> = {
   murkrow: 'Afortunado (Ingrediente aleatorio S)', honchkrow: 'Afortunado (Ingrediente aleatorio S)',
   shuckle: 'Zumo de Baya (Energía para todos S)',
   plusle: 'Más (Imán ingredientes S)', minun: 'Menos (Receta sustanciosa S)',
+  toxtricityamped: 'Más (Imán ingredientes S)', toxtricitylowkey: 'Menos (Receta sustanciosa S)',
   latias: 'Pulso Cura (Ánimo enérgico S)', latios: 'Cometa Draco (Bayamanía)',
   drifloon: 'Reserva (Carga vigor S)', drifblim: 'Reserva (Carga vigor S)',
   cresselia: 'Plegaria Lunar (Energía para todos S)',
   dedenne: 'Cocinitas S',
   togedemaru: 'Moflete Estático (Ánimo enérgico S)',
   raikou: 'Mejora de ayuda (Eléctrico)', entei: 'Mejora de ayuda (Fuego)', suicune: 'Mejora de ayuda (Agua)',
-  farfetchd: 'Imán ingredientes S', 'farfetch’d': 'Imán ingredientes S',
-  'mr. mime': 'Carga vigor S', 'mime jr.': 'Carga vigor S',
-  comfey: 'Energía para todos S',
-  cramorant: 'Afortunado (Ingrediente aleatorio S)',
-  sprigatito: 'Imán ingredientes S', floragato: 'Imán ingredientes S', meowscarada: 'Imán ingredientes S',
+  farfetchd: 'Carga vigor S', 'farfetch’d': 'Carga vigor S',
+  'mr. mime': 'Mimético (Copia habilidades)', 'mime jr.': 'Mimético (Copia habilidades)', mrmime: 'Mimético (Copia habilidades)', mimejr: 'Mimético (Copia habilidades)',
+  comfey: 'Ánimo enérgico S',
+  cramorant: 'Cocinitas S',
+  sprigatito: 'Receta sustanciosa S', floragato: 'Receta sustanciosa S', meowscarada: 'Receta sustanciosa S',
   fuecoco: 'Carga energía S', crocalor: 'Carga energía S', skeledirge: 'Carga energía S',
-  quaxly: 'Carga vigor S', quaxwell: 'Carga vigor S', quaquaval: 'Carga vigor S',
+  quaxly: 'Carga vigor M', quaxwell: 'Carga vigor M', quaquaval: 'Carga vigor M',
   pawmi: 'Energía para todos S', pawmo: 'Energía para todos S', pawmot: 'Energía para todos S',
-  tinkatink: 'Carga energía S', tinkatuff: 'Carga energía S', tinkaton: 'Carga energía S',
+  tinkatink: 'Imán ingredientes S', tinkatuff: 'Imán ingredientes S', tinkaton: 'Imán ingredientes S',
   mew: 'Metrónomo',
   mewtwo: 'Onda Mental'
+};
+
+const ENGLISH_AND_FUZZY_SKILL_MAP: Record<string, string> = {
+  'berry burst': 'Bayamanía',
+  'berry burst (disguise)': 'Disfraz (Bayamanía)',
+  'berry burst (draco meteor)': 'Cometa Draco (Bayamanía)',
+  'berry zone (psystrike)': 'Onda Mental',
+  'psystrike': 'Onda Mental',
+  'bad dreams': 'Mal Sueño',
+  'charge energy s': 'Carga energía S',
+  'charge energy s (moonlight)': 'Luz Lunar (Carga energía S)',
+  'charge strength m': 'Carga vigor M',
+  'charge strength s': 'Carga vigor S',
+  'charge strength s (stockpile)': 'Reserva (Carga vigor S)',
+  'cooking advance s': 'Llama Embrujada (Cocinitas con sustancia S)',
+  'cooking advance s (mystical fire)': 'Llama Embrujada (Cocinitas con sustancia S)',
+  'cocinitas con sustancia s': 'Llama Embrujada (Cocinitas con sustancia S)',
+  'llama embrujada': 'Llama Embrujada (Cocinitas con sustancia S)',
+  'cooking assist s': 'Corpulencia (Asistencia culinaria S)',
+  'cooking assist s (bulk up)': 'Corpulencia (Asistencia culinaria S)',
+  'asistencia culinaria s': 'Corpulencia (Asistencia culinaria S)',
+  'corpulencia': 'Corpulencia (Asistencia culinaria S)',
+  'cooking power-up s': 'Receta sustanciosa S',
+  'cooking power up s': 'Receta sustanciosa S',
+  'cooking power-up s (minus)': 'Menos (Receta sustanciosa S)',
+  'dream shard magnet s': 'Imán fragmentos S',
+  'dream shard magnet s (aura sphere)': 'Esfera Aural (Imán fragmentos S)',
+  'energizing cheer s': 'Ánimo enérgico S',
+  'energizing cheer s (heal pulse)': 'Pulso Cura (Ánimo enérgico S)',
+  'energizing cheer s (nuzzle)': 'Moflete Estático (Ánimo enérgico S)',
+  'energy for everyone s': 'Energía para todos S',
+  'energy for everyone s (berry juice)': 'Zumo de Baya (Energía para todos S)',
+  'energy for everyone s (lunar blessing)': 'Plegaria Lunar (Energía para todos S)',
+  'extra helpful s': 'Superútil S',
+  'helper boost': 'Mejora de ayuda (Eléctrico)',
+  'ingredient draw s': 'Ingrediente aleatorio S',
+  'ingredient draw s (hyper cutter)': 'Corte Fuerte (Ingrediente aleatorio S)',
+  'ingredient draw s (super luck)': 'Afortunado (Ingrediente aleatorio S)',
+  'ingredient magnet s': 'Imán ingredientes S',
+  'ingredient magnet s (plus)': 'Más (Imán ingredientes S)',
+  'ingredient magnet s (present)': 'Presente (Imán ingredientes S)',
+  'metronome': 'Metrónomo',
+  'skill copy (mimic)': 'Mimético (Copia habilidades)',
+  'skill copy (transform)': 'Transformación (Copia habilidades)',
+  'tasty chance s': 'Cocinitas S'
 };
 
 export function normalizeMainSkillName(skillName?: string): string {
   if (!skillName) return 'Carga vigor S';
   const clean = skillName.trim();
   const lower = clean.toLowerCase();
+
+  if (lower === 'unknown') return 'Carga vigor S';
+
+  if (ENGLISH_AND_FUZZY_SKILL_MAP[lower]) {
+    return ENGLISH_AND_FUZZY_SKILL_MAP[lower];
+  }
+
+  // Signature fuzzy matches (OCR / partial text resilience)
+  if (lower.includes('llama embrujada') || lower.includes('con sustancia') || lower.includes('mystical fire') || lower.includes('cooking advance')) {
+    return 'Llama Embrujada (Cocinitas con sustancia S)';
+  }
+  if (lower.includes('corpulencia') || lower.includes('asistencia culinaria') || lower.includes('bulk up') || lower.includes('cooking assist')) {
+    return 'Corpulencia (Asistencia culinaria S)';
+  }
+  if (lower.includes('corte fuerte') || lower.includes('hyper cutter')) {
+    return 'Corte Fuerte (Ingrediente aleatorio S)';
+  }
+  if (lower.includes('afortunado') || lower.includes('super luck')) {
+    return 'Afortunado (Ingrediente aleatorio S)';
+  }
+  if (lower.includes('presente') || lower.includes('(present)')) {
+    return 'Presente (Imán ingredientes S)';
+  }
+  if (lower.includes('esfera aural') || lower.includes('aura sphere')) {
+    return 'Esfera Aural (Imán fragmentos S)';
+  }
+  if (lower.includes('mimético') || lower.includes('mimetico') || lower.includes('mimic')) {
+    return 'Mimético (Copia habilidades)';
+  }
 
   // Ditto's signature Transform / Skill Copy variants
   if (

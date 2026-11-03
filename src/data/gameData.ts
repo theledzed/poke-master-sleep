@@ -745,14 +745,13 @@ export const KNOWN_SUBSKILLS: Record<string, { tier: 'white' | 'blue' | 'gold'; 
   'Bonus EXP de estudio': { tier: 'gold', description: 'Aumenta un 6% la cantidad de EXP de estudio obtenidos.' },
   'Bonus fragmentos sueños': { tier: 'gold', description: 'Aumenta un 6% los fragmentos de sueños obtenidos.' },
   'Bonus recupera energía': { tier: 'gold', description: 'Multiplica por 1,14 la energía que recupera el equipo al dormir.' },
-  'Nivel habilidad L': { tier: 'gold', description: 'Aumenta 3 niveles la habilidad principal de este Pokémon.' },
+  'Nivel habilidad M': { tier: 'gold', description: 'Aumenta 2 niveles la habilidad principal de este Pokémon.' },
 
   'Velocidad ayuda M': { tier: 'blue', description: 'Reduce un 14% el tiempo que tarda en ayudar el Pokémon.' },
   'Más ingredientes M': { tier: 'blue', description: 'Aumenta un 36% la probabilidad de encontrar ingredientes.' },
   'Activación M': { tier: 'blue', description: 'Aumenta la probabilidad de que el Pokémon utilice su habilidad principal.' },
   'Inventario M': { tier: 'blue', description: 'Aumenta en 12 el número de bayas e ingredientes que puede tener.' },
   'Inventario L': { tier: 'blue', description: 'Aumenta en 18 el número de bayas e ingredientes que puede tener.' },
-  'Nivel habilidad M': { tier: 'blue', description: 'Aumenta 2 niveles la habilidad principal de este Pokémon.' },
 
   'Velocidad ayuda S': { tier: 'white', description: 'Reduce un 7% el tiempo que tarda en ayudar el Pokémon.' },
   'Más ingredientes S': { tier: 'white', description: 'Aumenta un 18% la probabilidad de encontrar ingredientes.' },

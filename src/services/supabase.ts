@@ -2,7 +2,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Pokemon, SnorlaxConfig } from '../types/pokemon';
 import { DEFAULT_CSV_DATA } from '../data/defaultPokedex';
 import { parseCsvText } from './csvParser';
-import { getPokemonCanonicalSkill } from './pokeApiService';
+import { getPokemonCanonicalSkill, normalizeMainSkillName } from './pokeApiService';
 
 export type ProfileId = 'cris' | 'ady';
 export type SyncStatus = 'local' | 'syncing' | 'synced' | 'error';
@@ -87,18 +87,27 @@ export function getLocalStorageKeys(profileId: ProfileId) {
 export function sanitizePokemonSkills(pokemons: Pokemon[]): { pokemons: Pokemon[]; changed: boolean } {
   let changed = false;
   const sanitized = pokemons.map(p => {
+    const cleanName = p.name.toLowerCase().trim();
     const canonical = getPokemonCanonicalSkill(p.name);
-    let skill = p.mainSkillName;
-    const isLegendaryBeast = ['raikou', 'entei', 'suicune'].some(b => p.name.toLowerCase().includes(b));
+    let skill = p.mainSkillName ? normalizeMainSkillName(p.mainSkillName) : canonical;
+    const isLegendaryBeast = ['raikou', 'entei', 'suicune'].some(b => cleanName.includes(b));
+    const isMisdreavusLine = cleanName.includes('misdreavus') || cleanName.includes('mismagius');
 
-    if (p.name.toLowerCase().trim() === 'eevee' && skill !== 'Imán ingredientes S') {
+    if (cleanName === 'eevee' && skill !== 'Imán ingredientes S') {
       skill = 'Imán ingredientes S';
-    } else if (p.name.toLowerCase().trim() === 'ditto' && (skill === 'Carga vigor S' || !skill || skill.toLowerCase().includes('copy') || skill.toLowerCase().includes('transform'))) {
+    } else if (cleanName === 'ditto' && (skill === 'Carga vigor S' || !skill || skill.toLowerCase().includes('copy') || skill.toLowerCase().includes('transform'))) {
       skill = 'Transformación (Copia habilidades)';
+    } else if (isMisdreavusLine && skill !== 'Llama Embrujada (Cocinitas con sustancia S)') {
+      skill = 'Llama Embrujada (Cocinitas con sustancia S)';
     } else if (skill === 'Impulso de ayuda S' && !isLegendaryBeast) {
       skill = canonical;
     } else if (!skill) {
       skill = canonical;
+    }
+
+    let specialty = p.specialty;
+    if (isMisdreavusLine && specialty !== 'Habilidades') {
+      specialty = 'Habilidades';
     }
 
     let berry = p.berry;
@@ -106,9 +115,30 @@ export function sanitizePokemonSkills(pokemons: Pokemon[]): { pokemons: Pokemon[
       berry = 'Baya Rimoya';
     }
 
-    if (skill !== p.mainSkillName || berry !== p.berry) {
+    let subskillsChanged = false;
+    const subskills = Array.isArray(p.subskills)
+      ? p.subskills.map(sub => {
+          if (!sub) return sub;
+          if (sub.name === 'Nivel habilidad L') {
+            subskillsChanged = true;
+            return {
+              ...sub,
+              name: 'Nivel habilidad M',
+              tier: 'gold' as const,
+              description: 'Aumenta 2 niveles la habilidad principal de este Pokémon.'
+            };
+          }
+          if (sub.name === 'Nivel habilidad M' && sub.tier !== 'gold') {
+            subskillsChanged = true;
+            return { ...sub, tier: 'gold' as const };
+          }
+          return sub;
+        })
+      : p.subskills;
+
+    if (skill !== p.mainSkillName || berry !== p.berry || specialty !== p.specialty || subskillsChanged) {
       changed = true;
-      return { ...p, mainSkillName: skill, berry };
+      return { ...p, mainSkillName: skill, berry, specialty, subskills };
     }
     return p;
   });
