@@ -679,13 +679,17 @@ export default async function handler(req: any, res: any) {
         }
       }
 
-      if (configDirty) {
+      const prevHeartbeat = pushCfg.lastCronHeartbeatAt ? Date.parse(pushCfg.lastCronHeartbeatAt) : 0;
+      const shouldUpdateHeartbeat = (now.getTime() - prevHeartbeat) >= 3 * 60 * 1000;
+
+      if (configDirty || shouldUpdateHeartbeat) {
         const nextConfig = {
           ...cfg,
           pushConfig: {
             ...pushCfg,
             subscriptions: currentSubs,
-            sentAlertKeys
+            sentAlertKeys,
+            lastCronHeartbeatAt: nowIso
           }
         };
         await supabase

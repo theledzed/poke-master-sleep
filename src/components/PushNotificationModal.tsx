@@ -243,6 +243,16 @@ select cron.schedule(
       })
     : null;
 
+  const heartbeatFormatted = useMemo(() => {
+    if (!pushConfig.lastCronHeartbeatAt) return null;
+    const date = new Date(pushConfig.lastCronHeartbeatAt);
+    const diffMinutes = Math.round((Date.now() - date.getTime()) / 60000);
+    const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (diffMinutes <= 1) return `hace un momento (${timeStr})`;
+    if (diffMinutes < 60) return `hace ${diffMinutes} min (${timeStr})`;
+    return `a las ${timeStr}`;
+  }, [pushConfig.lastCronHeartbeatAt]);
+
   const modalContent = (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-fade-in overflow-y-auto"
@@ -633,7 +643,14 @@ select cron.schedule(
               onClick={() => setShowCronHelp((v) => !v)}
               className="w-full flex items-center justify-between text-[11px] text-slate-300 hover:text-white font-bold"
             >
-              <span>⚡ Precisión reloj 24/7 (GitHub Cron incluido + SQL Supabase opcional)</span>
+              <div className="flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${heartbeatFormatted ? 'bg-emerald-400 animate-pulse' : 'bg-slate-400'}`} />
+                <span>
+                  {heartbeatFormatted
+                    ? `Reloj 24/7 activo (pulso: ${heartbeatFormatted})`
+                    : '⚡ Precisión reloj 24/7 (Supabase pg_cron + GitHub)'}
+                </span>
+              </div>
               {showCronHelp ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
             {showCronHelp && (

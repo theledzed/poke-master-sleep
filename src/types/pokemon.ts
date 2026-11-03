@@ -107,6 +107,7 @@ export interface PushNotificationConfig {
   subscriptions: PushSubscriptionRecord[];
   lastBagCollectedAt?: string;    // ISO timestamp updated via push button, Chef scan, or manual reset
   snoozedUntil?: string;          // ISO timestamp if snoozed +1h
+  lastCronHeartbeatAt?: string;   // ISO timestamp of last cron dispatch ping from Supabase / Actions
   sentAlertKeys?: Record<string, string>;
 }
 
