@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
   Bell,
@@ -19,7 +19,11 @@ import {
   ChevronUp,
   Backpack,
   Compass,
-  UtensilsCrossed
+  UtensilsCrossed,
+  Volume2,
+  Download,
+  Play,
+  Pause
 } from 'lucide-react';
 import { Pokemon, PushNotificationConfig, SnorlaxConfig } from '../types/pokemon';
 import { ProfileId, PROFILES } from '../services/supabase';
@@ -45,6 +49,37 @@ interface PushNotificationModalProps {
   onUpdatePushConfig: (nextPushConfig: PushNotificationConfig) => void;
 }
 
+const POKEMON_TONES = [
+  {
+    id: 'pokemon-center-recovery',
+    name: 'Sanación Centro Pokémon',
+    file: '/audio/pokemon-center-recovery.wav',
+    emoji: '🏥',
+    desc: 'El icónico arpegio de recuperación del Centro Pokémon.'
+  },
+  {
+    id: 'pokeflute-chime',
+    name: 'Pokéflauta Mágica',
+    file: '/audio/pokeflute-chime.wav',
+    emoji: '🎶',
+    desc: 'Melodía suave para despertar a Snorlax y aviso de comidas.'
+  },
+  {
+    id: 'item-bag-pop',
+    name: 'Bolsa Llena (Pop)',
+    file: '/audio/item-bag-pop.wav',
+    emoji: '🎒',
+    desc: 'Doble pop nítido y agradable para alertas de inventario.'
+  },
+  {
+    id: 'sleep-lullaby-bell',
+    name: 'Campana de Sueño',
+    file: '/audio/sleep-lullaby-bell.wav',
+    emoji: '🌙',
+    desc: 'Campanadas relajantes para la cena y hora de dormir.'
+  }
+];
+
 export const PushNotificationModal: React.FC<PushNotificationModalProps> = ({
   isOpen,
   onClose,
@@ -62,7 +97,40 @@ export const PushNotificationModal: React.FC<PushNotificationModalProps> = ({
   const [isBusy, setIsBusy] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
   const [showCronHelp, setShowCronHelp] = useState(false);
+  const [showToneHelp, setShowToneHelp] = useState(false);
   const [copiedSql, setCopiedSql] = useState(false);
+  const [playingToneId, setPlayingToneId] = useState<string | null>(null);
+  const activeAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  const handlePlayTone = (file: string, id: string) => {
+    if (playingToneId === id && activeAudioRef.current) {
+      activeAudioRef.current.pause();
+      activeAudioRef.current = null;
+      setPlayingToneId(null);
+      return;
+    }
+    if (activeAudioRef.current) {
+      activeAudioRef.current.pause();
+      activeAudioRef.current = null;
+    }
+    const audio = new Audio(file);
+    activeAudioRef.current = audio;
+    setPlayingToneId(id);
+    audio.play().catch(() => setPlayingToneId(null));
+    audio.onended = () => {
+      setPlayingToneId(null);
+      activeAudioRef.current = null;
+    };
+  };
+
+  const handleDownloadTone = (file: string, name: string) => {
+    const a = document.createElement('a');
+    a.href = file;
+    a.download = `${name}.wav`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
 
   const platformSupport = useMemo(() => detectPushPlatformSupport(), [isOpen]);
   const lunarStatus = useMemo(() => getLunarEventStatus(), [isOpen]);
@@ -88,6 +156,10 @@ export const PushNotificationModal: React.FC<PushNotificationModalProps> = ({
     return () => {
       document.body.style.overflow = originalOverflow;
       window.removeEventListener('keydown', onKey);
+      if (activeAudioRef.current) {
+        activeAudioRef.current.pause();
+        activeAudioRef.current = null;
+      }
     };
   }, [isOpen, onClose]);
 
@@ -633,6 +705,79 @@ select cron.schedule(
               >
                 🌙 "¡A dormir a Snorlax!"
               </button>
+            </div>
+          </div>
+
+          {/* 6. Tonos Especiales de Pokémon (Celular y Pixel Watch) */}
+          <div className="rounded-2xl bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-yellow-500/10 border border-white/12 p-3.5 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="text-xs font-black text-white flex items-center gap-1.5">
+                <Volume2 className="w-4 h-4 text-amber-300" />
+                <span>Tonos Especiales de Pokémon 🎵</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowToneHelp((v) => !v)}
+                className="text-[10px] text-amber-200 hover:text-white underline font-semibold"
+              >
+                {showToneHelp ? 'Ocultar guía' : '¿Cómo activarlo?'}
+              </button>
+            </div>
+
+            {showToneHelp && (
+              <div className="p-2.5 rounded-xl bg-black/40 border border-amber-400/20 text-[11px] text-slate-300 space-y-1.5">
+                <div className="font-bold text-amber-200">📱 Pasos para Android y Pixel Watch:</div>
+                <ol className="list-decimal list-inside space-y-1 text-[10px] text-slate-300">
+                  <li>Toca <span className="text-white font-semibold">Descargar</span> en tu tono preferido de la lista.</li>
+                  <li>Ve a <span className="text-white font-semibold">Ajustes ➔ Notificaciones ➔ Pokémon Sleep Master</span> (o mantén presionada la notificación cuando te llegue y toca la ⚙️).</li>
+                  <li>En <span className="text-white font-semibold">Sonido</span>, elige el archivo descargado.</li>
+                </ol>
+                <div className="text-[10px] text-amber-300/90 pt-1 border-t border-white/10">
+                  ✨ Tu Pixel Watch 4 reproducirá y vibrará con este tono automáticamente al sincronizarse con tu teléfono.
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {POKEMON_TONES.map((tone) => {
+                const isPlaying = playingToneId === tone.id;
+                return (
+                  <div
+                    key={tone.id}
+                    className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-black/30 border border-white/10 hover:border-amber-400/30 transition-all"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-xs text-white truncate flex items-center gap-1.5">
+                        <span>{tone.emoji}</span>
+                        <span>{tone.name}</span>
+                      </div>
+                      <div className="text-[10px] text-slate-400 truncate">{tone.desc}</div>
+                    </div>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handlePlayTone(tone.file, tone.id)}
+                        className={`p-1.5 rounded-lg border transition-all ${
+                          isPlaying
+                            ? 'bg-amber-500 text-black border-amber-400 animate-pulse'
+                            : 'bg-white/10 hover:bg-white/20 text-white border-white/10'
+                        }`}
+                        title={isPlaying ? 'Pausar' : 'Escuchar'}
+                      >
+                        {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadTone(tone.file, tone.id)}
+                        className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white border border-white/10 transition-all"
+                        title="Descargar tono .wav"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
