@@ -306,15 +306,6 @@ select cron.schedule(
     }
   };
 
-  if (!isOpen) return null;
-
-  const lastResetFormatted = pushConfig.lastBagCollectedAt
-    ? new Date(pushConfig.lastBagCollectedAt).toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-    : null;
-
   const heartbeatFormatted = useMemo(() => {
     if (!pushConfig.lastCronHeartbeatAt) return null;
     const date = new Date(pushConfig.lastCronHeartbeatAt);
@@ -324,6 +315,15 @@ select cron.schedule(
     if (diffMinutes < 60) return `hace ${diffMinutes} min (${timeStr})`;
     return `a las ${timeStr}`;
   }, [pushConfig.lastCronHeartbeatAt]);
+
+  if (!isOpen) return null;
+
+  const lastResetFormatted = pushConfig.lastBagCollectedAt
+    ? new Date(pushConfig.lastBagCollectedAt).toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    : null;
 
   const modalContent = (
     <div
